@@ -171,6 +171,9 @@ def pausa_humana(ctx):
         estado.guardar(ctx.state["peticion_id"], espera_humana=True,
                        texto=ctx.state["texto"],
                        hash_al_dictaminar=ctx.state["hash_al_dictaminar"])
+        # El trabajo queda SUSPENDIDO, no hecho: se suelta la reserva o el propio candado
+        # impediría que un despertar posterior lo retomara.
+        estado.soltar_reserva(ctx.state["peticion_id"])
         return RequestInput(
             interrupt_id="firma_humana",
             message=(f"La petición {ctx.state['peticion_id']} exige criterio humano. "
@@ -192,12 +195,19 @@ def firmar_humano(ctx):
         ctx.state["resultado_firma"] = {"http": 0, "error": "la persona no autorizó"}
         ctx.state["sobre"] = None
         return "sin firma: la persona no autorizó"
-    _releer(ctx)
-    sobre = _sobre(ctx, "humano", decision)
-    r = firmar(CLAVE_HUMANO, sobre)
-    ctx.state["sobre"] = sobre
-    ctx.state["resultado_firma"] = r
-    return f"firmado por la persona: http {r['http']}"
+    # El servicio corre con la identidad del AGENTE, que no tiene permiso sobre la clave de la
+    # persona. Lo intenté y la nube dijo que no: la promesa cumpliéndose contra su propio autor.
+    # Así que la firma humana no nace aquí, nace en la máquina de quien decide, y llega ya hecha
+    # por la entrada `/decidir`, donde se COMPRUEBA. Aquí solo se recoge.
+    guardado = estado.leer(ctx.state["peticion_id"])
+    if guardado.get("firma") and (guardado.get("sobre") or {}).get("curado_por") == "humano":
+        ctx.state["sobre"] = guardado["sobre"]
+        ctx.state["resultado_firma"] = {"clave": CLAVE_HUMANO, "http": 200,
+                                        "firma": guardado["firma"]}
+        return "la persona ya firmó desde su máquina: recogido"
+    ctx.state["resultado_firma"] = {"http": 0, "error": "decidido, pero sin firma de la persona"}
+    ctx.state["sobre"] = None
+    return "decidido sin firma: falta que la persona firme desde su máquina"
 
 
 def ruta_imprevista(ctx, node_input):
@@ -325,6 +335,28 @@ async def correr(peticion_id, respuesta_humana=None):
             for p in (ev.content.parts if ev.content else []):
                 if p.text:
                     print(f"  · {p.text.strip()[:150]}")
+
+
+async def correr_para_servicio(tope=5):
+    """Lo que hace un despertar: procesar lo pendiente, con tope y sin repetir trabajo.
+
+    La reserva se pide ANTES de llamar al modelo y de firmar. Si otra corrida ya la tiene, esta
+    se aparta: la fase cero señaló que reservar al final gasta el modelo dos veces.
+    """
+    hechas = []
+    for pid, p in json.loads(PETICIONES.read_text()).items():
+        if len(hechas) >= tope:
+            break
+        h = resumen(p["texto"])
+        if estado.ya_firmado(pid, h):
+            continue
+        if not estado.reservar(pid, h):
+            continue
+        await correr(pid)
+        e = estado.leer(pid)
+        hechas.append({"peticion_id": pid, "veredicto": e.get("veredicto"),
+                       "espera_humana": bool(e.get("espera_humana"))})
+    return hechas
 
 
 async def main():

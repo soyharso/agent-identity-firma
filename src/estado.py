@@ -64,9 +64,20 @@ def ya_firmado(peticion_id, hash_contenido) -> bool:
     return bool(e.get("firma")) and e.get("hash_contenido") == hash_contenido
 
 
+def soltar_reserva(peticion_id):
+    """La reserva dice «alguien se está ocupando», no «ya está hecho».
+
+    Si el flujo termina esperando a una persona, el trabajo NO está hecho: dejar la reserva
+    puesta bloquea su propia continuación, y el siguiente despertar se salta la petición para
+    siempre. Lo descubrí corriendo el ciclo entero, no leyéndolo.
+    """
+    _doc(peticion_id).update({"reserva_hash": firestore.DELETE_FIELD})
+
+
 def anotar_decision_humana(peticion_id, decision):
     """La persona decide por su propia entrada. El siguiente despertar lo consume."""
     guardar(peticion_id, decision_humana=str(decision).strip().lower(), espera_humana=False)
+    soltar_reserva(peticion_id)
 
 
 def pendientes_de_persona() -> list:
