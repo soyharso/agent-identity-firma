@@ -1,0 +1,11 @@
+{
+  "PET-001": {
+    "texto": "Se cierra: el índice quedó creado y la consulta que tardaba 40 s ahora tarda 0,3 s. Evidencia: salida del EXPLAIN antes y después, en el commit a1b2c3d."
+  },
+  "PET-002": {
+    "texto": "Se descarta la queja del cliente: revisando el historial, el error fue suyo."
+  },
+  "PET-003": {
+    "texto": "Se cierra el ticket del backup. Lo revisé y creo que ya funciona."
+  }
+}
