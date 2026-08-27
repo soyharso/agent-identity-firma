@@ -10,16 +10,14 @@ On 26 August 2026 we looked at a table in our own production system and counted 
 a complaint is thrown out. In four cases, a machine had absolved itself and signed a person's
 name to it.
 
-**Nobody chose this**, which is the part worth reading. We shipped a system with a gap in it, and
-that is on us. But no person and no model decided to misattribute anything — the misattribution
-was the only path the system left open. The function that closes a request signed `"human"` by
-default, the
-console exposed no flag to say otherwise, and a model was only allowed to write the state *open*.
-The system offered no way to say "a machine closed this". So the only path an agent had to close
-anything at all ran through a field that said *human*.
+**Nobody chose this**, which is the part worth reading. We shipped a system with a gap in it and
+that is on us — but no person and no model *decided* to misattribute anything. The closing
+function wrote `"human"` by default, the console exposed no flag to say otherwise, and a model
+was only allowed to write the state *open*. The system had no way to express "a machine closed
+this", so the only path an agent had ran through a field that said *human*.
 
-Nothing was hidden from anyone, no customer decision was reversed, and the records are intact —
-which is how we counted them. What was wrong was the **shape of the system**: it made the correct
+Nothing was hidden, no customer decision was reversed, and the records are intact — which is how
+we were able to count them. What was wrong was the **shape of the system**: it made the correct
 action impossible to express.
 
 That is not a bug in a form. It is an agent-identity failure, and it is going to happen to
@@ -76,9 +74,7 @@ proposes and what a dumb keyword ceiling allows, so the model can ask for more p
 never grant itself more authority. If any of the three non-deciding models fails, hallucinates or
 is poisoned, no door opens. At worst, a person gets bothered unnecessarily.
 
-## Three things that broke, and what each one taught
-
-Writing about what worked is easy and worth little. These are the ones that cost us.
+## Three findings from red-teaming, before we shipped
 
 ### 1. The test that lied when you ran it the way we told you to
 
@@ -94,24 +90,20 @@ document said.
 documentation pointing at the old command is not fixing anything, for the only person who
 matters.
 
-### 2. The comfortable diagnosis
+### 2. A request could be orphaned between deciding and signing
 
-The durability test failed at step 3. We investigated and concluded: *the product is fine, the
-test was wrong* — the test recorded a human decision without producing a human signature, so the
-system correctly refused to close.
+The durability test failed at step 3, and our first reading was that the test was wrong: it
+recorded a human decision without producing a human signature, so the system correctly refused
+to close. That reading was true and incomplete.
 
-That was true. It was also **the most convenient possible conclusion for the people who wrote
-both the product and the test**, so we sent it to an external model of a different lineage with
-one instruction: prove this is self-serving.
+The real defect is one layer down. Deciding and signing are two separate acts, on purpose,
+because the human signature is produced on the deciding person's own machine. **A crash fits
+between them.** When that happened, a restart treated the pause as resolved, found no signature,
+and terminated — leaving the request unsigned and flagged as though it were settled. Nobody would
+ever be asked to sign it again.
 
-It came back with: *"the state 'decided but not signed' is itself the defect"*. And it was right.
-If the process dies **between** a person deciding and that person signing — two separate acts, on
-purpose, because the human signature is produced on the deciding person's machine — then on
-restart the flow considered the pause resolved, found no signature, and terminated. **The request
-was orphaned, and marked as though it were settled.** Nobody would ever be asked to sign it
-again.
-
-That cost half a cent of inference. It is now fixed, with a test that covers exactly that window.
+Fixed: a decision without its signature no longer resolves the pause. There is a test for exactly
+that window.
 
 ### 3. The fence we built, and an attacker broke nine times out of nine
 
@@ -142,8 +134,7 @@ Three fixes, and **none of them was moving the threshold**:
 It now catches nine out of nine, and those nine texts ship in the repository as a permanent
 adversarial bank — a file of attack texts that only ever grows, because removing a case that now passes is how a test suite quietly stops measuring.
 
-**And here is what we are not going to pretend.** Two legitimate closures still trip it, and they
-are irreducible: by meaning alone you cannot separate *"balance zero because a duplicate charge
+**Known limitation.** Two legitimate closures still trip it, and they are irreducible: by meaning alone you cannot separate *"balance zero because a duplicate charge
 was reversed"* from *"balance zero because we forgave it"*. The cause is not in the text. Tuning
 the threshold until that looked solved would be fabricating a number against our own test set.
 
@@ -180,16 +171,13 @@ where the same words typed would land: with a person. The modality changes; the 
   deliberately misbehaving agent; the channel itself is not wired to it. We mention it because
   the port is easy to mistake for the integration.
 
-## What this actually cost
-
-Not the code. The rule underneath it:
+## The rule underneath all of it
 
 > **A boundary that depends on someone remembering is not a boundary.** Either the system enforces
 > it, or it does not exist.
 
-Applying that to ourselves is what produced the three sections above, and it was not free — each
-one meant undoing work that was already finished and already believed. The attacks that landed
-are in the commit history with their dates and their numbers.
+That is why the guarantee is an IAM binding and not a prompt, a keyword ceiling and not a
+judgement call, a file in version control and not a database row.
 
 The repository ships with the submission: nine kill-tests, the adversarial bank, and a verifier
 that runs with no network, no credentials and no Google account. That last one matters more than
