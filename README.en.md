@@ -4,6 +4,13 @@
 can't. The key that authorises human judgement is out of its reach, and when it tries, the cloud
 says no.
 
+**No model here can grant itself authority.** Two Google models take part — one adjudicates, one
+is a semantic fence — and neither can widen what the machine is allowed to sign. They can only
+ask for *more* caution. Authority comes from a deterministic function and from which key IAM
+lets you touch, so a model that fails, hallucinates or is poisoned opens no door: at worst it
+bothers a person unnecessarily. Three identities, three separate keys, three different scopes —
+and the cloud refuses when one reaches for another's.
+
 > Spanish version: [`README.md`](README.md). This English version is the one to read for judging.
 
 ## The real defect this comes from
@@ -185,3 +192,19 @@ crash, two canonical serialisers that disagreed with each other, an authorisatio
 case-sensitively that left the door wide open, and an authority ceiling that only spoke Spanish.
 
 It is all in the commit messages, with dates and measurements.
+
+**The clearest example, and it is the semantic fence.** We built it, then handed it to an external
+attacker whose only job was to get judgement past it. **It broke nine times out of nine** —
+notarial Spanish, English accounting jargon, French, Chinese, and absolution buried in ISO/ERP
+filler; eight of those nine also walked past the keyword ceiling. We fixed it three ways —
+multilingual embeddings, per-sentence scoring so filler stops diluting the signal, and anchors in
+the register and languages of the attack — and **it now catches nine out of nine**. Those nine
+texts are checked into the repository as a permanent adversarial bank (`agente/banco_adversarial.py`)
+that only ever grows.
+
+**That happened before we shipped, not after.** And we still publish what it cannot do: two
+legitimate closures trip it, and they are irreducible — by meaning alone you cannot separate
+"balance zero because a duplicate charge was reversed" from "balance zero because we forgave it".
+The cause is not in the text. Tuning the threshold until that looked solved would be fabricating a
+number against our own test set. **The fence is a net, not a guarantee. The guarantee is the key
+the service does not have.**
