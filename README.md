@@ -1,40 +1,154 @@
-# agent-identity-firma
+# El candado de firma
 
-Componente mínimo de identidad de agente sobre Google Cloud: un agente que firma el cierre de una
-petición **sin poder firmar como persona**. Nació el 2026-08-27 como sujeto de un experimento
-medido sobre el método (`clev-transferencia-metodo`), no como producto.
+**Un agente que cierra tareas y no puede firmar como una persona.** No porque no deba: porque no
+puede. La clave que autoriza los juicios humanos está fuera de su alcance, y cuando lo intenta, la
+nube le dice que no.
 
-**Estado: no funciona.** El agente nunca llegó a firmar. `roles/owner` sobre el proyecto no
-incluye `iam.serviceAccounts.signJwt`, y el diseño —congelado a propósito, sin corregir— no
-contempla a nadie con ese permiso. El detalle, con horas y códigos de error, está en el informe
-del experimento, fuera de este repositorio.
+## El defecto real del que sale
 
-## Qué hay aquí
+Esto no es un ejercicio. El 26 de agosto de 2026, en un sistema en producción, se midió esto:
 
-| Archivo | Qué hace | Estado |
-|---|---|---|
-| `src/firmar_agente.py` | pide a Google que firme un sobre con la clave del service account. | falla con 403. |
-| `src/firmar_humano.py` | firma con el `id_token` de la persona. | funciona, pero el sobre sale sin `estado` ni hash: Google no admite claims propios. |
-| `src/verificar.py` | comprueba la firma contra las claves públicas y aplica la política de rol. | funciona para el sobre humano. |
+> La función que cierra peticiones firma **«humano» por defecto**, la consola no expone ninguna
+> bandera para declarar otra cosa, y un modelo solo puede escribir el estado «abierta». **La única
+> forma de que un agente cierre una petición era firmando como persona.** Resultado: 58 filas mal
+> firmadas, cuatro de ellas en estado «descartada» — donde la máquina se absuelve a sí misma.
 
-## Cómo se corre
+Eso es un fallo de identidad de agente. Esto lo arregla.
 
-```bash
-pip install google-auth requests 'pyjwt[crypto]'
-python3 src/firmar_humano.py --peticion PET-001 --estado cerrada --texto-archivo libro/curacion.md
-python3 src/verificar.py libro/firmas.jsonl
+## Cómo funciona
+
+```mermaid
+flowchart TD
+    T([Cloud Scheduler<br/>cada 15 min]) -->|OIDC, identidad propia| D[/despertar/]
+    D --> C[cargar_petición<br/><i>función</i>]
+    C --> TE[techo_de_autoridad<br/><i>función determinista</i>]
+    TE --> G[dictaminar<br/><b>Gemini · el único modelo</b>]
+    G --> R{enrutar<br/><i>función determinista</i>}
+    R -->|cerrada| FM[firmar con la clave<br/>de la MÁQUINA]
+    R -->|exige_humano| P((pausa<br/>el flujo se detiene))
+    R -->|abierta| DV[devolver sin firma]
+    R -->|ruta imprevista| GU[guardián] --> P
+    P -.espera.-> H[La persona firma<br/><b>en SU máquina</b>]
+    H -->|POST /decidir<br/>con la firma ya hecha| V
+    FM --> V[verificar<br/><i>función pura, sin red</i>]
+    DV --> V
+    V --> RG[registrar]
+    RG --> FS[(Firestore<br/>la verdad duradera)]
+
+    style G fill:#4285f4,color:#fff
+    style P fill:#fbbc04,color:#000
+    style V fill:#34a853,color:#fff
+    style H fill:#ea4335,color:#fff
 ```
 
-Requiere `gcloud` autenticado y el proyecto `ai-transf-lab-0827` (o cambiar la constante en
-`src/firmar_agente.py`).
+**Un modelo. Seis funciones. Una pausa.** Todo lo determinista es una función: más barato, más
+rápido, y no depende de que el modelo razone bien ese día.
 
-## Lo que se aprendió chocando
+### Las dos claves
 
-- La **Agent Identity API** de Google trata de autorizaciones OAuth de agentes hacia recursos de
-  terceros. No emite clave de firma propia al agente.
-- El **Agent Registry** sí existe y acepta registrar un agente que no está desplegado: devuelve un
-  identificador estable. No tiene campo para atar ese agente a un service account.
-- El `id_token` de una persona **no admite claims propios**, así que no puede llevar qué se
-  cerró ni el hash de lo cerrado.
+| | Clave de la máquina | Clave de la persona |
+|---|---|---|
+| Dónde vive la privada | Cloud KMS, nunca sale | Cloud KMS, y **el servicio no la alcanza** |
+| Quién puede pedirle firma | solo la cuenta del agente | solo la persona, desde su máquina |
+| Qué estados puede autorizar | `cerrada`, `abierta` | `cerrada`, `abierta`, `descartada`, `cerrada_con_juicio`, `perdonada` |
 
-Privado. No publicado. Sin datos de personas ni de casos reales.
+El alcance sale de [`claves/directorio.json`](claves/directorio.json), **no del código**. El
+verificador hace una sola pregunta: *¿está este estado en el alcance de la clave que firmó?*
+
+## Arranque desde cero
+
+```bash
+# 1. Dependencias
+pip install -r servicio/requirements.txt
+
+# 2. Infraestructura (proyecto nuevo, ~0 USD: todo cabe en capa gratuita salvo céntimos de KMS)
+gcloud services enable cloudkms.googleapis.com run.googleapis.com \
+  firestore.googleapis.com cloudscheduler.googleapis.com aiplatform.googleapis.com
+gcloud kms keyrings create firmas --location=us-central1
+gcloud kms keys create clave-agente --location=us-central1 --keyring=firmas \
+  --purpose=asymmetric-signing --default-algorithm=ec-sign-p256-sha256
+gcloud kms keys create clave-humano --location=us-central1 --keyring=firmas \
+  --purpose=asymmetric-signing --default-algorithm=ec-sign-p256-sha256
+gcloud firestore databases create --location=us-central1 --type=firestore-native
+
+# 3. La separación que lo sostiene: el agente firma SOLO con su clave
+gcloud kms keys add-iam-policy-binding clave-agente --location=us-central1 --keyring=firmas \
+  --member="serviceAccount:sa-agente-curador@$PROJECT.iam.gserviceaccount.com" \
+  --role="roles/cloudkms.signer"
+# (sobre clave-humano NO se le concede nada: ahí está la garantía)
+
+# 4. Las claves públicas, que son las que verifica cualquiera
+for K in clave-agente clave-humano; do
+  gcloud kms keys versions get-public-key 1 --key=$K --keyring=firmas \
+    --location=us-central1 --output-file=claves/$K.pem
+done
+
+# 5. Desplegar y programar el despertar
+gcloud run deploy candado-firma --source . --region us-central1 \
+  --service-account "sa-agente-curador@$PROJECT.iam.gserviceaccount.com" \
+  --no-allow-unauthenticated
+gcloud scheduler jobs create http despertar-candado --location=us-central1 \
+  --schedule="*/15 * * * *" --uri="$URL/despertar" --http-method=POST \
+  --oidc-service-account-email="sa-temporizador@$PROJECT.iam.gserviceaccount.com" \
+  --oidc-token-audience="$URL"
+```
+
+### Probarlo en local, sin desplegar nada
+
+```bash
+python3 agente/grafo.py                    # el grafo entero, con las tres peticiones de ejemplo
+python3 src/verificar_sobre.py libro/firmas_grafo.jsonl   # verificar sin credenciales
+```
+
+### Que la persona decida
+
+```bash
+python3 src/decidir_como_persona.py PET-002 descartada
+```
+
+Firma **en la máquina de quien decide** y manda la firma ya hecha. El servicio la comprueba; no
+puede producirla.
+
+## Las pruebas que lo cierran
+
+Todas se ejecutan, ninguna es decorativa:
+
+```bash
+python3 agente/killtest_inyeccion.py     # texto envenenado contra el techo de autoridad
+python3 agente/killtest_alcance.py       # el alcance por clave, con firmas reales
+python3 agente/killtest_canonico.py      # el que firma y el que verifica producen los mismos bytes
+python3 agente/killtest_durabilidad.py 1 # la pausa sobrevive a que el proceso muera (4 pasos)
+```
+
+## La promesa, dicha con precisión
+
+Lo que se promete de más no vale nada, así que va separado:
+
+| **Garantizado**, pase lo que pase | Solo **mitigado** |
+|---|---|
+| La máquina **no puede** producir una firma que valide como humana. Es criptografía, no confianza. | Que la máquina no cierre un caso que una persona habría querido mirar. |
+| Ninguna clave puede autorizar un estado fuera de su alcance. | Se apoya en el techo por texto y en el blindaje del modelo, que son heurísticas. |
+| Todo cierre queda **atribuido y no repudiable**, y cualquiera lo comprueba con la clave pública. | |
+| El verificador **no necesita credenciales, ni red, ni cuenta en Google**. | |
+
+**Quien controla `claves/directorio.json` controla quién es humano.** Por eso vive en el
+repositorio y no en una base de datos: cada cambio queda en el historial, con su autor y su fecha.
+
+## Lo que NO está construido, dicho a propósito
+
+Declarar una pieza ausente vale más que fingirla:
+
+- **Pasarela de agentes** — no está.
+- **Memoria de largo plazo** — no está, y no es el relato de esto.
+- **Llaves de acceso del navegador** para la clave humana — sería mejor que la clave gestionada,
+  porque ni el administrador podría suplantar. Es trabajo de días y queda fuera.
+
+## Cómo se construyó
+
+Cada decisión pasó por un atacante externo **antes** de escribirse, y varios encontraron fallos
+reales que están corregidos en el historial: una ruta sin arista que mataba el flujo en silencio,
+una bandera de reanudación que no alcanzaba donde se creía, un esquema rígido que convertía una
+mala respuesta del modelo en una caída, dos serializadores que no coincidían entre sí, y un
+permiso de identidad que se leía en minúsculas y dejaba la autorización abierta.
+
+Está todo en los mensajes de los commits, con su fecha y su medición.

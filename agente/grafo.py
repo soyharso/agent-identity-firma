@@ -31,6 +31,7 @@ from google.adk.workflow import DEFAULT_ROUTE, START, FunctionNode, Workflow  # 
 from google.genai import types                                         # noqa: E402
 
 from src import estado                                                  # noqa: E402
+from src.verificar_sobre import verificar as verificar_sobre           # noqa: E402
 from src.firma_kms import CLAVE_AGENTE, CLAVE_HUMANO, firmar, resumen  # noqa: E402
 
 # 3.6-flash y no 3.7: las dos cumplen la regla del concurso (3.5 o superior), pero la ultima
@@ -130,8 +131,16 @@ def enrutar(ctx, node_input):
 def _sobre(ctx, curado_por, estado_peticion):
     # El parámetro NO se llama `estado`: ese nombre es del módulo del almacén, y taparlo aquí
     # dentro es la clase de error que solo aparece el día que alguien añade una línea.
-    return {"peticion_id": ctx.state["peticion_id"], "estado": estado_peticion,
-            "curado_por": curado_por, "hash_contenido": ctx.state["hash_actual"]}
+    #
+    # `tipo_firmante` viaja como comprobación redundante, NUNCA como fuente de verdad: la clase
+    # la decide qué clave validó. Marca temporal y algoritmo entran por la propuesta externa.
+    return {"peticion_id": ctx.state["peticion_id"],
+            "estado_destino": estado_peticion,
+            "tipo_firmante": "MAQUINA" if curado_por == "modelo" else "HUMANO",
+            "curado_por": curado_por,
+            "hash_contenido": ctx.state["hash_actual"],
+            "marca_temporal": int(time.time()),
+            "algoritmo": "EC_SIGN_P256_SHA256"}
 
 
 def _releer(ctx):
@@ -228,19 +237,20 @@ def devolver(ctx):
 
 
 def verificar(ctx):
-    """La regla dura. Ninguna ruta llega al registro sin pasar por aquí."""
+    """La regla dura, y ahora con UNA sola compuerta: el alcance de la clave que firmó.
+
+    No hay reglas por estado escritas a mano. La pregunta es siempre la misma: ¿puede esta clave
+    autorizar este estado? Eso es lo que la propuesta externa aportó y su propio código no usaba.
+    """
     sobre = ctx.state.get("sobre")
     r = ctx.state.get("resultado_firma") or {}
-    if not sobre or r.get("http") != 200:
-        v = "SIN_FIRMA"
-    elif r["clave"] == CLAVE_AGENTE and sobre["curado_por"] != "modelo":
-        v = "RECHAZADO_SUPLANTACION"
-    elif sobre["estado"] in ("descartada",) and r["clave"] != CLAVE_HUMANO:
-        v = "RECHAZADO_SUPLANTACION"
+    if not sobre or r.get("http") != 200 or not r.get("firma"):
+        v, det = "SIN_FIRMA", {}
     else:
-        v = "OK"
+        v, det = verificar_sobre(sobre, r["firma"], ctx.state.get("texto"))
     ctx.state["veredicto"] = v
-    return v
+    ctx.state["detalle_veredicto"] = det
+    return f"{v} {det}"
 
 
 def registrar(ctx):

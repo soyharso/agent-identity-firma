@@ -53,29 +53,13 @@ def quien_llama() -> str:
 
 
 def _comprobar_firma_humana(sobre, firma_b64):
-    """Comprueba, no confía. Usa la clave pública que viaja en el repositorio."""
-    import base64
-    import hashlib
+    """Comprueba, no confía. Y con la MISMA compuerta que el resto: el alcance de la clave.
 
-    from cryptography.exceptions import InvalidSignature
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.asymmetric import ec
-    from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
-    from cryptography.hazmat.primitives.serialization import load_pem_public_key
-
-    pem = pathlib.Path(__file__).resolve().parent / "claves" / "clave-humano.pem"
-    if not pem.exists():
-        pem = pathlib.Path(__file__).resolve().parent.parent / "claves" / "clave-humano.pem"
-    pub = load_pem_public_key(pem.read_bytes())
-    mensaje = json.dumps(sobre, sort_keys=True, separators=(",", ":")).encode()
-    try:
-        pub.verify(base64.b64decode(firma_b64), hashlib.sha256(mensaje).digest(),
-                   ec.ECDSA(Prehashed(hashes.SHA256())))
-    except InvalidSignature:
-        return "FIRMA_INVALIDA", "no valida con la clave pública de la persona"
-    if sobre.get("curado_por") != "humano":
-        return "RECHAZADO_SUPLANTACION", "firmada con la clave humana pero no se declara humana"
-    return "OK", None
+    Antes esta función tenía su propia lógica y su propia serialización. Tener dos formas de
+    comprobar lo mismo es tener dos formas de equivocarse: aquí se llama al verificador único.
+    """
+    from src.verificar_sobre import verificar
+    return verificar(sobre, firma_b64)
 
 
 def _negar(esperada, quien):

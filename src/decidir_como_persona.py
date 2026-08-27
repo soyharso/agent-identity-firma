@@ -33,8 +33,14 @@ def main():
     args = ap.parse_args()
 
     texto = json.loads(PETICIONES.read_text())[args.peticion_id]["texto"]
-    sobre = {"peticion_id": args.peticion_id, "estado": args.decision,
-             "curado_por": "humano", "hash_contenido": resumen(texto)}
+    import time
+    sobre = {"peticion_id": args.peticion_id,
+             "estado_destino": args.decision,
+             "tipo_firmante": "HUMANO",
+             "curado_por": "humano",
+             "hash_contenido": resumen(texto),
+             "marca_temporal": int(time.time()),
+             "algoritmo": "EC_SIGN_P256_SHA256"}
 
     if args.decision == "no":
         firma = None
