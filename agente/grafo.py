@@ -30,6 +30,7 @@ from google.adk.runners import InMemoryRunner                          # noqa: E
 from google.adk.workflow import DEFAULT_ROUTE, START, FunctionNode, Workflow  # noqa: E402
 from google.genai import types                                         # noqa: E402
 
+from src import estado                                                  # noqa: E402
 from src.firma_kms import CLAVE_AGENTE, CLAVE_HUMANO, firmar, resumen  # noqa: E402
 
 # 3.6-flash y no 3.7: las dos cumplen la regla del concurso (3.5 o superior), pero la ultima
@@ -49,13 +50,22 @@ def _peticion(pid):
 
 
 def cargar_peticion(ctx):
-    """Lee el texto y su estado actual. Deja en el estado lo que otros nodos necesitarán:
-    la fase cero confirmó que el dato NO viaja más allá del vecino inmediato."""
+    """Reconstruye TODO el estado del dominio desde el almacén duradero.
+
+    Aquí es donde el diseño deja de depender de la sesión del motor: si una persona ya decidió,
+    su decisión está guardada y se inyecta ahora. Un reinicio deja de importar, porque no hay
+    nada que reanudar — se vuelve a empezar y el dato está donde tiene que estar.
+    """
     pid = ctx.state.get("peticion_id", "PET-001")
     p = _peticion(pid)
+    guardado = estado.leer(pid)
+
     ctx.state["peticion_id"] = pid
     ctx.state["texto"] = p["texto"]
     ctx.state["hash_al_dictaminar"] = resumen(p["texto"])
+    # Lo que la persona ya decidió, si decidió. Viene del almacén, no de la sesión.
+    if guardado.get("decision_humana"):
+        ctx.state["decision_humana"] = guardado["decision_humana"]
     return p["texto"]
 
 
@@ -117,8 +127,10 @@ def enrutar(ctx, node_input):
     return f"{efectivo} (dictamen={dictamen}, techo={techo})"
 
 
-def _sobre(ctx, curado_por, estado):
-    return {"peticion_id": ctx.state["peticion_id"], "estado": estado,
+def _sobre(ctx, curado_por, estado_peticion):
+    # El parámetro NO se llama `estado`: ese nombre es del módulo del almacén, y taparlo aquí
+    # dentro es la clase de error que solo aparece el día que alguien añade una línea.
+    return {"peticion_id": ctx.state["peticion_id"], "estado": estado_peticion,
             "curado_por": curado_por, "hash_contenido": ctx.state["hash_actual"]}
 
 
@@ -145,9 +157,20 @@ def refrescar_y_firmar(ctx):
 
 
 def pausa_humana(ctx):
-    """El flujo se DETIENE aquí. No es un aviso: es un nodo que no continúa sin la persona."""
+    """El flujo se DETIENE aquí, salvo que la persona YA haya decidido antes.
+
+    La decisión guardada manda sobre el mecanismo nativo del marco. Así la pausa sobrevive a un
+    reinicio: si el contenedor murió y alguien decidió mientras tanto, al volver a empezar este
+    nodo ni siquiera se detiene.
+    """
+    if ctx.state.get("decision_humana"):
+        return ctx.state["decision_humana"]          # ya decidido, no se pausa
+
     respuesta = (ctx.resume_inputs or {}).get("firma_humana")
     if respuesta is None:
+        estado.guardar(ctx.state["peticion_id"], espera_humana=True,
+                       texto=ctx.state["texto"],
+                       hash_al_dictaminar=ctx.state["hash_al_dictaminar"])
         return RequestInput(
             interrupt_id="firma_humana",
             message=(f"La petición {ctx.state['peticion_id']} exige criterio humano. "
@@ -157,6 +180,7 @@ def pausa_humana(ctx):
     if isinstance(respuesta, dict):
         respuesta = respuesta.get("result", respuesta)
     ctx.state["decision_humana"] = str(respuesta).strip().lower()
+    estado.anotar_decision_humana(ctx.state["peticion_id"], ctx.state["decision_humana"])
     return ctx.state["decision_humana"]
 
 
@@ -217,6 +241,10 @@ def registrar(ctx):
     FIRMAS.parent.mkdir(parents=True, exist_ok=True)
     with FIRMAS.open("a") as fh:
         fh.write(json.dumps(fila, ensure_ascii=False) + "\n")
+    estado.guardar(ctx.state["peticion_id"], veredicto=ctx.state["veredicto"],
+                   dictamen=ctx.state.get("dictamen"), espera_humana=False,
+                   hash_contenido=(ctx.state.get("sobre") or {}).get("hash_contenido"),
+                   firma=(ctx.state.get("resultado_firma") or {}).get("firma"))
     return f"{ctx.state['peticion_id']} → {ctx.state['veredicto']}"
 
 
