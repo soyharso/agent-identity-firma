@@ -63,9 +63,10 @@ def _comprobar_firma_humana(sobre, firma_b64):
 
 
 def _negar(esperada, quien):
-    return jsonify({"error": "identidad no autorizada para esta entrada",
-                    "quien_llama": quien or "(sin token)",
-                    "esperada": esperada or "(sin configurar)"}), 403
+    return jsonify({"error": "identity not authorised for this endpoint",
+                    "error_es": "identidad no autorizada para esta entrada",
+                    "caller": quien or "(no token)",
+                    "expected": esperada or "(not configured)"}), 403
 
 
 @app.post("/despertar")
@@ -77,7 +78,7 @@ def despertar():
 
     from agente.grafo import correr_para_servicio
     hechas = asyncio.run(correr_para_servicio(TOPE_POR_DESPERTAR))
-    return jsonify({"despertado_por": quien, "procesadas": hechas})
+    return jsonify({"woken_by": quien, "processed": hechas})
 
 
 @app.post("/decidir")
@@ -91,25 +92,28 @@ def decidir():
     pid = cuerpo.get("peticion_id")
     decision = str(cuerpo.get("decision", "")).strip().lower()
     if not pid or decision not in ("cerrada", "descartada", "no"):
-        return jsonify({"error": "hace falta peticion_id y decision (cerrada|descartada|no)"}), 400
+        return jsonify({"error": "peticion_id and decision are required "
+                                 "(cerrada|descartada|no)"}), 400
 
     # El servicio NO firma como persona: no puede, y esa es la promesa. La firma viene hecha
     # desde la máquina de quien decide, y aquí solo se COMPRUEBA contra la clave pública.
     sobre, firma = cuerpo.get("sobre"), cuerpo.get("firma")
     if decision != "no":
         if not sobre or not firma:
-            return jsonify({"error": "falta el sobre firmado por la persona",
-                            "nota": "este servicio no puede firmar como humano, y no debe"}), 400
+            return jsonify({
+                "error": "the human-signed envelope is missing",
+                "note": "this service cannot sign as a human, and must not",
+                "note_es": "este servicio no puede firmar como humano, y no debe"}), 400
         veredicto, detalle = _comprobar_firma_humana(sobre, firma)
         if veredicto != "OK":
-            return jsonify({"error": "la firma no valida como humana",
-                            "veredicto": veredicto, "detalle": detalle}), 400
+            return jsonify({"error": "the signature does not validate as human",
+                            "verdict": veredicto, "detail": detalle}), 400
         estado.guardar(pid, sobre=sobre, firma=firma, veredicto="OK",
                        hash_contenido=sobre.get("hash_contenido"))
 
     estado.anotar_decision_humana(pid, decision)
-    return jsonify({"anotado": True, "peticion_id": pid, "decision": decision,
-                    "por": quien, "firma_comprobada": decision != "no"})
+    return jsonify({"recorded": True, "request_id": pid, "decision": decision,
+                    "by": quien, "signature_verified": decision != "no"})
 
 
 @app.post("/intentar-suplantar")
@@ -131,21 +135,20 @@ def intentar_suplantar():
     con_la_suya = firmar(CLAVE_AGENTE, sobre)
     con_la_humana = firmar(CLAVE_HUMANO, sobre)
     return jsonify({
-        "quien_corre_este_servicio": "sa-agente-curador (la identidad del AGENTE)",
-        "1_con_su_propia_clave": {"http": con_la_suya.get("http"),
-                                  "firma": (con_la_suya.get("firma") or "")[:44] or None},
-        "2_con_la_clave_de_la_persona": {"http": con_la_humana.get("http"),
-                                         "error": con_la_humana.get("error"),
-                                         "mensaje": con_la_humana.get("mensaje")},
-        "3_y_aunque_hubiera_firmado": ("el verificador la rechazaria igual: el estado "
-                                       "'descartada' esta fuera del alcance de la clave de la "
-                                       "maquina"),
+        "this_service_runs_as": "sa-agente-curador — the AGENT's identity",
+        "1_with_its_own_key": {"http": con_la_suya.get("http"),
+                               "signature": (con_la_suya.get("firma") or "")[:44] or None},
+        "2_with_the_human_key": {"http": con_la_humana.get("http"),
+                                 "error": con_la_humana.get("error"),
+                                 "message": con_la_humana.get("mensaje")},
+        "3_and_even_if_it_had_signed": ("the verifier would reject it anyway: the state "
+                                        "'descartada' is outside the scope of the machine key"),
     })
 
 
 @app.get("/estado")
 def ver_estado():
-    return jsonify({"esperando_persona": estado.pendientes_de_persona()})
+    return jsonify({"awaiting_a_human": estado.pendientes_de_persona()})
 
 
 @app.get("/quien")
@@ -158,8 +161,9 @@ def quien():
 
 @app.get("/")
 def salud():
-    return jsonify({"rutas": ["/despertar", "/decidir", "/estado"],
-                    "nota": "ninguna entrada firma; la firma vive dentro del grafo"})
+    return jsonify({"endpoints": ["/despertar", "/decidir", "/estado",
+                                 "/intentar-suplantar"],
+                    "note": "no endpoint signs; signing lives inside the graph"})
 
 
 if __name__ == "__main__":

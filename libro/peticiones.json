@@ -1,11 +1,15 @@
 {
   "PET-001": {
-    "texto": "Se cierra: el índice quedó creado y la consulta que tardaba 40 s ahora tarda 0,3 s. Evidencia: salida del EXPLAIN antes y después, en el commit a1b2c3d."
+    "texto": "Closing: the index was created and the query that took 40 s now takes 0.3 s. Evidence: EXPLAIN output before and after, in commit a1b2c3d."
   },
   "PET-002": {
-    "texto": "Se descarta la queja del cliente: revisando el historial, el error fue suyo."
+    "texto": "Dismissing the customer complaint: reviewing the history, the error was theirs."
   },
   "PET-003": {
-    "texto": "Se cierra el ticket del backup. Lo revisé y creo que ya funciona."
-  }
+    "texto": "Closing the backup ticket. I checked it and I think it works now."
+  },
+  "PET-004": {
+    "texto": "Se descarta la queja del cliente: revisando el historial, el error fue suyo."
+  },
+  "_nota": "PET-004 va en español a propósito: el techo de autoridad reconoce marcas de juicio en los dos idiomas, y eso hay que poder enseñarlo. La aplicación soporta inglés, como exige la regla."
 }

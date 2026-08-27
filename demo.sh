@@ -21,112 +21,113 @@ limpio() { grep -viE "FutureWarning|grpcio|warnings\.warn|check_feature|UserWarn
 
 # ── TOMA 1 · el defecto real ────────────────────────────────────────────────────────────
 toma1() {
-  titulo "TOMA 1 — el defecto real del que sale todo"
-  paso "El componente y su promesa, en una línea:"
+  titulo "SHOT 1 — the real defect this comes from"
+  paso "What it is, in one line:"
   head -5 README.en.md
-  paso "El texto de las peticiones de ejemplo — una de ellas es un juicio sobre una persona:"
+  paso "The sample requests — one of them is a judgement about a person:"
   python3 -c "
 import json
 for k,v in json.load(open('libro/peticiones.json')).items():
-    print(f'  {k}: {v[\"texto\"][:88]}')"
+    if k.startswith('_'): continue
+    print(f'  {k}: {v[\"texto\"][:86]}')"
   esperar
 }
 
 # ── TOMA 2 · el agente trabaja solo ─────────────────────────────────────────────────────
 toma2() {
-  titulo "TOMA 2 — el agente despierta solo y decide"
-  paso "Limpiar el almacén para que la corrida sea honesta:"
+  titulo "SHOT 2 — the agent wakes on its own and decides"
+  paso "Clearing the store so the run is honest:"
   python3 -c "
 import sys; sys.path.insert(0,'.')
 from src import estado
-for p in ('PET-001','PET-002','PET-003'): estado._doc(p).delete()
-print('  almacén limpio')" 2>&1 | limpio
+for p in ('PET-001','PET-002','PET-003','PET-004'): estado._doc(p).delete()
+print('  store cleared')" 2>&1 | limpio
 
-  paso "El temporizador de la nube despierta al servicio (no lo lanza una persona):"
+  paso "Cloud Scheduler wakes the service — no person launches it:"
   gcloud scheduler jobs run despertar-candado --location=$REGION --project=$P --quiet 2>&1 | tail -1
-  echo "  esperando a que procese…"; sleep 70
+  echo "  waiting while it processes…"; sleep 70
 
-  paso "Lo que decidió, leído del almacén:"
+  paso "What it decided, read from the store:"
   python3 -c "
 import sys; sys.path.insert(0,'.')
 from src import estado
-for p in ('PET-001','PET-002','PET-003'):
+for p in ('PET-001','PET-002','PET-003','PET-004'):
     e=estado.leer(p)
-    print(f'  {p}: veredicto={e.get(\"veredicto\",\"-\"):<10} espera_persona={str(e.get(\"espera_humana\",\"-\")):<6} firma={\"SÍ\" if e.get(\"firma\") else \"no\"}')" 2>&1 | limpio
+    print(f'  {p}: verdict={e.get(\"veredicto\",\"-\"):<10} awaiting_human={str(e.get(\"espera_humana\",\"-\")):<6} signed={\"YES\" if e.get(\"firma\") else \"no\"}')" 2>&1 | limpio
   echo
-  echo "  → evidencia comprobable: la MÁQUINA firma."
-  echo "  → un juicio sobre una persona: el flujo SE DETIENE."
-  echo "  → sin evidencia: se devuelve sin firma."
+  echo "  -> verifiable evidence: the MACHINE signs."
+  echo "  -> a judgement about a person: the flow STOPS."
+  echo "  -> no evidence: returned unsigned."
   esperar
 }
 
 # ── TOMA 3 · la que gana ────────────────────────────────────────────────────────────────
 toma3() {
-  titulo "TOMA 3 — la nube le dice que no. ESTA ES LA TOMA QUE GANA."
+  titulo "SHOT 3 — the cloud says no. THIS IS THE SHOT THAT WINS."
   TOK=$(gcloud auth print-identity-token)
-  paso "EL SERVICIO —que corre como el agente— intenta firmar con las DOS claves:"
+  paso "THE SERVICE — running as the agent — tries BOTH keys:"
   curl -s -X POST -H "Authorization: Bearer $TOK" "$URL/intentar-suplantar" | python3 -m json.tool
   echo
-  echo "  → con la SUYA: 200. Con la de la PERSONA: 403 PERMISSION_DENIED."
-  echo "  → y aunque hubiera firmado, el verificador la rechazaría igual."
+  echo "  -> with ITS OWN: 200. With the HUMAN key: 403 PERMISSION_DENIED."
+  echo "  -> and even if it had signed, the verifier would reject it anyway."
 
-  paso "Y si se le pide que firme por la persona sin traer la firma hecha:"
+  paso "And if asked to sign on the person's behalf without a ready signature:"
   curl -s -X POST -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
        -d '{"peticion_id":"PET-003","decision":"descartada"}' "$URL/decidir" | python3 -m json.tool
   echo
-  echo "  → «este servicio no puede firmar como humano, y no debe»"
+  echo "  -> \"this service cannot sign as a human, and must not\""
 
-  paso "Y la persona SÍ puede, desde SU máquina, con SU clave:"
+  paso "And the person CAN, from THEIR machine, with THEIR key:"
   python3 src/decidir_como_persona.py PET-002 descartada 2>&1 | limpio | tail -3
 
-  paso "El temporizador recoge esa firma y cierra:"
+  paso "The scheduler picks that signature up and closes:"
   gcloud scheduler jobs run despertar-candado --location=$REGION --project=$P --quiet 2>&1 | tail -1
   sleep 70
   python3 -c "
 import sys; sys.path.insert(0,'.')
 from src import estado
 e=estado.leer('PET-002'); s=e.get('sobre') or {}
-print(f'  PET-002 → veredicto={e.get(\"veredicto\")} · firmante={s.get(\"tipo_firmante\")} · estado={s.get(\"estado_destino\")}')" 2>&1 | limpio
+print(f'  PET-002 -> verdict={e.get(\"veredicto\")} · signer={s.get(\"tipo_firmante\")} · state={s.get(\"estado_destino\")}')" 2>&1 | limpio
   esperar
 }
 
 # ── TOMA 4 · cualquiera lo comprueba ────────────────────────────────────────────────────
 toma4() {
-  titulo "TOMA 4 — cualquiera lo verifica, y el filtro del fabricante falla"
-  paso "El verificador NO importa nada de Google:"
+  titulo "SHOT 4 — anyone can verify, and the vendor filter misses"
+  paso "The verifier imports NOTHING from Google:"
   python3 -c "
 import ast
 t=ast.parse(open('src/verificar_sobre.py').read()); imp=set()
 for n in ast.walk(t):
     if isinstance(n,ast.Import): imp|={a.name.split('.')[0] for a in n.names}
     if isinstance(n,ast.ImportFrom) and n.module: imp.add(n.module.split('.')[0])
-print('  importa:', ', '.join(sorted(imp)))
-print('  ¿algo de Google? →', 'sí' if any(i in ('google','requests') for i in imp) else 'NO')"
+print('  imports:', ', '.join(sorted(imp)))
+print('  anything from Google? ->', 'yes' if any(i in ('google','requests') for i in imp) else 'NO')"
 
-  paso "Las cinco pruebas, en verde:"
+  paso "The kill-tests, all green:"
   for k in inyeccion alcance canonico blindaje; do
     printf "  %-12s " "$k"
     python3 agente/killtest_$k.py >/dev/null 2>&1 && echo "PASA" || echo "NO PASA"
   done
 
-  paso "El filtro de inyección de Google contra NUESTRO ataque:"
+  paso "Google's own injection filter against OUR attack:"
   python3 agente/killtest_blindaje.py 2>&1 | limpio | sed -n '3,12p'
   esperar
 }
 
 # ── TOMA 5 · la prueba visual de la nube, que las reglas exigen ─────────────────────────
 toma5() {
-  titulo "TOMA 5 — prueba visual de Google Cloud (obligatoria por las reglas)"
-  paso "El servicio desplegado:"
+  titulo "SHOT 5 — visual proof of Google Cloud (required by the rules)"
+  paso "The deployed service:"
   gcloud run services list --project=$P --region=$REGION --format='table(metadata.name,status.url)' 2>&1 | head -4
-  paso "El temporizador que lo despierta:"
+  paso "The scheduler that wakes it:"
   gcloud scheduler jobs list --location=$REGION --project=$P --format='table(name,schedule,state)' 2>&1 | head -3
-  paso "LAS DOS CLAVES Y SUS PERMISOS — la diferencia ES el producto:"
+  paso "THE TWO KEYS AND THEIR IAM POLICIES — the difference IS the product:"
   for K in clave-agente clave-humano; do
     echo "  ── $K"
     gcloud kms keys get-iam-policy $K --location=$REGION --keyring=firmas --project=$P 2>&1 | sed 's/^/     /' | head -6
   done
-  paso "El agente en el catálogo de agentes de Google:"
+  paso "The live service URL:"
   gcloud run services describe candado-firma --region=$REGION --project=$P --format='value(status.url)' 2>&1 | tail -1
 }
 
@@ -138,5 +139,5 @@ esac
 
 echo
 echo "════════════════════════════════════════════════════════════════"
-echo "  fin de la demostración"
+echo "  end of demo"
 echo "════════════════════════════════════════════════════════════════"

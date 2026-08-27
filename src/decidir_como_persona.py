@@ -44,14 +44,14 @@ def main():
 
     if args.decision == "no":
         firma = None
-        print("la persona NO autoriza: no se firma nada")
+        print("the person does NOT authorise: nothing is signed")
     else:
         r = firmar(CLAVE_HUMANO, sobre)
         if r["http"] != 200:
-            print("no se pudo firmar:", r)
+            print("could not sign:", r)
             return 1
         firma = r["firma"]
-        print(f"firmado por la persona con su propia clave · {firma[:32]}…")
+        print(f"signed by the person with THEIR OWN key · {firma[:32]}…")
 
     token = subprocess.run(["gcloud", "auth", "print-identity-token"],
                            capture_output=True, text=True, check=True).stdout.strip()
@@ -60,7 +60,7 @@ def main():
                          json={"peticion_id": args.peticion_id, "decision": args.decision,
                                "sobre": sobre, "firma": firma},
                          timeout=60)
-    print(f"el servicio respondió HTTP {resp.status_code}: {resp.text[:300]}")
+    print(f"the service replied HTTP {resp.status_code}: {resp.text[:300]}")
     return 0 if resp.ok else 1
 
 
