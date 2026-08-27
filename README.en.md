@@ -1,0 +1,183 @@
+# The Signing Lock
+
+**An agent that closes tasks and cannot sign as a human.** Not because it shouldn't — because it
+can't. The key that authorises human judgement is out of its reach, and when it tries, the cloud
+says no.
+
+> Spanish version: [`README.md`](README.md). This English version is the one to read for judging.
+
+## The real defect this comes from
+
+This is not a toy problem. On 26 August 2026, in a production system, we measured this:
+
+> The function that closes requests signs **"human" by default**, the console exposes no flag to
+> declare otherwise, and a model may only write the state "open". **The only way for an agent to
+> close a request was to sign as a person.** Result: 58 rows wrongly signed, four of them in the
+> state "dismissed" — where the machine absolves itself.
+
+That is an agent-identity failure. This fixes it.
+
+## How it works
+
+```mermaid
+flowchart TD
+    T([Cloud Scheduler<br/>every 15 min]) -->|OIDC, own identity| D[/wake/]
+    D --> C[load request<br/><i>function</i>]
+    C --> TE[authority ceiling<br/><i>deterministic function</i>]
+    TE --> G[adjudicate<br/><b>Gemini · the only model</b>]
+    G --> R{route<br/><i>deterministic function</i>}
+    R -->|closed| FM[sign with the<br/>MACHINE key]
+    R -->|needs a human| P((pause<br/>the flow stops))
+    R -->|open| DV[return unsigned]
+    R -->|unforeseen route| GU[guard] --> P
+    P -.waits.-> H[The person signs<br/><b>on THEIR machine</b>]
+    H -->|POST /decide<br/>signature already made| V
+    FM --> V[verify<br/><i>pure function, no network</i>]
+    DV --> V
+    V --> RG[record]
+    RG --> FS[(Firestore<br/>the durable truth)]
+
+    style G fill:#4285f4,color:#fff
+    style P fill:#fbbc04,color:#000
+    style V fill:#34a853,color:#fff
+    style H fill:#ea4335,color:#fff
+```
+
+**One model. Six functions. One pause.** Everything deterministic is a function: cheaper, faster,
+and it does not depend on the model reasoning well that day.
+
+### The two keys
+
+| | Machine key | Human key |
+|---|---|---|
+| Where the private key lives | Cloud KMS, never leaves | Cloud KMS, and **the service cannot reach it** |
+| Who may request a signature | only the agent's service account | only the person, from their own machine |
+| Which states it may authorise | `closed`, `open` | `closed`, `open`, `dismissed`, `closed_with_judgement`, `waived` |
+
+Scope comes from [`claves/directorio.json`](claves/directorio.json), **not from code**. The
+verifier asks a single question: *is this state within the scope of the key that signed?*
+
+## The three things a judge should check
+
+### 1. The machine cannot sign as a human — and the cloud says so
+
+Live, the agent tries to sign with the human key:
+
+```
+HTTP 403  PERMISSION_DENIED
+Permission 'cloudkms.cryptoKeyVersions.useToSign' denied on resource '…/clave-humano'
+```
+
+And the deployed service, asked to sign as a human, answers:
+
+> **"this service cannot sign as a human, and must not"**
+
+The human signature is produced **on the deciding person's machine** and the service only
+**verifies** it. It cannot produce one.
+
+### 2. Anyone can re-verify, with no credentials at all
+
+```bash
+python3 src/verificar_sobre.py libro/firmas_grafo.jsonl
+```
+
+The verifier imports only the standard library and a crypto package. **No network, no Google
+account, no credentials.** Signing uses RFC 8785 canonical JSON, so a verifier written in another
+language produces the same bytes.
+
+### 3. We measured Google's own injection filter against our attack — it misses
+
+| Prompt | Caught by Model Armor? |
+|---|---|
+| classic injection, in English | **yes**, high confidence |
+| obvious jailbreak, in English | **yes**, high confidence |
+| **our attack, in Spanish** | **no** |
+| legitimate text | no, as it should |
+
+**The filter works, and our attack still walks through.** That is precisely why the guarantee does
+not live in a filter. It lives in a function that does not reason — so there is nothing to
+persuade — and in a key the machine cannot reach.
+
+## Run it from scratch
+
+```bash
+pip install -r servicio/requirements.txt
+
+gcloud services enable cloudkms.googleapis.com run.googleapis.com \
+  firestore.googleapis.com cloudscheduler.googleapis.com aiplatform.googleapis.com
+gcloud kms keyrings create firmas --location=us-central1
+gcloud kms keys create clave-agente --location=us-central1 --keyring=firmas \
+  --purpose=asymmetric-signing --default-algorithm=ec-sign-p256-sha256
+gcloud kms keys create clave-humano --location=us-central1 --keyring=firmas \
+  --purpose=asymmetric-signing --default-algorithm=ec-sign-p256-sha256
+gcloud firestore databases create --location=us-central1 --type=firestore-native
+
+# The separation that holds everything up: the agent may sign ONLY with its own key
+gcloud kms keys add-iam-policy-binding clave-agente --location=us-central1 --keyring=firmas \
+  --member="serviceAccount:sa-agente-curador@$PROJECT.iam.gserviceaccount.com" \
+  --role="roles/cloudkms.signer"
+# (nothing is granted on clave-humano — that is the guarantee)
+
+gcloud run deploy candado-firma --source . --region us-central1 \
+  --service-account "sa-agente-curador@$PROJECT.iam.gserviceaccount.com" \
+  --no-allow-unauthenticated
+gcloud scheduler jobs create http despertar-candado --location=us-central1 \
+  --schedule="*/15 * * * *" --uri="$URL/despertar" --http-method=POST \
+  --oidc-service-account-email="sa-temporizador@$PROJECT.iam.gserviceaccount.com" \
+  --oidc-token-audience="$URL"
+```
+
+Locally, without deploying anything:
+
+```bash
+python3 agente/grafo.py                                   # the whole graph, three sample requests
+python3 src/verificar_sobre.py libro/firmas_grafo.jsonl   # verify with no credentials
+python3 src/decidir_como_persona.py PET-002 descartada    # the person decides and signs
+```
+
+**English and Spanish both work.** The agent adjudicates in either language, and the authority
+ceiling recognises judgement markers in both — an English-only gap we found and closed, with the
+measurement in the commit history.
+
+## The tests that close it
+
+```bash
+python3 agente/killtest_inyeccion.py     # poisoned text vs the authority ceiling (8 cases, 2 languages)
+python3 agente/killtest_alcance.py       # per-key scope, with real signatures
+python3 agente/killtest_canonico.py      # signer and verifier produce identical bytes
+python3 agente/killtest_blindaje.py      # does the vendor's filter catch OUR attack?
+python3 agente/killtest_durabilidad.py 1 # the pause survives process death (4 steps)
+```
+
+## The promise, stated precisely
+
+Over-promising is worth nothing, so it is kept separate:
+
+| **Guaranteed**, no matter what | Only **mitigated** |
+|---|---|
+| The machine **cannot** produce a signature that validates as human. Cryptography, not trust. | That the machine won't close a case a human would have wanted to see. |
+| No key can authorise a state outside its scope. | Rests on the text ceiling and the vendor filter — both heuristics. |
+| Every closure is **attributable and non-repudiable**, checkable by anyone with the public key. | |
+| The verifier needs **no credentials, no network, no Google account**. | |
+
+**Whoever controls `claves/directorio.json` controls who counts as human.** That is why it lives
+in the repository and not in a database: every change is in the history, with its author and date.
+
+## Not built, said on purpose
+
+Declaring a piece absent is worth more than faking it:
+
+- **Agent gateway** — not built.
+- **Long-term memory** — not built, and not what this is about.
+- **Passkeys** for the human key — better than a managed key, because not even the administrator
+  could impersonate. Days of work; out of scope this week.
+
+## How it was built
+
+Every decision was attacked by an external model **before** being written, and several found real
+faults that are fixed in the history: a route with no edge that killed the flow silently, a resume
+flag that did not reach where we thought, a rigid schema that turned a bad model answer into a
+crash, two canonical serialisers that disagreed with each other, an authorisation header read
+case-sensitively that left the door wide open, and an authority ceiling that only spoke Spanish.
+
+It is all in the commit messages, with dates and measurements.
