@@ -22,7 +22,7 @@ flowchart TD
     T([Cloud Scheduler<br/>cada 15 min]) -->|OIDC, identidad propia| D[/despertar/]
     D --> C[cargar_petición<br/><i>función</i>]
     C --> TE[techo_de_autoridad<br/><i>función determinista</i>]
-    TE --> G[dictaminar<br/><b>Gemini · el único modelo</b>]
+    TE --> G[dictaminar<br/><b>Gemini · el único que decide</b>]
     G --> R{enrutar<br/><i>función determinista</i>}
     R -->|cerrada| FM[firmar con la clave<br/>de la MÁQUINA]
     R -->|exige_humano| P((pausa<br/>el flujo se detiene))
@@ -41,7 +41,11 @@ flowchart TD
     style H fill:#ea4335,color:#fff
 ```
 
-**Un modelo. Seis funciones. Una pausa.** Todo lo determinista es una función: más barato, más
+**Dos modelos. Ninguno puede darse autoridad. Seis funciones deciden.** Gemini dictamina; un
+segundo modelo de Google (embeddings) es un cerco semántico que solo puede pedir MÁS prudencia
+—puede subir el listón a «que decida una persona», nunca bajarlo—. Si falla, alucina o lo
+envenenan, no abre ninguna puerta: en el peor caso molesta a alguien de más. Todo lo determinista
+es una función: más barato, más
 rápido, y no depende de que el modelo razone bien ese día.
 
 ### Las dos claves

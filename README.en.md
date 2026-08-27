@@ -24,7 +24,7 @@ flowchart TD
     T([Cloud Scheduler<br/>every 15 min]) -->|OIDC, own identity| D[/wake/]
     D --> C[load request<br/><i>function</i>]
     C --> TE[authority ceiling<br/><i>deterministic function</i>]
-    TE --> G[adjudicate<br/><b>Gemini · the only model</b>]
+    TE --> G[adjudicate<br/><b>Gemini · the only model that decides</b>]
     G --> R{route<br/><i>deterministic function</i>}
     R -->|closed| FM[sign with the<br/>MACHINE key]
     R -->|needs a human| P((pause<br/>the flow stops))
@@ -43,7 +43,11 @@ flowchart TD
     style H fill:#ea4335,color:#fff
 ```
 
-**One model. Six functions. One pause.** Everything deterministic is a function: cheaper, faster,
+**Two models. Neither can grant itself authority. Six functions decide.** Gemini adjudicates;
+a second Google model (embeddings) is a semantic fence that may only ask for *more* caution —
+it can raise the bar to "a human must decide", never lower it. So if it fails, hallucinates or
+is poisoned, no door opens: at worst a person is bothered unnecessarily. Everything deterministic
+is a function: cheaper, faster,
 and it does not depend on the model reasoning well that day.
 
 ### The two keys

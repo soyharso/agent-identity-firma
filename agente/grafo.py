@@ -31,6 +31,7 @@ from google.adk.workflow import DEFAULT_ROUTE, START, FunctionNode, Workflow  # 
 from google.genai import types                                         # noqa: E402
 
 from src import estado                                                  # noqa: E402
+from src.cerco_semantico import techo_semantico                        # noqa: E402
 from src.verificar_sobre import verificar as verificar_sobre           # noqa: E402
 from src.firma_kms import CLAVE_AGENTE, CLAVE_HUMANO, firmar, resumen  # noqa: E402
 
@@ -136,11 +137,28 @@ def enrutar(ctx, node_input):
     efectivo = min(dictamen if dictamen != "ilegible" else "exige_humano", techo,
                    key=lambda v: _AUTORIDAD[v])
 
+    # EL CERCO SEMÁNTICO — el segundo modelo, y solo entra aquí, donde ya está decidido que la
+    # MÁQUINA VA A FIRMAR. Ni antes ni en ningún otro sitio, por dos razones que se midieron:
+    #   · sobre una petición que se devuelve abierta no se firma nada, así que levantar la mano
+    #     ahí es molestar a una persona por un documento que nadie iba a autorizar;
+    #   · aplicarlo a todo daba dos falsos positivos y un margen entre clases de +0,008 —o sea,
+    #     ninguno—. Con esta condición el margen sube a +0,151. El arreglo fue el alcance, no
+    #     el umbral (`agente/killtest_cerco_semantico.py`).
+    # El cerco solo puede DEVOLVER `exige_humano` o nada: no está en su poder abrir ninguna
+    # puerta, así que su fallo o su alucinación no conceden autoridad, solo la quitan.
+    cerco = None
+    if efectivo == "cerrada":
+        cerco, detalle_cerco = techo_semantico(ctx.state.get("texto", ""))
+        ctx.state["cerco_semantico"] = detalle_cerco
+        if cerco:
+            efectivo = min(efectivo, cerco, key=lambda v: _AUTORIDAD[v])
+
     ctx.state["dictamen"] = dictamen
     ctx.state["techo"] = techo
     ctx.state["decision_efectiva"] = efectivo
     ctx.route = {"cerrada": "modelo", "abierta": "abierta"}.get(efectivo, "exige_humano")
-    return f"{efectivo} (dictamen={dictamen}, techo={techo})"
+    return (f"{efectivo} (dictamen={dictamen}, techo={techo}"
+            f"{', cerco=' + cerco if cerco else ''})")
 
 
 def _sobre(ctx, curado_por, estado_peticion):
