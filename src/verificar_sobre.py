@@ -34,10 +34,7 @@ CLAVES = RAIZ / "claves"
 CAMPOS = ("peticion_id", "estado_destino", "hash_contenido", "marca_temporal", "algoritmo")
 
 
-def canonico(sobre: dict) -> bytes:
-    """La forma exacta que se firma. El verificador la recalcula igual o no valida."""
-    return json.dumps(sobre, sort_keys=True, separators=(",", ":"),
-                      ensure_ascii=False).encode("utf-8")
+from src.canonico import canonico  # noqa: E402
 
 
 def cargar_directorio(dir_claves=CLAVES) -> dict:

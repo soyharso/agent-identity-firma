@@ -21,13 +21,8 @@ _BASE = ("https://cloudkms.googleapis.com/v1/projects/{p}/locations/{r}"
          "/keyRings/{a}/cryptoKeys/{k}/cryptoKeyVersions/1")
 
 
-def canonico(sobre: dict) -> bytes:
-    """La forma exacta que se firma. El verificador la recalcula igual o no valida."""
-    return json.dumps(sobre, sort_keys=True, separators=(",", ":")).encode()
-
-
-def resumen(texto: str) -> str:
-    return "sha256:" + hashlib.sha256(texto.encode()).hexdigest()
+# La serialización vive en UN solo sitio, y es la de la norma. Tener dos era el fallo.
+from src.canonico import canonico, resumen_texto as resumen  # noqa: E402,F401
 
 
 def _sesion():
