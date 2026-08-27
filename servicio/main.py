@@ -112,6 +112,37 @@ def decidir():
                     "por": quien, "firma_comprobada": decision != "no"})
 
 
+@app.post("/intentar-suplantar")
+def intentar_suplantar():
+    """La demostración: el servicio INTENTA firmar como persona, delante de quien mire.
+
+    No es una simulación ni un mensaje preparado: se llama de verdad al servicio de claves con la
+    clave de la persona, y se devuelve lo que la nube conteste. Si algún día contestara 200,
+    querría decir que la garantía se rompió, y esta ruta lo enseñaría igual.
+    """
+    quien = quien_llama()
+    if IDENTIDAD_HUMANA and quien not in (IDENTIDAD_HUMANA, IDENTIDAD_TEMPORIZADOR):
+        return _negar(IDENTIDAD_HUMANA, quien)
+
+    from src.firma_kms import CLAVE_AGENTE, CLAVE_HUMANO, firmar
+    sobre = {"peticion_id": "DEMO", "estado_destino": "descartada",
+             "tipo_firmante": "HUMANO", "hash_contenido": "sha256:demo",
+             "marca_temporal": 0, "algoritmo": "EC_SIGN_P256_SHA256"}
+    con_la_suya = firmar(CLAVE_AGENTE, sobre)
+    con_la_humana = firmar(CLAVE_HUMANO, sobre)
+    return jsonify({
+        "quien_corre_este_servicio": "sa-agente-curador (la identidad del AGENTE)",
+        "1_con_su_propia_clave": {"http": con_la_suya.get("http"),
+                                  "firma": (con_la_suya.get("firma") or "")[:44] or None},
+        "2_con_la_clave_de_la_persona": {"http": con_la_humana.get("http"),
+                                         "error": con_la_humana.get("error"),
+                                         "mensaje": con_la_humana.get("mensaje")},
+        "3_y_aunque_hubiera_firmado": ("el verificador la rechazaria igual: el estado "
+                                       "'descartada' esta fuera del alcance de la clave de la "
+                                       "maquina"),
+    })
+
+
 @app.get("/estado")
 def ver_estado():
     return jsonify({"esperando_persona": estado.pendientes_de_persona()})
