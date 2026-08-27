@@ -4,11 +4,21 @@
 can't. The key that authorises human judgement is out of its reach, and when it tries, the cloud
 says no.
 
-**No model here can grant itself authority.** Two Google models take part — one adjudicates, one
-is a semantic fence — and neither can widen what the machine is allowed to sign. They can only
-ask for *more* caution. Authority comes from a deterministic function and from which key IAM
-lets you touch, so a model that fails, hallucinates or is poisoned opens no door: at worst it
-bothers a person unnecessarily.
+**Four Google models take part. Exactly one of them decides.** Counting models is not counting
+who decides, and here that distinction is the architecture:
+
+| Model | What it does | Can it widen the machine's authority? |
+|---|---|---|
+| Gemini 3.6 Flash | **adjudicates** — the one judgement call in the flow | no: a function takes the *minimum* of its verdict and the ceiling |
+| `gemini-embedding-001` | semantic fence: catches judgement written to dodge the keyword list | **no — it can only ask for *more* caution** |
+| Speech-to-Text | transducer: turns a voice note into words | no. It is not on the decision path; it is before it |
+| Text-to-Speech | transducer: turns the answer into speech | no |
+
+**No model here can grant itself authority.** Authority comes from a deterministic function and
+from which key IAM will let you touch. So a model that fails, hallucinates or is poisoned opens
+no door: at worst it bothers a person unnecessarily. A transcript is *data*, exactly like typed
+text — if a voice note contains instructions aimed at the agent, they stay data, and they stay a
+signal that a human is needed.
 
 **Two agents and a person** — not three agents. The distinction is the whole point: if the person
 were just another agent, the human/machine boundary would blur exactly where this project claims
