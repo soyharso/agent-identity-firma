@@ -162,7 +162,7 @@ We ran that on ourselves. Every decision here was attacked by a model of a diffe
 before it was written, and the attacks that landed are in the commit history with their dates and
 their numbers — including the ones that made us undo work we had just finished.
 
-The repository, the ten kill-tests and the adversarial bank are public. Run them.
+The repository, the nine kill-tests and the adversarial bank are public. Run them.
 
 ---
 
