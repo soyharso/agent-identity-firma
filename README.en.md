@@ -8,8 +8,16 @@ says no.
 is a semantic fence — and neither can widen what the machine is allowed to sign. They can only
 ask for *more* caution. Authority comes from a deterministic function and from which key IAM
 lets you touch, so a model that fails, hallucinates or is poisoned opens no door: at worst it
-bothers a person unnecessarily. Three identities, three separate keys, three different scopes —
-and the cloud refuses when one reaches for another's.
+bothers a person unnecessarily.
+
+**Two agents and a person** — not three agents. The distinction is the whole point: if the person
+were just another agent, the human/machine boundary would blur exactly where this project claims
+to defend it. Three separate keys, three different scopes, three different IAM principals, and
+the cloud refuses twice over: an agent cannot sign as the person, **and one agent cannot sign as
+another agent**.
+
+And it holds when the request arrives **spoken**, not typed: a voice note asking for a judgement
+ends up where the same words typed would — with a person. The modality changes; the key does not.
 
 > Spanish version: [`README.md`](README.md). This English version is the one to read for judging.
 
