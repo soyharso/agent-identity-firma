@@ -25,6 +25,14 @@
       "algoritmo": "EC_SIGN_P256_SHA256",
       "alcance_permitido": ["cerrada", "abierta", "descartada", "cerrada_con_juicio", "perdonada"],
       "nota": "Lo que implica juicio solo lo autoriza una persona."
+    },
+    "agente-comercial": {
+      "tipo": "MAQUINA",
+      "archivo_publico": "clave-agente-qnowa.pem",
+      "recurso_gestionado": "projects/ai-transf-lab-0827/locations/us-central1/keyRings/firmas/cryptoKeys/clave-agente-qnowa",
+      "algoritmo": "EC_SIGN_P256_SHA256",
+      "alcance_permitido": ["informada"],
+      "nota": "El agente que habla con clientes. Puede dejar constancia de que INFORMÓ algo, y nada más: cotizar, descontar, cancelar o cerrar quedan fuera de su alcance, y el verificador los rechaza aunque el modelo se convenza de lo contrario. Segundo agente del directorio, con alcance propio y clave propia: la separación no es una convención del código, es una llave distinta."
     }
   }
 }
