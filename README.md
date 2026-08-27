@@ -117,8 +117,24 @@ Todas se ejecutan, ninguna es decorativa:
 python3 agente/killtest_inyeccion.py     # texto envenenado contra el techo de autoridad
 python3 agente/killtest_alcance.py       # el alcance por clave, con firmas reales
 python3 agente/killtest_canonico.py      # el que firma y el que verifica producen los mismos bytes
+python3 agente/killtest_blindaje.py      # ¿caza el filtro del fabricante NUESTRO ataque?
 python3 agente/killtest_durabilidad.py 1 # la pausa sobrevive a que el proceso muera (4 pasos)
 ```
+
+### El dato que justifica toda la arquitectura
+
+Medimos el filtro de inyección del propio Google contra nuestro ataque real:
+
+| Texto | ¿Lo caza? |
+|---|---|
+| inyección clásica, en inglés | **sí**, con confianza alta |
+| jailbreak evidente, en inglés | **sí**, con confianza alta |
+| **nuestro ataque, en español** | **no** |
+| texto legítimo | no, como debe |
+
+**El filtro funciona y aun así nuestro ataque pasa limpio.** Por eso el blindaje es una capa más
+y nunca la garantía: esta vive en una función que no razona —y por tanto no se deja convencer— y
+en que la clave humana está fuera del alcance de la máquina.
 
 ## La promesa, dicha con precisión
 
