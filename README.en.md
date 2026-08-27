@@ -146,7 +146,7 @@ python3 agente/killtest_inyeccion.py     # poisoned text vs the authority ceilin
 python3 agente/killtest_alcance.py       # per-key scope, with real signatures
 python3 agente/killtest_canonico.py      # signer and verifier produce identical bytes
 python3 agente/killtest_blindaje.py      # does the vendor's filter catch OUR attack?
-python3 agente/killtest_durabilidad.py 1 # the pause survives process death (4 steps)
+python3 agente/killtest_durabilidad.py   # the pause survives process death (5 steps, 5 processes)
 ```
 
 ## The promise, stated precisely

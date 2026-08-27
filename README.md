@@ -118,7 +118,7 @@ python3 agente/killtest_inyeccion.py     # texto envenenado contra el techo de a
 python3 agente/killtest_alcance.py       # el alcance por clave, con firmas reales
 python3 agente/killtest_canonico.py      # el que firma y el que verifica producen los mismos bytes
 python3 agente/killtest_blindaje.py      # ¿caza el filtro del fabricante NUESTRO ataque?
-python3 agente/killtest_durabilidad.py 1 # la pausa sobrevive a que el proceso muera (4 pasos)
+python3 agente/killtest_durabilidad.py   # la pausa sobrevive a que el proceso muera (5 pasos, 5 procesos)
 ```
 
 ### El dato que justifica toda la arquitectura

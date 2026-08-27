@@ -34,6 +34,14 @@ CLAVES = RAIZ / "claves"
 CAMPOS = ("peticion_id", "estado_destino", "hash_contenido", "marca_temporal", "algoritmo")
 
 
+# La raíz del repositorio entra en la ruta de módulos ANTES de importar `src.*`. Sin esto, el
+# primer comando que el README le pide teclear a un jurado —`python3 src/verificar_sobre.py …`
+# desde la raíz— moría con ModuleNotFoundError: Python pone en la ruta el directorio del script
+# (`src/`), no la raíz, así que el paquete `src` no era visible desde dentro de sí mismo. El
+# verificador sigue siendo puro: esto no añade ninguna dependencia, solo lo hace ejecutable
+# tal como está escrito en el README.
+sys.path.insert(0, str(RAIZ))
+
 from src.canonico import canonico  # noqa: E402
 
 
@@ -111,15 +119,28 @@ def main():
     directorio = cargar_directorio(args.claves)
 
     malos = 0
+    sin_firmar = 0
     for n, linea in enumerate(pathlib.Path(args.libro).read_text().splitlines(), 1):
         if not linea.strip():
             continue
         fila = json.loads(linea)
+        # El libro registra TODAS las pasadas, también aquellas en las que no se firmó nada:
+        # la que se devolvió abierta por falta de evidencia, y la que se detuvo esperando a una
+        # persona. Esas filas no traen sobre ni firma, y eso NO es un defecto: es el sistema
+        # negándose a firmar, que es justo lo que promete. Antes reventaban el verificador con
+        # un TypeError —el primer comando que teclea un jurado—, así que ahora se declaran.
+        if not fila.get("sobre") or not fila.get("firma"):
+            sin_firmar += 1
+            print(f"{n:>3} {fila.get('peticion_id', '?'):<10} {'SIN_FIRMA':<22} "
+                  f"{{\"nota\": \"nada que verificar: no se firmó\"}}")
+            continue
         v, det = verificar(fila["sobre"], fila["firma"], texto, directorio)
         if v != "OK":
             malos += 1
         print(f"{n:>3} {fila['sobre'].get('peticion_id','?'):<10} {v:<22} "
               f"{json.dumps(det, ensure_ascii=False)}")
+    print(f"\nfirmas inválidas: {malos} · filas sin firma (no se firmó, y está bien): "
+          f"{sin_firmar}")
     sys.exit(1 if malos else 0)
 
 

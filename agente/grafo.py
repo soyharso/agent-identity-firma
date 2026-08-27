@@ -180,15 +180,41 @@ def refrescar_y_firmar(ctx):
     return f"firmado por la máquina: http {r['http']}"
 
 
+def _firmada_por_la_persona(peticion_id) -> bool:
+    """¿Hay en el almacén una firma hecha POR LA PERSONA para esta petición?
+
+    Es la única pregunta que distingue «decidido» de «cerrado». La firma de la máquina no
+    cuenta aquí: se comprueba `curado_por == "humano"`, que es lo mismo que exige el nodo de
+    firma. Si estas dos comprobaciones se separaran, volvería el defecto que dejaba peticiones
+    huérfanas.
+    """
+    guardado = estado.leer(peticion_id)
+    return bool(guardado.get("firma")) and \
+        (guardado.get("sobre") or {}).get("curado_por") == "humano"
+
+
 def pausa_humana(ctx):
-    """El flujo se DETIENE aquí, salvo que la persona YA haya decidido antes.
+    """El flujo se DETIENE aquí, salvo que la persona YA haya decidido Y FIRMADO antes.
 
     La decisión guardada manda sobre el mecanismo nativo del marco. Así la pausa sobrevive a un
     reinicio: si el contenedor murió y alguien decidió mientras tanto, al volver a empezar este
     nodo ni siquiera se detiene.
     """
-    if ctx.state.get("decision_humana"):
-        return ctx.state["decision_humana"]          # ya decidido, no se pausa
+    decidido = ctx.state.get("decision_humana")
+    if decidido:
+        # DECIDIDO NO ES LO MISMO QUE FIRMADO, y confundirlos abandonaba la petición.
+        # Lo encontró un disidente externo y se reprodujo: si el proceso muere ENTRE que la
+        # persona decide y que firma —dos actos separados a propósito, porque la firma nace en
+        # la máquina de quien decide—, al reiniciar este nodo daba la pausa por resuelta, el
+        # nodo de firma no encontraba firma, y el flujo terminaba en SIN_FIRMA con
+        # `espera_humana=False`. Nadie volvía a pedir esa firma jamás: la petición quedaba
+        # huérfana, y encima con pinta de resuelta.
+        #
+        # Un «no autorizo» sí es terminal sin firma: la persona decidió que no se cierra, y no
+        # hay nada que firmar. Los demás estados exigen la firma de la persona para avanzar.
+        if decidido == "no" or _firmada_por_la_persona(ctx.state["peticion_id"]):
+            return decidido                          # ya decidido Y cerrado, no se pausa
+        # Decidido pero SIN firma: se vuelve a pausar, porque el trabajo NO está hecho.
 
     respuesta = (ctx.resume_inputs or {}).get("firma_humana")
     if respuesta is None:
