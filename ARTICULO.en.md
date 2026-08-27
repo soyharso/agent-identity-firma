@@ -1,7 +1,7 @@
-# We let an agent close our tickets. It had to sign as a human to do it.
+# The agent cannot sign as a human. Not "must not" — cannot.
 
-*How a production defect we found on 26 August turned into a signing lock — and what broke along
-the way.*
+*Our system left an agent no way to close a ticket except by signing as a person. This is the
+lock we built so that stops being possible, and the three things that broke while we built it.*
 
 ---
 
@@ -10,12 +10,21 @@ On 26 August 2026 we looked at a table in our own production system and counted 
 a complaint is thrown out. In four cases, a machine had absolved itself and signed a person's
 name to it.
 
-Nobody had done anything wrong. The function that closes a request signed `"human"` by default,
-the console exposed no flag to say otherwise, and a model was only allowed to write the state
-*open*. So the only way an agent could ever close anything was to sign as a person.
+**Nobody chose this**, which is the part worth reading. We shipped a system with a gap in it, and
+that is on us. But no person and no model decided to misattribute anything — the misattribution
+was the only path the system left open. The function that closes a request signed `"human"` by
+default, the
+console exposed no flag to say otherwise, and a model was only allowed to write the state *open*.
+The system offered no way to say "a machine closed this". So the only path an agent had to close
+anything at all ran through a field that said *human*.
 
-That is not a bug in a form. That is an agent-identity failure, and it is going to happen to
-everyone who puts agents next to people in the same workflow.
+Nothing was hidden from anyone, no customer decision was reversed, and the records are intact —
+which is how we counted them. What was wrong was the **shape of the system**: it made the correct
+action impossible to express.
+
+That is not a bug in a form. It is an agent-identity failure, and it is going to happen to
+everyone who puts agents next to people in the same workflow — most of them without a column to
+count it in.
 
 ## The idea, in one sentence
 
@@ -33,15 +42,34 @@ Permission 'cloudkms.cryptoKeyVersions.useToSign' denied on resource '.../clave-
 
 We did not write that sentence. That is the whole point.
 
+**The mechanism is four lines of IAM, not clever code**, and that is deliberate — anything you can
+argue with is not a control:
+
+```bash
+# the agent may sign with its own key, and only that one
+gcloud kms keys add-iam-policy-binding clave-agente \
+  --member="serviceAccount:sa-agente-curador@$PROJECT..." --role="roles/cloudkms.signer"
+
+# on the human key, nothing is granted to anyone. That absence IS the guarantee.
+```
+
+Which state each key may authorise lives in one file, `claves/directorio.json`, not in code. The
+verifier asks a single question — *is this state within the scope of the key that signed?* — so
+there are no per-state rules to age badly. Whoever controls that file controls who counts as
+human, which is why it sits in the repository with its history, not in a database someone can
+edit at 3am.
+
 ## Four models, and exactly one of them decides
 
 This is the part we would have got wrong if an outside reviewer had not pushed on it. Counting
 models is not counting who decides:
 
 - **Gemini 3.6 Flash** adjudicates. It is the one judgement call in the flow.
-- **An embedding model** is a semantic fence. It can only ask for *more* caution — never less.
-- **Speech-to-Text and Text-to-Speech** are transducers. They carry words in and out. They are
-  not on the decision path; they are before and after it.
+- **An embedding model** compares what the text *means* against examples of human judgement —
+  dismissing, absolving, forgiving a debt. We call it the *semantic fence*. It has exactly one
+  power: it can say "get a human". It cannot say "go ahead".
+- **Speech-to-Text and Text-to-Speech** only convert sound to words and back. They sit before and
+  after the decision, never inside it.
 
 Everything else is a deterministic function. The router takes the **minimum** of what the model
 proposes and what a dumb keyword ceiling allows, so the model can ask for more prudence and can
@@ -87,9 +115,11 @@ That cost half a cent of inference. It is now fixed, with a test that covers exa
 
 ### 3. The fence we built, and an attacker broke nine times out of nine
 
-Our keyword ceiling is deliberately dumb: it does not reason, so there is nothing to persuade.
-The flip side is that judgement written *around* those words walks straight through. We measured
-it:
+Before any model runs, a plain list of words decides the *most* authority the machine can have
+for this text — see "dismiss", "absolve", "waive", and the ceiling drops to *a human must do
+this*. We call it the **keyword ceiling**, and it is deliberately dumb: it does not reason, so
+there is nothing to persuade. The flip side is that judgement written *around* those words walks
+straight through. We measured it:
 
 > *"The account holder is released from all liability and the outstanding balance will not be
 > charged."*
@@ -110,7 +140,7 @@ Three fixes, and **none of them was moving the threshold**:
 3. Anchors in the register and the languages of the attack.
 
 It now catches nine out of nine, and those nine texts ship in the repository as a permanent
-adversarial bank that only ever grows.
+adversarial bank — a file of attack texts that only ever grows, because removing a case that now passes is how a test suite quietly stops measuring.
 
 **And here is what we are not going to pretend.** Two legitimate closures still trip it, and they
 are irreducible: by meaning alone you cannot separate *"balance zero because a duplicate charge
@@ -142,27 +172,28 @@ protects precisely the customers who need it least.
 So a voice note saying *"dismiss the customer's complaint"* is transcribed, and lands exactly
 where the same words typed would land: with a person. The modality changes; the key does not.
 
-## What we did not build, and say so
+## Not built
 
-- **An agent gateway.** Not built.
-- **Long-term memory.** Not built, and not what this is about.
-- **The WhatsApp channel wired to this lock in production.** The port exists and is tested; the
-  channel is not running it. Saying otherwise would be a lie a judge could check.
+- **An agent gateway.**
+- **Long-term memory.**
+- **The WhatsApp channel actually running this lock.** The port exists and is tested against a
+  deliberately misbehaving agent; the channel itself is not wired to it. We mention it because
+  the port is easy to mistake for the integration.
 
-Declaring what is absent is what makes the present part believable.
+## What this actually cost
 
-## The thing worth stealing
-
-Not the code. This:
+Not the code. The rule underneath it:
 
 > **A boundary that depends on someone remembering is not a boundary.** Either the system enforces
 > it, or it does not exist.
 
-We ran that on ourselves. Every decision here was attacked by a model of a different lineage
-before it was written, and the attacks that landed are in the commit history with their dates and
-their numbers — including the ones that made us undo work we had just finished.
+Applying that to ourselves is what produced the three sections above, and it was not free — each
+one meant undoing work that was already finished and already believed. The attacks that landed
+are in the commit history with their dates and their numbers.
 
-The repository, the nine kill-tests and the adversarial bank are public. Run them.
+The repository ships with the submission: nine kill-tests, the adversarial bank, and a verifier
+that runs with no network, no credentials and no Google account. That last one matters more than
+our word for any of this — **you can re-derive every signature we claim, without us.**
 
 ---
 
