@@ -1,0 +1,30 @@
+{
+  "_nota": [
+    "El catálogo de quién puede autorizar qué. Es la ÚNICA compuerta de política del",
+    "verificador: no hay reglas por estado escritas a mano, hay alcance por clave.",
+    "",
+    "QUIEN CONTROLA ESTE ARCHIVO CONTROLA QUIÉN ES HUMANO. Por eso vive en el repositorio y",
+    "no en una base de datos: cualquier cambio queda en el historial, con su autor y su fecha.",
+    "Un directorio que se pudiera editar en caliente convertiría toda la criptografía en",
+    "decoración, y eso lo señaló la fase cero."
+  ],
+  "version": 1,
+  "claves": {
+    "agente-curador": {
+      "tipo": "MAQUINA",
+      "archivo_publico": "clave-agente.pem",
+      "recurso_gestionado": "projects/ai-transf-lab-0827/locations/us-central1/keyRings/firmas/cryptoKeys/clave-agente",
+      "algoritmo": "EC_SIGN_P256_SHA256",
+      "alcance_permitido": ["cerrada", "abierta"],
+      "nota": "La máquina propone y cierra lo comprobable. No juzga."
+    },
+    "persona-operador": {
+      "tipo": "HUMANO",
+      "archivo_publico": "clave-humano.pem",
+      "recurso_gestionado": "projects/ai-transf-lab-0827/locations/us-central1/keyRings/firmas/cryptoKeys/clave-humano",
+      "algoritmo": "EC_SIGN_P256_SHA256",
+      "alcance_permitido": ["cerrada", "abierta", "descartada", "cerrada_con_juicio", "perdonada"],
+      "nota": "Lo que implica juicio solo lo autoriza una persona."
+    }
+  }
+}
