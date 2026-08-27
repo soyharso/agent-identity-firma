@@ -59,11 +59,43 @@ def cargar_peticion(ctx):
     return p["texto"]
 
 
-def enrutar(ctx, node_input):
-    """DETERMINISTA. Lee el dictamen como texto y decide. Nunca decide el modelo.
+# Marcas de que hay un juicio de por medio. La lista es tonta a propósito: no razona, así que
+# no hay nada que engañar. Un texto envenenado no puede convencerla de nada.
+MARCAS_DE_JUICIO = (
+    "descart", "absol", "absuelv", "absuelt", "exculp", "exime", "exim",
+    "perdon", "culpa", "sanci", "multa", "reclam", "queja", "cliente",
+    "denuncia", "despido", "indemniz", "no amerita", "no vale la pena",
+    "caso límite", "caso limite", "ya no importa", "no parece importante",
+)
+# `absuelv` está aquí porque el kill-test lo cazó: «absuelve» NO contiene «absol». Una lista de
+# raíces se rompe por una conjugación, y por eso el kill-test corre en cada cambio. Lo que la
+# lista da es superficie de ataque más pequeña, no una garantía: la garantía está más abajo.
 
-    Si el dictamen llega ilegible, la ruta es `exige_humano`: ante la duda, molesta a una
-    persona. Es más barato que dejar que la máquina se absuelva."""
+
+def techo_de_autoridad(texto: str) -> str:
+    """Cuánta autoridad puede tener la máquina sobre ESTE texto, decidido sin modelo.
+
+    Es el arreglo del agujero que la fase cero encontró en la promesa central: si el techo lo
+    fijara el modelo, un texto envenenado podría subirlo. Aquí lo fija una función, y el modelo
+    solo puede REBAJARLO.
+    """
+    t = (texto or "").lower()
+    return "exige_humano" if any(m in t for m in MARCAS_DE_JUICIO) else "cerrada"
+
+
+# Cuánta autoridad concede cada dictamen. Menor número, menos autoridad para la máquina.
+_AUTORIDAD = {"exige_humano": 0, "abierta": 1, "cerrada": 2}
+
+
+def enrutar(ctx, node_input):
+    """DETERMINISTA. Nunca decide el modelo: el modelo propone y esta función dispone.
+
+    Dos reglas duras:
+      · El techo lo fija el texto, no el dictamen. El modelo puede pedir MÁS prudencia, nunca
+        menos: si el techo dice `exige_humano`, ahí se queda pase lo que pase.
+      · Si el dictamen llega ilegible, la ruta es `exige_humano`. Ante la duda, molesta a una
+        persona: es más barato que dejar que la máquina se absuelva.
+    """
     crudo = str(node_input or "")
     dictamen = "ilegible"
     for linea in crudo.splitlines():
@@ -72,9 +104,17 @@ def enrutar(ctx, node_input):
             if valor in ("cerrada", "abierta", "exige_humano"):
                 dictamen = valor
             break
+
+    techo = techo_de_autoridad(ctx.state.get("texto", ""))
+    # Se queda el MENOS permisivo de los dos. El modelo solo puede bajar.
+    efectivo = min(dictamen if dictamen != "ilegible" else "exige_humano", techo,
+                   key=lambda v: _AUTORIDAD[v])
+
     ctx.state["dictamen"] = dictamen
-    ctx.route = {"cerrada": "modelo", "abierta": "abierta"}.get(dictamen, "exige_humano")
-    return dictamen
+    ctx.state["techo"] = techo
+    ctx.state["decision_efectiva"] = efectivo
+    ctx.route = {"cerrada": "modelo", "abierta": "abierta"}.get(efectivo, "exige_humano")
+    return f"{efectivo} (dictamen={dictamen}, techo={techo})"
 
 
 def _sobre(ctx, curado_por, estado):
