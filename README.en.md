@@ -29,7 +29,31 @@ another agent**.
 And it holds when the request arrives **spoken**, not typed: a voice note asking for a judgement
 ends up where the same words typed would — with a person. The modality changes; the key does not.
 
-> Spanish version: [`README.md`](README.md). This English version is the one to read for judging.
+> **Category:** The Fortified Enterprise Fleet · **Organization:** Softronica S.A.S.  
+> Spanish version: [`README.md`](README.md). This English version is the authoritative submission doc.
+
+---
+
+## ⚡ Quick Judge Path (Run in 60 Seconds)
+
+```bash
+# 1. Zero credentials, zero network offline verification (re-derive all cryptographic signatures)
+python3 src/verificar_sobre.py libro/firmas_grafo.jsonl
+
+# 2. Run the ADK graph across all test cases (machine signs evidence, pauses on human judgement)
+python3 agente/grafo.py
+
+# 3. Inspect generated Fleet Agent Cards (derived deterministically from key directory)
+cat agent_cards/catalog.json
+
+# 4. Run the key security & injection kill-tests (bilingual semantic fence & scope gate)
+python3 agente/killtest_alcance.py
+python3 agente/killtest_inyeccion.py
+```
+
+![Cleveria Architecture](ARCHITECTURE.png)
+
+---
 
 ## The real defect this comes from
 
@@ -193,14 +217,26 @@ Over-promising is worth nothing, so it is kept separate:
 **Whoever controls `claves/directorio.json` controls who counts as human.** That is why it lives
 in the repository and not in a database: every change is in the history, with its author and date.
 
-## Not built, said on purpose
+## Fleet Capabilities Coverage
 
-Declaring a piece absent is worth more than faking it:
+Following official guidance for *The Fortified Enterprise Fleet* (where first-party equivalents are accepted):
 
-- **Agent gateway** — not built.
-- **Long-term memory** — not built, and not what this is about.
-- **Passkeys** for the human key — better than a managed key, because not even the administrator
-  could impersonate. Days of work; out of scope this week.
+| Fleet Subsystem | Cleveria First-Party Equivalent | Live Demonstration |
+|---|---|---|
+| **Agent Registry** | Versioned Agent Cards (`agent_cards/catalog.json`) generated directly from `claves/directorio.json` | Generated deterministically via `generar_agent_cards.py` |
+| **Agent Identity** | Cloud KMS asymmetric keys with individual IAM Service Accounts per agent | Real HTTP 403 when machine attempts to sign as human |
+| **Gateway / Policy** | Deterministic scope gate enforcing state limits per key | Rejected out-of-scope transitions via `killtest_alcance.py` |
+| **Durable State / Memory** | Cloud Firestore native persistence for workflow facts | Resumable execution surviving process crash (`killtest_durabilidad.py`) |
+| **Audit & Trust Anchor** | RFC 8785 canonical JSON signature log + offline zero-credential verifier | `src/verificar_sobre.py` independently verifiable without cloud access |
+| **Injection Defense** | Multilingual semantic fence (`gemini-embedding-001`) + deterministic keyword ceiling | Catches 9/9 adversarial injections (`killtest_cerco_semantico.py`) |
+
+## What is declared absent (by design)
+
+Declaring a component absent is honest engineering:
+
+- **Agent Gateway as a separate proxy product**: Not built; replaced by direct cryptographic scope verification.
+- **Conversational Memory Bank / Vector DB**: Not built; workflow continuity relies on durable domain facts in Firestore, not probabilistic memory.
+- **Passkeys for human authentication**: Planned; currently signed via operator workstation key.
 
 ## How it was built
 

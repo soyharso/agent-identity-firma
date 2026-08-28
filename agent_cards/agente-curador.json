@@ -1,0 +1,32 @@
+{
+  "agent_card_version": "1.0",
+  "generated_from": "claves/directorio.json",
+  "directory_version": 1,
+  "generated_at": "2026-08-28",
+  "name": "agente-curador",
+  "owner": "Softronica SAS",
+  "type": "MAQUINA",
+  "purpose": "La máquina propone y cierra lo comprobable. No juzga.",
+  "scope": {
+    "authorized_states": [
+      "cerrada",
+      "abierta"
+    ],
+    "cannot_authorize": [
+      "descartada",
+      "cerrada_con_juicio",
+      "perdonada",
+      "informada",
+      "cotizada",
+      "descuento_aprobado",
+      "cancelada",
+      "exige_humano"
+    ]
+  },
+  "identity": {
+    "algorithm": "EC_SIGN_P256_SHA256",
+    "kms_resource": "projects/ai-transf-lab-0827/locations/us-central1/keyRings/firmas/cryptoKeys/clave-agente",
+    "public_key_file": "claves/clave-agente.pem"
+  },
+  "status": "active"
+}

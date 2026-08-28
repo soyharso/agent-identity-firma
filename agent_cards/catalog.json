@@ -1,0 +1,22 @@
+{
+  "catalog_version": 1,
+  "generated_at": "2026-08-28",
+  "generated_from": "claves/directorio.json",
+  "agents": [
+    {
+      "name": "agente-curador",
+      "type": "MAQUINA",
+      "card_file": "agent_cards/agente-curador.json"
+    },
+    {
+      "name": "persona-operador",
+      "type": "HUMANO",
+      "card_file": "agent_cards/persona-operador.json"
+    },
+    {
+      "name": "agente-comercial",
+      "type": "MAQUINA",
+      "card_file": "agent_cards/agente-comercial.json"
+    }
+  ]
+}

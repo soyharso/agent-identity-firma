@@ -1,0 +1,32 @@
+{
+  "agent_card_version": "1.0",
+  "generated_from": "claves/directorio.json",
+  "directory_version": 1,
+  "generated_at": "2026-08-28",
+  "name": "persona-operador",
+  "owner": "Softronica SAS",
+  "type": "HUMANO",
+  "purpose": "Lo que implica juicio solo lo autoriza una persona.",
+  "scope": {
+    "authorized_states": [
+      "cerrada",
+      "abierta",
+      "descartada",
+      "cerrada_con_juicio",
+      "perdonada"
+    ],
+    "cannot_authorize": [
+      "informada",
+      "cotizada",
+      "descuento_aprobado",
+      "cancelada",
+      "exige_humano"
+    ]
+  },
+  "identity": {
+    "algorithm": "EC_SIGN_P256_SHA256",
+    "kms_resource": "projects/ai-transf-lab-0827/locations/us-central1/keyRings/firmas/cryptoKeys/clave-humano",
+    "public_key_file": "claves/clave-humano.pem"
+  },
+  "status": "active"
+}
