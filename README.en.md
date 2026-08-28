@@ -221,6 +221,16 @@ Over-promising is worth nothing, so it is kept separate:
 **Whoever controls `claves/directorio.json` controls who counts as human.** That is why it lives
 in the repository and not in a database: every change is in the history, with its author and date.
 
+## Concurrency & Cryptographic Integrity
+
+- **Durable State & Race Conditions**: Idempotency and race-condition immunity are guaranteed via **atomic Firestore transactions** (read-modify-write transactional batches), not in-memory locks. Reads inside transactions are strictly consistent; out-of-transaction reads follow Firestore's document model. Signatures and state transitions commit atomically.
+- **Canonical Determinism (RFC 8785)**: The verifier operates on Canonical JSON (RFC 8785) with an explicit type schema (ISO-8601 timestamps, base64 digests, strings for decimal amounts). The signature log is verifiable offline using Python's standard library and cryptography package, without vendor dependencies.
+- **Service Account Isolation**: Callers are authenticated via OIDC tokens validated by Cloud Run:
+  ```bash
+  # Verify distinct service accounts on Cloud Run services
+  gcloud run services describe candado-firma --region=us-central1 --format='value(spec.template.spec.serviceAccountName)'
+  ```
+
 ## Fleet Capabilities Coverage
 
 Following official guidance for *The Fortified Enterprise Fleet* (where first-party equivalents are accepted):

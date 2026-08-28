@@ -97,11 +97,12 @@ on resource '…/cryptoKeys/clave-humano'
 
 *On screen: the Cloud Run console, the service and its URL — the required proof of Google Cloud.*
 
-> "Agent Registry. Agent identity. Cloud Run. Cloud KMS. Firestore. Model Armor. Six of the seven
-> fleet pieces, and the seventh we declare absent rather than fake.
+> "Agent Registry. Agent identity. Cloud Run. Cloud KMS. Firestore. Six fleet capabilities
+> backed by first-party implementations, and the seventh declared absent rather than faked.
 >
-> The machine does the work it can prove. The person keeps the judgement. And now that boundary is
-> arithmetic, not a promise."
+> Cleveria isn't a brake — it is the license for enterprise fleets to automate 90% of critical
+> workflows, with the mathematical guarantee that the remaining 10% stays locked behind hardware
+> and Cloud KMS."
 
 ---
 
