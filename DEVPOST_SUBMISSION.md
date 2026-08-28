@@ -14,6 +14,14 @@ Cleveria provides a deterministic identity and cryptographic authority harness f
 
 ---
 
+## The "Unlikely Hero": The Hispanic Operations Supervisor
+
+We operate real customer-attention queues and healthcare/BPO workflows in Colombia. When agents started acting autonomously across ticket queues and WhatsApp channels, operations supervisors faced an impossible dilemma: either keep all tickets manual (crushing human throughput) or give agents unrestricted closure authority (risking illegal debts forgiven, dismissed customer claims, and compliance chaos).
+
+Cleveria was built specifically for this operational supervisor: **the machine resolves and signs everything it can prove with verifiable evidence, but when subjective judgement or liability is involved, the workflow pauses deterministically for human cryptographic authorization.** The supervisor retains definitive control without becoming a bottleneck.
+
+---
+
 ## Fleet Capabilities Coverage (The Fortified Enterprise Fleet)
 
 | Fleet Subsystem | Cleveria First-Party Implementation | How It Is Proven Live |

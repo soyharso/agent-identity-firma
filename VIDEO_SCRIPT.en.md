@@ -28,12 +28,13 @@ demonstrate the backend is running on Google Cloud"*. This script is written to 
 
 > "A scheduler wakes it every fifteen minutes with its own identity. No one launches anything."
 
-*Three requests, three outcomes:*
+*Three requests plus spoken audio, demonstrating modality independence:*
 
 | On screen | Say |
 |---|---|
 | index rebuilt, query 40s → 0.3s, commit hash | "Verifiable evidence. **The machine signs it.**" |
 | "dismissing the customer complaint" | "A judgement about a person. **The flow stops and waits.**" |
+| Voice note audio waveform: *"dismiss the claim"* | "Spoken in WhatsApp. Transcribed, parsed, and **landed with a human**. Modality changes; the key does not." |
 | "I think the backup works now" | "No evidence. Returned, unsigned." |
 
 > "One model decides. Six deterministic functions do everything else. And the model can only ask
