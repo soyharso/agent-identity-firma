@@ -2,3 +2,14 @@ __pycache__/
 *.pyc
 libro/firmas.jsonl
 agente/.adk/
+
+# Los worktrees de cada frente viven DENTRO del repositorio, en `.claude/worktrees/<slug>/`,
+# que es la convención de la casa (`~/.claude/reference/worktree-ops.md`). Sin esta línea, al
+# mover un worktree aquí dentro el repositorio lo vería como contenido sin rastrear y el
+# siguiente `git add -A` se lo llevaría dentro de un commit — el árbol de trabajo de una rama
+# metido dentro de otra.
+#
+# Se añade el 2026-08-27 como paso previo a mover `agent-identity-firma-articulo`, que hoy
+# cuelga de `~/Desarrollos/` como si fuera un repositorio hermano y en realidad es un worktree
+# de éste.
+.claude/
