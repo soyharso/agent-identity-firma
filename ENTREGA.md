@@ -74,7 +74,10 @@ viajan en el repositorio. Y se enseña el dato incómodo:
 - **Un defecto real y medido**, con cifras, de dos días antes. No un caso de ejemplo.
 - **Elimina fricción de verdad**: la máquina cierra lo comprobable sola y molesta a la persona
   solo cuando hay un juicio de por medio.
-- **Ejecución autónoma**: despierta cada quince minutos por su cuenta.
+- **Ejecución autónoma, con el freno en la misma frase**: despierta cada quince minutos por su
+  cuenta **y con su propia identidad**, y lo primero que se encuentra al despertar es el techo de
+  lo que puede autorizar. Medido con jurados ciegos: prometer autonomía **antes** de enseñar el
+  límite se lee como venta, y con razón.
 
 ### Disciplina de arquitectura — 30%
 
