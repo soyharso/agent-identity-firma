@@ -188,5 +188,6 @@ our word for any of this — **you can re-derive every signature we claim, witho
 
 ---
 
-*Built with the Google Agent Development Kit, Gemini, Cloud Run, Cloud KMS, Firestore and Cloud
-Scheduler, for the All Things Agentic Hackathon.*
+*This article was created for the purposes of entering the All Things Agentic Hackathon.*
+
+*Built with the Google Agent Development Kit, Gemini 3.6 Flash, `gemini-embedding-001`, Cloud Run, Cloud KMS, Firestore and Cloud Scheduler, by Softronica S.A.S. for Cleveria.*

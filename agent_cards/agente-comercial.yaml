@@ -1,0 +1,30 @@
+# Agent Card — generada desde claves/directorio.json v1
+# Fecha de generación: 2026-08-28
+# NO editar a mano: editar claves/directorio.json y regenerar.
+agent_card_version: "1.0"
+generated_from: "claves/directorio.json"
+directory_version: 1
+generated_at: "2026-08-28"
+
+name: "agente-comercial"
+owner: "Softronica SAS"
+type: "MAQUINA"
+
+purpose: >
+  El agente que habla con clientes. Puede dejar constancia de que INFORMÓ algo, y nada más: cotizar, descontar, cancelar o cerrar quedan fuera de su alcance, y el verificador los rechaza aunque el modelo se convenza de lo contrario. Segundo agente del directorio, con alcance propio y clave propia: la separación no es una convención del código, es una llave distinta.
+
+scope:
+  authorized_states: ["informada"]
+  cannot_authorize: ["abierta", "cerrada", "descartada", "cerrada_con_juicio", "perdonada", "cotizada", "descuento_aprobado", "cancelada", "exige_humano"]
+
+identity:
+  algorithm: "EC_SIGN_P256_SHA256"
+  kms_resource: "projects/ai-transf-lab-0827/locations/us-central1/keyRings/firmas/cryptoKeys/clave-agente-qnowa"
+  public_key_file: "claves/clave-agente-qnowa.pem"
+
+status: "active"
+
+# Lo que este agente NO puede hacer (declarado explícitamente):
+# - Autorizar estados fuera de authorized_states
+# - Firmar con la clave de otro agente o de la persona
+# - Ampliar su propio alcance en tiempo de ejecución
