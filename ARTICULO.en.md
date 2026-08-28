@@ -66,7 +66,7 @@ This is the part we would have got wrong if an outside reviewer had not pushed o
 models is not counting who decides:
 
 - **Gemini 3.6 Flash** adjudicates. It is the one judgement call in the flow.
-- **An embedding model** compares what the text *means* against examples of human judgement —
+- **`gemini-embedding-001` (Vertex AI)** compares what the text *means* against examples of human judgement —
   dismissing, absolving, forgiving a debt. We call it the *semantic fence*. It has exactly one
   power: it can say "get a human". It cannot say "go ahead".
 - **Speech-to-Text and Text-to-Speech** only convert sound to words and back. They sit before and
