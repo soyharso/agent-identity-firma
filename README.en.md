@@ -40,17 +40,21 @@ ends up where the same words typed would — with a person. The modality changes
 # 1. Zero credentials, zero network offline verification (re-derive all cryptographic signatures)
 python3 src/verificar_sobre.py libro/firmas_grafo.jsonl
 
-# 2. Inspect the 2nd Google Model integration (gemini-embedding-001 semantic fence on Vertex AI)
+# 2. Fault Tolerance: verify deterministic rejection on tampered/hallucinated data
+python3 tests/test_verifier_tampered.py
+
+# 3. Inspect the 2nd Google Model integration (gemini-embedding-001 semantic fence on Vertex AI)
 grep -n "gemini-embedding-001" src/cerco_semantico.py
+grep -A2 "Vertex AI Request" logs/cerco_embedding.log
 python3 -c "import src.cerco_semantico as c; print(f'Model: {c.MODELO}, Endpoint: Vertex AI {c.REGION}')"
 
-# 3. Run the ADK graph across all test cases (machine signs evidence, pauses on human judgement)
+# 4. Run the ADK graph across all test cases (machine signs evidence, pauses on human judgement)
 python3 agente/grafo.py
 
-# 4. Inspect generated Fleet Agent Cards (derived deterministically from key directory)
+# 5. Inspect generated Fleet Agent Cards (derived deterministically from key directory)
 cat agent_cards/catalog.json
 
-# 5. Run the key security & injection kill-tests (bilingual semantic fence & scope gate)
+# 6. Run the key security & injection kill-tests (bilingual semantic fence & scope gate)
 python3 agente/killtest_alcance.py
 python3 agente/killtest_inyeccion.py
 ```

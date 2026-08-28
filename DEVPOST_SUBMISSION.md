@@ -16,6 +16,8 @@ Cleveria provides a deterministic identity and cryptographic authority harness f
 
 ## The "Unlikely Hero": The Hispanic Operations Supervisor
 
+*Built for the Hispanic operations supervisor who runs real customer-attention queues in a LatAm BPO — not for a generic 'enterprise admin'.*
+
 We operate real customer-attention queues and healthcare/BPO workflows in Colombia. When agents started acting autonomously across ticket queues and WhatsApp channels, operations supervisors faced an impossible dilemma: either keep all tickets manual (crushing human throughput) or give agents unrestricted closure authority (risking illegal debts forgiven, dismissed customer claims, and compliance chaos).
 
 Cleveria was built specifically for this operational supervisor: **the machine resolves and signs everything it can prove with verifiable evidence, but when subjective judgement or liability is involved, the workflow pauses deterministically for human cryptographic authorization.** The supervisor retains definitive control without becoming a bottleneck.
@@ -26,13 +28,13 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 
 | Fleet Subsystem | Cleveria First-Party Implementation | How It Is Proven Live |
 |---|---|---|
-| **Agent Registry** | Versioned Agent Cards (`agent_cards/catalog.json`) generated directly from `claves/directorio.json` | Deterministic generation via `generar_agent_cards.py`; immutable in Git history |
-| **Agent Identity** | Cloud KMS asymmetric keys (P-256) with distinct Service Accounts per agent (`sa-agente-curador` vs `sa-agente-qnowa`) | Real `HTTP 403 PERMISSION_DENIED` when an agent attempts to use the human signing key |
-| **Gateway / Scope Gate** | Deterministic scope gate enforcing state limits per key before verification | Real-time rejection of out-of-scope state transitions (`agente/killtest_alcance.py`) |
-| **Durable State / Continuity** | Cloud Firestore native persistence for workflow facts | Resumable execution surviving abrupt Cloud Run process crashes (`agente/killtest_durabilidad.py`) |
-| **Audit & Trust Anchor** | RFC 8785 canonical JSON signature log + offline zero-credential verifier | Re-derive all cryptographic signatures independently without Google Cloud or network access |
-| **Injection Defense** | Multilingual semantic fence (`gemini-embedding-001`) + keyword authority ceiling | Neutralizes 9/9 real-world adversarial prompt injections across 4 languages |
-| **Multimodal Ingestion** | Transducers for voice notes (STT) on WhatsApp/customer channels | Voice requests enter identical cryptographic fences; modality does not expand authority |
+| ✓ **Agent Registry** | Versioned Agent Cards (`agent_cards/catalog.json`) generated directly from `claves/directorio.json` | Deterministic generation via `generar_agent_cards.py`; immutable in Git history |
+| ✓ **Agent Identity** | Cloud KMS asymmetric keys (P-256) with distinct Service Accounts per agent (`sa-agente-curador` vs `sa-agente-qnowa`) | Real `HTTP 403 PERMISSION_DENIED` when an agent attempts to use the human signing key |
+| ✓ **Gateway / Scope Gate** | Deterministic scope gate enforcing state limits per key before verification | Real-time rejection of out-of-scope state transitions (`agente/killtest_alcance.py`) |
+| ✓ **Durable State / Continuity** | Cloud Firestore native persistence for workflow facts | Resumable execution surviving abrupt Cloud Run process crashes (`agente/killtest_durabilidad.py`) |
+| ✓ **Audit & Trust Anchor** | RFC 8785 canonical JSON signature log + offline zero-credential verifier | Re-derive all cryptographic signatures independently without Google Cloud or network access |
+| ✓ **Injection Defense** | Multilingual semantic fence (`gemini-embedding-001`) + keyword authority ceiling | Neutralizes 9/9 real-world adversarial prompt injections across 4 languages |
+| ✓ **Multimodal Ingestion** | Transducers for voice notes (STT) on WhatsApp/customer channels | Voice requests enter identical cryptographic fences; modality does not expand authority |
 
 ---
 

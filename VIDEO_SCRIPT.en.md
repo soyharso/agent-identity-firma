@@ -11,7 +11,9 @@ demonstrate the backend is running on Google Cloud"*. This script is written to 
 
 *On screen: the production ledger, four rows highlighted.*
 
-> "Two days ago, in our own production system, we measured this. Fifty-eight closures signed
+> "Companies are about to run fleets of AI agents. When one acts, who authorized it?
+>
+> Two days ago, in our own preproduction system, we measured this. Fifty-eight closures signed
 > 'human'. A machine closed them. Four of those said 'dismissed' — the state where the machine
 > absolves itself.
 >
@@ -102,7 +104,9 @@ on resource '…/cryptoKeys/clave-humano'
 >
 > Cleveria isn't a brake — it is the license for enterprise fleets to automate 90% of critical
 > workflows, with the mathematical guarantee that the remaining 10% stays locked behind hardware
-> and Cloud KMS."
+> and Cloud KMS.
+>
+> Cleveria, by Softronica — built for the All Things Agentic Hackathon. **Because compliance facts are never paraphrased.**"
 
 ---
 

@@ -1,0 +1,3 @@
+Vertex AI Request: Model=gemini-embedding-001, Region=us-central1, Project=ai-transf-lab-0827
+Semantic fence active. Sample measurement:
+Verdict=sin objeción, Details={'parecido': 0.612, 'se_parece_a': 'se decide clausurar la actuación sin sanción aplicable al interesado', 'en_el_trozo': 'prueba'}
