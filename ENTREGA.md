@@ -13,14 +13,21 @@ Sin esto no se puntúa nada, así que va primero:
 | Al menos un servicio de infraestructura | **cumplido, cuatro** | Cloud Run, Cloud KMS, Firestore y Cloud Scheduler. |
 | Proyecto creado dentro del periodo | **cumplido** | repositorio creado el 2026-08-27. |
 
-## 2 · Las cuatro tomas del vídeo
+## 2 · Las cuatro tomas del vídeo — SUPERSEDED 2026-08-27
 
-Cuatro minutos como máximo. **La tercera es la que gana o pierde.**
+> **SUPERSEDED 2026-08-27 por el guion medido, en `docs/strategy/metodo/ganar-hackathon/` del
+> repositorio del método. Razón: estas cuatro tomas ya no son el guion, y su apertura quedó
+> ÚLTIMA de cuatro en una prueba con tres jurados ciegos y orden rotado.**
+>
+> **Si estás leyendo esto para grabar, el guion no es este archivo.** Se conserva abajo por
+> trazabilidad, no como instrucción. Dos cosas que ya son falsas aquí: la apertura ganadora es
+> «¿Quién firmó esto?», y los agentes están en **preproducción**, no en producción.
 
 ### Toma 1 — el defecto real (40 s)
 
-Se enseña el registro de producción del 26 de agosto: **58 filas firmadas «humano» que cerró una
-máquina**, cuatro de ellas en estado descartada.
+Se enseña el registro del 26 de agosto —del sistema con el que trabaja el propio equipo, con los
+agentes en **preproducción**—: **58 filas firmadas «humano» que cerró una máquina**, cuatro de
+ellas en estado descartada.
 
 > «Esto no es un ejemplo inventado. Pasó en nuestro sistema hace dos días. La única forma de que
 > un agente cerrara una petición era firmando como si fuera una persona.»
@@ -85,8 +92,12 @@ viajan en el repositorio. Y se enseña el dato incómodo:
   funciones: más barato, más rápido y comprobable.
 - **Una sola compuerta de política**: el alcance por clave, en un archivo y no en el código.
 - **El verificador no depende de nada**: ni red, ni credenciales, ni cuenta.
-- **Cinco pruebas que se ejecutan**, y una de ellas mide al proveedor en su contra.
-- **Lo ausente se declara ausente.** La pasarela no está, y se dice.
+- **Nueve pruebas de ruptura que se ejecutan**, más un verificador que corre sin red ni
+  credenciales. Una de las nueve mide al proveedor en su contra, y otra guarda los nueve textos
+  con que un atacante externo rompió el cerco semántico antes de que se entregara.
+- **Lo ausente se declara ausente, y son tres**: la pasarela, el **catálogo de agentes** y la
+  memoria de largo plazo. Ninguna se finge, y el catálogo se quitó de los materiales el
+  2026-08-27 al comprobar que no existía nada que lo respaldara.
 
 ### Demostración y madurez — 30%
 
@@ -108,8 +119,10 @@ Nada de eso lo hace un agente, y nada de eso se ha hecho.
 
 ## 5 · La probabilidad, sin adornos
 
-Entre el **1,1% y el 5,6%** de llevarse algún premio, multiplicando por la probabilidad de que el
-paquete se termine. Sigue siendo poco.
+Entre el **3% y el 5,5%** de llevarse algún premio (actualizada el 2026-08-27; la anterior,
+1,1%–5,6%, es de antes de que el paquete estuviera terminado). Sigue siendo poco, y la banda ya
+no se multiplica por «si se termina», porque está terminado: lo que queda son actos del operador
+—inscribir, grabar, publicar—, y sin ellos la probabilidad no es baja, es cero.
 
 **Lo que justifica el intento no es el premio.** Es que el componente resuelve un defecto real
 nuestro, la norma del verificador tapa un agujero del método, y el conocimiento de estas

@@ -6,7 +6,8 @@ nube le dice que no.
 
 ## El defecto real del que sale
 
-Esto no es un ejercicio. El 26 de agosto de 2026, en un sistema en producción, se midió esto:
+Esto no es un ejercicio. El 26 de agosto de 2026, en el sistema con el que trabaja el propio
+equipo —**agentes en preproducción, a propósito todavía no delante de clientes**—, se midió esto:
 
 > La función que cierra peticiones firma **«humano» por defecto**, la consola no expone ninguna
 > bandera para declarar otra cosa, y un modelo solo puede escribir el estado «abierta». **La única

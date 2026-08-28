@@ -5,10 +5,13 @@ lock we built so that stops being possible, and the three things that broke whil
 
 ---
 
-On 26 August 2026 we looked at a table in our own production system and counted **58 rows signed
-"human" that a machine had closed**. Four of them sat in the state *dismissed* — the state where
-a complaint is thrown out. In four cases, a machine had absolved itself and signed a person's
-name to it.
+On 26 August 2026, in the system our own team works in, we counted **58 rows signed "human" that a
+machine had closed**. Four of them sat in the state *dismissed* — the state where a complaint is
+thrown out. In four cases, a machine had absolved itself and signed a person's name to it.
+
+**These agents are not in production, and that is the point.** They run in preproduction
+precisely so that things like this surface here instead of in front of a customer. This is what
+that decision is for: the gap was real, it was measurable, and it cost nobody anything.
 
 **Nobody chose this**, which is the part worth reading. We shipped a system with a gap in it and
 that is on us — but no person and no model *decided* to misattribute anything. The closing

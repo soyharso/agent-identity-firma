@@ -33,7 +33,8 @@ ends up where the same words typed would — with a person. The modality changes
 
 ## The real defect this comes from
 
-This is not a toy problem. On 26 August 2026, in a production system, we measured this:
+This is not a toy problem. On 26 August 2026, in the system our own team works in — **agents in
+preproduction, deliberately not yet in front of customers** — we measured this:
 
 > The function that closes requests signs **"human" by default**, the console exposes no flag to
 > declare otherwise, and a model may only write the state "open". **The only way for an agent to
