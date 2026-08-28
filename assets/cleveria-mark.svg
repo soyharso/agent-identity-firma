@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" role="img" aria-labelledby="title desc">
+  <title id="title">Cleveria.ai mark</title>
+  <desc id="desc">A C-shaped blue boundary ending at a green verified node.</desc>
+  <rect width="220" height="220" rx="44" fill="#0B1020"/>
+  <path d="M108 50a58 58 0 1 0 0 116" fill="none" stroke="#4285F4" stroke-width="20" stroke-linecap="round"/>
+  <path d="M108 108h48" fill="none" stroke="#34A853" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="164" cy="108" r="15" fill="#34A853"/>
+  <circle cx="108" cy="50" r="8" fill="#F8FAFC"/>
+  <circle cx="108" cy="166" r="8" fill="#F8FAFC"/>
+</svg>
