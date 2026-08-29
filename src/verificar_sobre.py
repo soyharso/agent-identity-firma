@@ -66,7 +66,7 @@ def quien_firmo(directorio, mensaje: bytes, firma: bytes):
 
 
 def verificar(sobre: dict, firma_b64: str, texto_actual: str | None = None,
-              directorio=None) -> tuple[str, dict]:
+              directorio=None, peticion_esperada: str | None = None) -> tuple[str, dict]:
     directorio = directorio if directorio is not None else cargar_directorio()
 
     faltan = [c for c in CAMPOS if c not in sobre]
@@ -81,6 +81,22 @@ def verificar(sobre: dict, firma_b64: str, texto_actual: str | None = None,
     nombre, entrada = quien_firmo(directorio, canonico(sobre), firma)
     if nombre is None:
         return "FIRMANTE_DESCONOCIDO", {"por_que": "ninguna clave del directorio valida esta firma"}
+
+    # Anti-reutilización: una firma auténtica, presentada en el caso de al lado, sigue siendo
+    # una falsificación. Es el ataque más plausible de los tres, porque no exige romper nada:
+    # basta con copiar una aprobación que ya existe. Sin esta comprobación, quien reutiliza un
+    # sobre válido junto a su propio texto pasa las demás: la firma es buena, el firmante está
+    # en el directorio, el contenido cuadra con el hash que él mismo copió, y el estado está en
+    # alcance. Lo único que delata el fraude es que la aprobación no era PARA ESE CASO.
+    #
+    # `peticion_esperada` la pone quien verifica, nunca el sobre: si se leyera del propio sobre
+    # la comprobación sería un espejo y no comprobaría nada.
+    if peticion_esperada is not None and sobre["peticion_id"] != peticion_esperada:
+        return "CONTEXTO_AJENO", {
+            "firmante": nombre,
+            "firmado_para": sobre["peticion_id"],
+            "presentado_en": peticion_esperada,
+            "por_que": "la firma es válida, pero aprobaba otro caso"}
 
     # Anti-obsolescencia: no se acepta un juicio sobre un texto que ya cambió.
     if texto_actual is not None:

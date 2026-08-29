@@ -1,13 +1,20 @@
 {
   "_que_es": "Resultado de la ultima corrida de las pruebas de ruptura. Lo escribe pruebas_de_ruptura.sh; se muestra con --resumen. No se edita a mano.",
-  "fecha": "2026-08-29 09:42:18 -0500",
-  "epoch": 1788014538,
-  "segundos": 127,
+  "fecha": "2026-08-29 15:57:26 -0500",
+  "epoch": 1788037046,
+  "segundos": 151,
   "pruebas": [
     {
       "nombre": "canonical-json",
       "archivo": "agente/killtest_canonico.py",
       "rompe": "RFC 8785 byte-for-byte, accents and integers included",
+      "ok": true,
+      "segundos": 0.2
+    },
+    {
+      "nombre": "signature-replay",
+      "archivo": "agente/killtest_reutilizacion.py",
+      "rompe": "a genuine human approval cannot be moved to another case",
       "ok": true,
       "segundos": 0.1
     },
@@ -16,56 +23,56 @@
       "archivo": "agente/killtest_puerto_canal.py",
       "rompe": "the WhatsApp channel is decoupled from signing",
       "ok": true,
-      "segundos": 4.1
+      "segundos": 3.6
     },
     {
       "nombre": "managed-filter",
       "archivo": "agente/killtest_blindaje.py",
       "rompe": "the vendor filter misses our Spanish attack",
-      "ok": false,
-      "segundos": 0.8
+      "ok": true,
+      "segundos": 6.5
     },
     {
       "nombre": "prompt-injection",
       "archivo": "agente/killtest_inyeccion.py",
       "rompe": "8 injections, 4 languages, stopped by the ceiling",
       "ok": true,
-      "segundos": 7.0
+      "segundos": 12.0
     },
     {
       "nombre": "key-scope",
       "archivo": "agente/killtest_alcance.py",
       "rompe": "a key cannot authorize a state outside its scope",
       "ok": true,
-      "segundos": 8.3
+      "segundos": 10.5
     },
     {
       "nombre": "fleet-identity",
       "archivo": "agente/killtest_agente_comercial.py",
       "rompe": "two agents cannot borrow each other's key",
       "ok": true,
-      "segundos": 12.9
+      "segundos": 14.1
     },
     {
       "nombre": "voice",
       "archivo": "agente/killtest_voz.py",
       "rompe": "a spoken judgement still requires a human signature",
       "ok": true,
-      "segundos": 17.8
+      "segundos": 20.4
     },
     {
       "nombre": "semantic-fence",
       "archivo": "agente/killtest_cerco_semantico.py",
       "rompe": "9/9 caught, 2 false positives declared",
       "ok": true,
-      "segundos": 27.4
+      "segundos": 33.2
     },
     {
       "nombre": "durability",
       "archivo": "agente/killtest_durabilidad.py",
       "rompe": "5 steps, 5 processes, survives an abrupt kill",
       "ok": true,
-      "segundos": 46.9
+      "segundos": 49.6
     }
   ]
 }

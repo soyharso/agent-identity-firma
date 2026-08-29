@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# CLEVERIA — THE NINE BREAK TESTS, IN ONE BLOCK
+# CLEVERIA — THE TEN BREAK TESTS, IN ONE BLOCK
 # ==============================================================================
-# The video promises "nine break tests, green, in a block". Running them live
-# costs ~125 seconds, which does not fit the shot. So this script does two
+# The video promises "break tests, green, in a block". Running them live costs
+# well over two minutes, which does not fit the shot. So this script does two
 # things and keeps them apart:
 #
-#   ./pruebas_de_ruptura.sh          run all nine, record the result
+#   ./pruebas_de_ruptura.sh          run all ten, record the result
 #   ./pruebas_de_ruptura.sh --resumen  print the recorded result (the shot)
 #
 # The summary always prints WHEN the run happened and refuses to pretend it is
@@ -21,6 +21,7 @@ BOLD="\033[1m"; DIM="\033[2m"; GREEN="\033[32m"; RED="\033[31m"; YELLOW="\033[33
 # name:file:what it breaks
 PRUEBAS=(
   "canonical-json:agente/killtest_canonico.py:RFC 8785 byte-for-byte, accents and integers included"
+  "signature-replay:agente/killtest_reutilizacion.py:a genuine human approval cannot be moved to another case"
   "channel-port:agente/killtest_puerto_canal.py:the WhatsApp channel is decoupled from signing"
   "managed-filter:agente/killtest_blindaje.py:the vendor filter misses our Spanish attack"
   "prompt-injection:agente/killtest_inyeccion.py:8 injections, 4 languages, stopped by the ceiling"
