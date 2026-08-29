@@ -1,72 +1,95 @@
-# Runbook de Grabación y Checklist Técnico — All Things Agentic Hackathon
+# RUNBOOK DE GRABACIÓN FINAL V2 — CLEVERIA FLEET
 
-**Entorno de Grabación:** Fedora Linux (Wayland / GNOME)  
-**Herramientas:** OBS Studio (o Kooha como backup) + PipeWire + terminal configurada  
-**Restricción Dura:** Vídeo ≤ 4:00 minutos (solo se juzgan los primeros 4 minutos)  
-**Objetivo de Fecha:** Grabación Domingo 30 de Agosto (13:00 – 17:00 COT)  
-
----
-
-## 1. Checklist Técnico Prevuelo (Domingo 12:30 COT)
-
-- [ ] **Servicio Cloud Run "caliente"**:
-  - Ejecutar un curl previo para evitar *cold start* en la toma:
-    ```bash
-    curl -s -X POST "https://candado-firma-141981963817.us-central1.run.app/despertar"
-    ```
-- [ ] **Terminal de Grabación**:
-  - Fuente monospace limpia (JetBrains Mono / Fira Code) a tamaño **24–28 pt**.
-  - Tema de alto contraste (fondo oscuro puro, texto blanco/azul/verde claro).
-  - Variable `PS1` limpia (sin rutas largas que ocupen media pantalla).
-- [ ] **Navegador Web (Pestañas en orden)**:
-  - Zoom al **125% o 150%** para legibilidad en 1080p.
-  - Barra de marcadores oculta y notificaciones del sistema desactivadas (`Do Not Disturb`).
-  - Pestaña 1: Consola de Google Cloud Run (`candado-firma`, URL `.run.app` visible).
-  - Pestaña 2: Consola de Cloud KMS (`keyRings/firmas` mostrando `clave-agente` vs `clave-humano`).
-  - Pestaña 3: Consola de Cloud Firestore (colección de peticiones con documentos y firmas).
-- [ ] **Audio & Micrófono**:
-  - Micrófono configurado en PipeWire con filtro de cancelación de ruido activo.
-  - Nivel de entrada calibrado a **-6 dB de pico** (sin saturar).
-- [ ] **OBS Studio**:
-  - Perfil de grabación: 1080p a 30 fps (formato MKV, remux automático a MP4).
-  - Escenas preparadas:
-    1. *Escena 1: Terminal Demo* (pantalla completa o terminal + cámara miniatura).
-    2. *Escena 2: Consola GCP / Navegador* (Cloud Run + KMS + Firestore).
-    3. *Escena 3: Diagrama de Arquitectura* (`ARCHITECTURE.png`).
+**Fecha:** 2026-08-28  
+**Versión:** 2.0 (Rediseñado con Dashboard Rich y Diagrama HTML Interactivo)  
+**Objetivo:** Guiar la grabación de la demostración de 4 minutos combinando impacto visual, evidencia determinista en vivo y narrativa tipo pitch (problema ➔ clímax ➔ revelación).
 
 ---
 
-## 2. Cronograma de las 5 Tomas del Vídeo (Presupuesto: 3:50 / 4:00)
+## 1. CHECKLIST TÉCNICO PRE-GRABACIÓN
 
-| Timecode | Toma / Segmento | Qué se muestra | Frase Clave |
-|---|---|---|---|
-| **0:00 – 0:35** | **Shot 1: El Defecto Real** | Ledger / terminal con los 58 registros en preproducción. | *"Companies are about to run fleets of AI agents. When one acts, who authorized it? ... 58 closures signed 'human' closed by a machine."* |
-| **0:35 – 1:30** | **Shot 2: Utilidad & Flota** | Cloud Scheduler + Firestore + audio waveform de WhatsApp. Tarea legítima completada. | *"A commercial agent does the work end to end... Spoken in WhatsApp. Modality changes; the key does not."* |
-| **1:30 – 2:30** | **Shot 3: La que Gana (KMS 403)** | Terminal en vivo: `POST /intentar-suplantar` ➔ `HTTP 403 PERMISSION_DENIED`. | *"The cloud itself says no. Live. It's not that the agent won't; it can't."* |
-| **2:30 – 3:20** | **Shot 4: Verificador & Ataque** | Verificador puro RFC 8785 offline + resultado 9/9 del cerco semántico (`gemini-embedding-001`). | *"Zero network, zero Google credentials... Anyone can re-verify every closure independently."* |
-| **3:20 – 3:55** | **Shot 5: Prueba GCP & Cierre** | Consola Cloud Run con URL `.run.app` visible + Diagrama Fleet. | *"Cleveria isn't a brake — it is the license to scale... Because compliance facts are never paraphrased."* |
+### 1.1 Verificación de Entorno (Terminal)
+- [ ] **OBS Studio instalado:** `obs --version` (recomendado ≥ 30.0).
+- [ ] **Dependencias Python:** `pip3 install rich`.
+- [ ] **Credenciales GCP Frescas:** `gcloud auth list` (Asegurar que la identidad de operador esté activa).
+- [ ] **Opcional (Edge TTS):** Si se prefiere narración sintética, preparar clips.
+
+### 1.2 Archivos Clave Preparados
+- [ ] `demo_rich_dashboard.py` — El dashboard de 4 paneles en vivo.
+- [ ] `assets/slides/architecture_interactive.html` — Diagrama animado HTML5.
+- [ ] `assets/slides/slide_title_cleveria.png` — Tarjeta visual de Intro/Outro (1080p).
+- [ ] `VIDEO_SCRIPT.en.md` — El guion narrativo impreso o en segunda pantalla.
+
+### 1.3 Configuración de Escenas en OBS (Transición *Fade* de 0.8s)
+1. **Intro / Outro**: Fuente de Imagen apuntando a `slide_title_cleveria.png`.
+2. **Dashboard de Flota**: Captura de Ventana de Terminal en pantalla completa (fondo oscuro). **Comando a ejecutar:** `python3 demo_rich_dashboard.py`.
+3. **Arquitectura Interactiva**: *Browser Source* (1920x1080) apuntando a `file:///.../architecture_interactive.html`.
+4. **Consola GCP**: Captura de Ventana del navegador con zoom al 125%. Pestañas abiertas: Cloud Run, Scheduler, KMS, Firestore.
+
+### 1.4 Calibración de Audio
+- [ ] **Micrófono:** Configurado a **-6 dB**.
+- [ ] **Filtros OBS:** Supresión de ruido (RNNoise o Speex) activada.
+- [ ] Realizar grabación de prueba de 15 segundos y verificar que el fondo esté en absoluto silencio al no hablar.
 
 ---
 
-## 3. Matriz de Riesgos en Vivo y Mitigaciones ("Qué puede fallar y qué hacer")
+## 2. SECUENCIA DE GRABACIÓN (Cronometraje de 4 Minutos)
 
-| Riesgo / Fallo | Probabilidad | Impacto | Mitigación Inmediata |
-|---|---|---|---|
-| **Latencia / Cold Start en Cloud Run** | Media | Alto | Tirar 2 peticiones antes de grabar para que la instancia esté caliente. Si tarda >3s en responder, no cortar la toma en falso: regrabar ese segmento. |
-| **Error de token OIDC expirado** | Baja | Medio | Generar token fresco antes de iniciar el bloque de terminal: `export TOK=$(gcloud auth print-identity-token)`. |
-| **Saturación o ruido de fondo en el micro** | Media | Alto | Grabar una prueba de 10 segundos antes del ensayo y escucharla con auriculares. |
-| **El 403 no se lee con claridad** | Baja | Crítico | Mantener la fuente a ≥26pt. Dejar el `HTTP 403 PERMISSION_DENIED` visible en pantalla durante al menos 4 segundos enteros. |
-| **El tiempo se pasa de los 4:00 minutos** | Media | Crítico | El rubro descarta todo lo que supere el minuto 4:00. Si el ensayo da 4:05, recortar 10s de la explicación inicial de Shot 1, **nunca** de Shot 3 (el 403). |
+### Acto I: El Defecto y la Cola de Ingesta
+#### Shot 0: Intro Animada (0:00 – 0:10)
+- **Escena OBS:** Intro / Outro.
+- **Voz:** *"Companies are about to run fleets of AI agents. When one acts, who authorized it?"*
+- **Acción:** `[Fade a Dashboard]`
+
+#### Shot 1: Dashboard de Ingesta (0:10 – 0:50)
+- **Escena OBS:** Dashboard (`python3 demo_rich_dashboard.py`).
+- **Voz:** *"Two days ago, in preproduction, we measured 58 closures signed 'human' — but a machine closed them. Cleveria does not trust — it proves. Each agent runs with its own service identity and a key limited to 'machine work'. When a decision involves judgement about a person, the flow stops deterministically and requires a human signature."*
+- **Visual:** Se ve la terminal actualizando `PET-001` a `✓ SIGNED (Machine)` y `PET-002` deteniéndose en `⏸️ AWAITING HUMAN`.
+- **Acción:** `[Fade a Diagrama Interactivo]`
+
+### Acto II: La Flota en Acción y el Clímax 403
+#### Shot 2: Diagrama de Arquitectura (0:50 – 1:30)
+- **Escena OBS:** Arquitectura Interactiva.
+- **Acción:** Hacer clic en "Trigger Cloud Run Simulation".
+- **Voz:** *"Here is how it works: the commercial agent receives a voice note, transcribes it, and detects judgement. The curator agent closes operational tickets with evidence. But when liability is at stake, the human key is required — and the cloud enforces it."*
+- **Visual:** La animación avanza mostrando el trigger, la pausa HITL, el rechazo en KMS (nodo rojo) y la firma humana final (nodo verde).
+- **Acción:** `[Fade a Dashboard]`
+
+#### Shot 3: El Momento del 403 (1:30 – 2:20)
+- **Escena OBS:** Dashboard (Sección *Cloud KMS Enforcement* resaltada).
+- **Voz:** *"This is the moment that wins the hackathon. The agent tries to sign with the human key. Google Cloud says no. HTTP 403. Not trust. Proof. It's not that the agent won't; it can't."*
+- **Visual:** Panel verde `HTTP 200 OK` vs Panel rojo masivo `HTTP 403 PERMISSION_DENIED`.
+- **Acción:** Dejar asimilar 5 segundos. `[Fade a Consola GCP]`
+
+### Acto III: Evidencia Desnuda y Cierre
+#### Shot 4: Verificación 100% Offline (2:20 – 2:40)
+- **Escena OBS:** Dashboard (Sección *Audit Telemetry* resaltada).
+- **Voz:** *"Our verifier imports nothing from Google. Zero network calls. And our semantic fence catches attacks in Spanish that vendor filters miss."*
+- **Visual:** Métricas de 0 dependencias y 9/9 inyecciones capturadas.
+
+#### Shot 5: Prueba de Infraestructura (2:40 – 3:20)
+- **Escena OBS:** Consola GCP.
+- **Voz:** *"Cloud Run, Cloud Scheduler, Cloud KMS with two asymmetric keys, and Firestore. All live, all verifiable."*
+- **Acción:** Pasear tranquilamente por las 4 pestañas de Google Cloud.
+- **Acción:** `[Fade a Intro / Outro]`
+
+#### Shot 6: Cierre de Marca (3:20 – 3:40)
+- **Escena OBS:** Intro / Outro.
+- **Voz:** *"Cleveria, by Softronica — built for the All Things Agentic Hackathon. Because compliance facts are never paraphrased."*
+- **Acción:** Detener Grabación.
 
 ---
 
-## 4. Checklist Post-Grabación (Domingo Tarde)
+## 3. PLAN B (CONTINGENCIAS TÉCNICAS)
+- **Si el dashboard Rich falla (glitches ANSI):** Retroceder al `demo_rich.py` puro.
+- **Si el Diagrama HTML no se captura bien:** Usar el render de `ARCHITECTURE.png` y narrar sobre la imagen estática.
+- **Si la voz en vivo se enreda:** Grabar la captura visual primero (Video Mudo) y superponer el audio leyendo el guion en un editor de video después (Post-Dubbing).
 
-- [ ] Generar subtítulos en inglés con `faster-whisper` local:
-  ```bash
-  whisper cleveria_demo.mp4 --model medium --language en --output_format srt
-  ```
-- [ ] Revisión humana línea a línea del archivo `.srt` (verificar términos técnicos: *Cloud KMS*, *Firestore*, *ADK*, *RFC 8785*).
-- [ ] Subir vídeo a YouTube como **Público** (o *No listado* si las reglas lo permiten; se recomienda Público con `#AllThingsAgenticHackathon`).
-- [ ] Verificar que la URL del vídeo reproduce en 1080p y que el audio es nítido.
-- [ ] Respaldar el archivo de vídeo final (`cleveria_demo.mp4`) y subtítulos (`subtitles.srt`) en la carpeta `demo/` del repositorio.
+---
+
+## 4. POST-GRABACIÓN Y ENVÍO (DOMINGO / LUNES)
+1. **Subtítulos (OBLIGATORIO):** 
+   - Ejecutar: `python3 -m whisper video_final.mp4 --model large-v3 --language en --output_format srt`.
+   - Revisar tiempos y corregir términos (ej: KMS, IAM, Firestore).
+2. **Subida a Plataforma:** YouTube o Vimeo (Visibilidad Pública). Título recomendado: *Cleveria — Governing Enterprise Agent Fleets*.
+3. **Ensamblaje Devpost:** Pegar el contenido íntegro de `DEVPOST_SUBMISSION.md` antes del Lunes a las 16:00 COT.
