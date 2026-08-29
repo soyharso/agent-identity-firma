@@ -40,14 +40,52 @@ paso()   { echo -e "\n${BOLD}${MAGENTA}▶${RESET} ${BOLD}$*${RESET}"; }
 esperar(){ [ "$PAUSA" = 1 ] && { echo; echo -e "${DIM}── Press ${BOLD}[ENTER]${RESET}${DIM} to continue to the next shot ──${RESET}"; read -r; }; return 0; }
 limpio() { grep -viE "FutureWarning|grpcio|warnings\.warn|check_feature|UserWarning|^\s*$"; }
 
+# ── esperar_a · poll instead of sleeping a fixed 65 seconds ───────────────────
+# The two live shots used `sleep 65`, which is 130 seconds of dead clock inside
+# 50 seconds of script, in a video recorded in one unbroken take. The wait is
+# real — Cloud Run has to do the work — but the ceiling is not: the run usually
+# finishes far sooner. This polls Firestore for the condition and returns the
+# moment it holds, with a visible counter so the shot never looks frozen.
+#
+#   esperar_a <python-expression-that-prints-LISTO> [max seconds]
+esperar_a() {
+  local cond="$1" max="${2:-90}" t=0
+  # In an offline rehearsal there is nothing to wait for: do not burn 90s.
+  [ "$LIVE" = 0 ] && { echo -e "  ${YELLOW}⚠ offline rehearsal — not waiting${RESET}"; return 1; }
+  while [ "$t" -lt "$max" ]; do
+    if python3 -c "
+import sys; sys.path.insert(0,'.')
+from src import estado
+sys.exit(0 if ($cond) else 1)
+" >/dev/null 2>&1; then
+      printf "\r  ${GREEN}✓ done in %ss${RESET}%-30s\n" "$t" " "
+      return 0
+    fi
+    printf "\r  ${CYAN}⏳ waiting on Cloud Run… %ss${RESET}" "$t"
+    sleep 2; t=$((t+2))
+  done
+  printf "\r  ${YELLOW}⚠ still not ready after %ss — showing current state${RESET}%-10s\n" "$max" " "
+  return 1
+}
+
 # ── Preflight · never let a rehearsal be mistaken for live evidence ───────────
-# Every cloud shot depends on a valid Google Cloud identity token. Without it
-# SHOT 3 used to print a canned response that is indistinguishable from a real
-# one on camera. Rehearsing offline is fine; recording it is not. This gate
-# makes the difference impossible to miss, and refuses to run by default.
-LIVE=1
+# SHOT 3 used to print a canned response indistinguishable from a real one when
+# the identity token was missing. Rehearsing offline is fine; recording it is
+# not. So the gate exists — but it guards ONLY the shots that touch the cloud.
+#
+# Shots 1 and 4 must keep working with no credentials at all: shot 4 is the
+# offline verifier, and the whole point it makes on camera is that it needs
+# neither network nor credentials. Gating it would contradict the claim it
+# exists to prove.
+#
+# It is also re-checked immediately before each cloud shot, not once at start:
+# a token that was valid two minutes ago can be gone by the time the single
+# take reaches the climax.
+LIVE=1        # 1 = every cloud shot attempted so far reached the cloud
+NUBE=0        # 1 = at least one cloud shot was attempted in this run
 preflight() {
-  gcloud auth print-identity-token >/dev/null 2>&1 && return 0
+  NUBE=1
+  if gcloud auth print-identity-token >/dev/null 2>&1; then return 0; fi
   LIVE=0
   echo
   echo -e "${RED}╔══════════════════════════════════════════════════════════════════════════════╗${RESET}"
@@ -55,14 +93,15 @@ preflight() {
   echo -e "${RED}║  Any cloud output below would be a CANNED SAMPLE. DO NOT RECORD THIS RUN.    ║${RESET}"
   echo -e "${RED}║                                                                              ║${RESET}"
   echo -e "${RED}║  Fix it, then run again:    gcloud auth login                                ║${RESET}"
+  echo -e "${RED}║                                                                              ║${RESET}"
+  echo -e "${RED}║  Shots 1 and 4 need no credentials and run regardless.                       ║${RESET}"
   echo -e "${RED}╚══════════════════════════════════════════════════════════════════════════════╝${RESET}"
   echo
   if [ "${FORZAR_SIN_NUBE:-0}" != "1" ]; then
-    echo -e "${DIM}Refusing to run. Export FORZAR_SIN_NUBE=1 to rehearse offline anyway.${RESET}"
+    echo -e "${DIM}Refusing to run this shot. Export FORZAR_SIN_NUBE=1 to rehearse offline anyway.${RESET}"
     exit 3
   fi
 }
-preflight
 
 # ── SHOT 1 · The Real Defect ──────────────────────────────────────────────────
 toma1() {
@@ -85,6 +124,7 @@ for k,v in json.load(open('libro/peticiones.json')).items():
 
 # ── SHOT 2 · Autonomous Fleet Execution ───────────────────────────────────────
 toma2() {
+  preflight
   banner "2" "AUTONOMOUS FLEET EXECUTION & GOVERNANCE" "Scheduler wakes the fleet; Gemini adjudicates within authority ceiling"
 
   paso "Resetting Firestore state for verifiable live execution:"
@@ -98,7 +138,8 @@ print('  \033[32m✓ Store cleared cleanly\033[0m')
   paso "Cloud Scheduler triggers Cloud Run (/despertar) via OIDC:"
   gcloud scheduler jobs run despertar-candado --location=$REGION --project=$P --quiet 2>&1 | tail -1
   echo -e "  ${CYAN}⏳ Autonomous workflow running in Google Cloud Run...${RESET}"
-  sleep 65
+  # Ready when the fleet has ruled on every request in the batch.
+  esperar_a "all(estado.leer(p).get('veredicto') for p in ('PET-001','PET-002','PET-003','PET-004'))" 90
 
   paso "Durable State & Cryptographic Signatures recorded in Firestore:"
   python3 -c "
@@ -122,6 +163,7 @@ for p in ('PET-001','PET-002','PET-003','PET-004'):
 
 # ── SHOT 3 · Cryptographic Boundary (KMS HTTP 403) ────────────────────────────
 toma3() {
+  preflight
   banner "3" "THE CLOUD BOUNDARY — IAM & CLOUD KMS" "Mathematical impossibility: Google Cloud IAM returns HTTP 403"
 
   TOK=$(gcloud auth print-identity-token 2>/dev/null || echo "")
@@ -152,7 +194,8 @@ print(json.dumps(resp, indent=2))
 
   paso "The scheduler resumes the workflow and closes with verified human signature:"
   gcloud scheduler jobs run despertar-candado --location=$REGION --project=$P --quiet 2>&1 | tail -1
-  sleep 65
+  # Ready when the request carries a signed envelope, i.e. the human signature landed.
+  esperar_a "(estado.leer('PET-002').get('sobre') or {}).get('tipo_firmante')" 90
   python3 -c "
 import sys; sys.path.insert(0,'.')
 from src import estado
@@ -188,6 +231,7 @@ print('  Requires Cloud SDK / Network? ->', '\033[31mYES\033[0m' if has_cloud el
 
 # ── SHOT 5 · Visual Proof of Google Cloud ─────────────────────────────────────
 toma5() {
+  preflight
   banner "5" "VISUAL PROOF OF GOOGLE CLOUD INFRASTRUCTURE" "Cloud Run, Cloud Scheduler, Cloud KMS Keyring, and Firestore Native"
 
   paso "Cloud Run Live Production Deployment:"
@@ -213,6 +257,20 @@ case "$TOMA" in
 esac
 
 echo
-echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
-echo -e "  ${BOLD}${GREEN}DEMO EXECUTION COMPLETE — ALL EVIDENCE PROVEN LIVE ON GOOGLE CLOUD${RESET}"
-echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
+if [ "$NUBE" = 0 ]; then
+  # Shots 1 and 4 only. They prove what they prove — offline — and nothing more.
+  echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
+  echo -e "  ${BOLD}${GREEN}COMPLETE — verified with no network and no credentials${RESET}"
+  echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
+elif [ "$LIVE" = 1 ]; then
+  echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
+  echo -e "  ${BOLD}${GREEN}DEMO EXECUTION COMPLETE — ALL EVIDENCE PROVEN LIVE ON GOOGLE CLOUD${RESET}"
+  echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
+else
+  # This is the frame the terminal is left on. It must never claim the cloud was
+  # reached when it was not — the claim would outlive the warnings above it.
+  echo -e "${YELLOW}════════════════════════════════════════════════════════════════════════════════${RESET}"
+  echo -e "  ${BOLD}${YELLOW}REHEARSAL COMPLETE — CLOUD EVIDENCE WAS NOT PROVEN. DO NOT RECORD.${RESET}"
+  echo -e "  ${DIM}Run 'gcloud auth login' and try again for a valid take.${RESET}"
+  echo -e "${YELLOW}════════════════════════════════════════════════════════════════════════════════${RESET}"
+fi

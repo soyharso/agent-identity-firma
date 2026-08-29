@@ -2,14 +2,20 @@
 
 > ## ⚠ NO GRABAR CON ESTE RUNBOOK SIN DECIDIR ANTES
 >
-> **2026-08-29.** Hay **dos planes de grabación vivos y contradictorios**, y solo se puede usar
+> **2026-08-29.** Hay **tres planes de grabación vivos y contradictorios**, y solo se puede usar
 > uno:
 >
-> | | Este runbook (v2.0, 28-ago) | El guion medido (28-ago) |
-> |---|---|---|
-> | Forma | varias escenas de OBS con fundidos → **vídeo editado** | **una sola toma corrida**, sin cortes |
-> | Qué se enseña | `demo_rich_dashboard.py` y el diagrama HTML animado | `demo.sh` con llamadas reales a Cloud Run, KMS y Firestore |
-> | Respaldo | ninguno | **ganó 1º-1º-1º con tres jurados ciegos** |
+> | | Este runbook (v2.0, 28-ago) | `VIDEO_SCRIPT.en.md` | El guion medido (28-ago) |
+> |---|---|---|---|
+> | Forma | escenas de OBS con fundidos → **vídeo editado** | 4 minutos leídos | **una sola toma corrida**, sin cortes |
+> | Idioma | sin decidir | **inglés** | español con subtítulos quemados |
+> | Qué se enseña | `demo_rich_dashboard.py` y el diagrama animado | — | `demo.sh`, con llamadas reales a Cloud Run, KMS y Firestore |
+> | Respaldo | ninguno | es el que el jurado lee en el repositorio | **ganó 1º-1º-1º con tres jurados ciegos** |
+>
+> **Y con ellos va una decisión de producción que nadie ha tomado: el idioma.** Narrar en español
+> obliga a transcribir, sincronizar y quemar subtítulos en inglés sobre una toma corrida de cuatro
+> minutos, a horas del cierre y sobre metraje que aún no existe. Narrar en inglés borra esa
+> partida entera.
 >
 > Las dos piezas que este runbook manda ejecutar **no miden nada**: son maquetas de presentación
 > con valores fijos, ya rotuladas como tales. Están bien para ensayar ritmo y encuadre; grabarlas

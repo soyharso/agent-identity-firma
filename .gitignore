@@ -13,3 +13,4 @@ agente/.adk/
 # cuelga de `~/Desarrollos/` como si fuera un repositorio hermano y en realidad es un worktree
 # de éste.
 .claude/
+logs/
