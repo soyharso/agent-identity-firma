@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
-"""CLEVERIA — LIVE 4-PANEL RICH DASHBOARD (ALL THINGS AGENTIC HACKATHON)
+"""CLEVERIA — 4-PANEL PRESENTATION MOCKUP (ALL THINGS AGENTIC HACKATHON)
 
-High-density visual layout combining:
+*** THIS IS A MOCKUP. IT IS NOT LIVE TELEMETRY. ***
+
+Every value below is fixed text. This file makes no call to Cloud Run, Cloud
+KMS, Firestore or Vertex AI, and nothing it prints is measured at run time. It
+exists to rehearse layout and pacing, never to stand as evidence.
+
+The live evidence lives in `demo.sh` (real gcloud/KMS/Firestore calls) and in
+`agente/killtest_*.py`. Record those, not this.
+
+Layout rehearsed here:
 - Panel 1: Ingestion Queue (Multimodal / Bilingual requests)
 - Panel 2: Agent Fleet Status (agente-curador, agente-comercial, persona-operador)
-- Panel 3: Cloud IAM & KMS Boundary (HTTP 200 vs HTTP 403 live status)
+- Panel 3: Cloud IAM & KMS Boundary (HTTP 200 vs HTTP 403)
 - Panel 4: Trust Metrics & Multilingual Semantic Net
 """
 import os
@@ -46,8 +55,9 @@ def get_header() -> Panel:
     grid.add_column(justify="left", ratio=1)
     grid.add_column(justify="right")
     grid.add_row(
-        "[bold white]CLEVERIA[/bold white] [bold bright_cyan]— Enterprise Agent Fleet Authority Dashboard[/bold bright_cyan]",
-        "[dim]GCP: us-central1 • ADK 2.8 • KMS • Cloud Run[/dim]"
+        "[bold white]CLEVERIA[/bold white] [bold bright_cyan]— Agent Fleet Authority Dashboard[/bold bright_cyan]"
+        " [bold black on yellow] MOCKUP · NOT LIVE TELEMETRY [/bold black on yellow]",
+        "[dim]Live evidence: demo.sh · agente/killtest_*.py[/dim]"
     )
     return Panel(grid, style="white on #0b1120", box=ROUNDED)
 
@@ -106,7 +116,7 @@ def get_metrics_panel() -> Panel:
     content.append("• Dual Model (gemini-embedding):  ", style="white")
     content.append("ACTIVE (Vertex AI)\n", style="bold green")
     content.append("• Multilingual Injections (4 Lang): ", style="white")
-    content.append("9/9 CAUGHT (0 False Positives)\n", style="bold green")
+    content.append("9/9 CAUGHT, 2 false positives\n", style="bold green")
     content.append("• Durable Recovery (Kill-Resume): ", style="white")
     content.append("100% ATOMIC (Firestore)\n", style="bold green")
     return Panel(content, title="4. Safety & Audit Telemetry", box=ROUNDED, border_style="green")

@@ -115,9 +115,13 @@
     </div>
 
     <div class="interactive-bar">
-      <div class="status-text" id="sim-status">System Status: Fleet Idle • Ready for execution</div>
-      <button class="btn" onclick="runSimulation()">Trigger Cloud Run Simulation</button>
+      <div class="status-text" id="sim-status">Animated walkthrough — replays the flow described above. No backend call.</div>
+      <button class="btn" onclick="runSimulation()">Play walkthrough (animation)</button>
     </div>
+    <p style="text-align:center;font-size:12px;opacity:.65;margin:.6em 0 0">
+      This page is an explanatory animation, not a live console. Real execution and the real
+      HTTP&nbsp;403 from Cloud KMS are in <code>demo.sh</code> and <code>servicio/main.py</code>.
+    </p>
   </div>
 
   <script>

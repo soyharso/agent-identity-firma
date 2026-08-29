@@ -46,8 +46,16 @@ CASOS = [
 
 
 def token():
-    return subprocess.run(["gcloud", "auth", "print-access-token"],
-                          capture_output=True, text=True, check=True).stdout.strip()
+    r = subprocess.run(["gcloud", "auth", "print-access-token"],
+                       capture_output=True, text=True)
+    if r.returncode != 0 or not r.stdout.strip():
+        # Sin credenciales esto reventaba con un traceback de Python crudo, y este
+        # kill-test se ejecuta dentro de una toma del vídeo. Falla diciendo qué
+        # falta y cómo se arregla, en dos líneas legibles a pantalla completa.
+        sys.exit("\n  NO SE PUEDE CORRER: faltan credenciales de Google Cloud.\n"
+                 "  Este kill-test consulta el filtro gestionado del proveedor y necesita\n"
+                 "  un token de acceso.  Arréglalo con:  gcloud auth login\n")
+    return r.stdout.strip()
 
 
 def analizar(t, texto):

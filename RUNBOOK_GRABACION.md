@@ -1,5 +1,26 @@
 # RUNBOOK DE GRABACIÓN FINAL V2 — CLEVERIA FLEET
 
+> ## ⚠ NO GRABAR CON ESTE RUNBOOK SIN DECIDIR ANTES
+>
+> **2026-08-29.** Hay **dos planes de grabación vivos y contradictorios**, y solo se puede usar
+> uno:
+>
+> | | Este runbook (v2.0, 28-ago) | El guion medido (28-ago) |
+> |---|---|---|
+> | Forma | varias escenas de OBS con fundidos → **vídeo editado** | **una sola toma corrida**, sin cortes |
+> | Qué se enseña | `demo_rich_dashboard.py` y el diagrama HTML animado | `demo.sh` con llamadas reales a Cloud Run, KMS y Firestore |
+> | Respaldo | ninguno | **ganó 1º-1º-1º con tres jurados ciegos** |
+>
+> Las dos piezas que este runbook manda ejecutar **no miden nada**: son maquetas de presentación
+> con valores fijos, ya rotuladas como tales. Están bien para ensayar ritmo y encuadre; grabarlas
+> como evidencia es lo que un jurado técnico desmonta abriendo el código fuente.
+>
+> **Decisión pendiente del operador.** Mientras no esté tomada, la evidencia se graba con
+> `demo.sh` y el guion medido; este runbook vale por su lista técnica (OBS, audio, resolución),
+> no por su plan de tomas.
+>
+> Detalle: `cleveria-dominios/docs/strategy/metodo/ganar-hackathon/2026-08-29_RECONCILIACION_guion_contra_el_codigo.md`
+
 **Fecha:** 2026-08-28  
 **Versión:** 2.0 (Rediseñado con Dashboard Rich y Diagrama HTML Interactivo)  
 **Objetivo:** Guiar la grabación de la demostración de 4 minutos combinando impacto visual, evidencia determinista en vivo y narrativa tipo pitch (problema ➔ clímax ➔ revelación).

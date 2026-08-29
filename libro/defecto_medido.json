@@ -1,0 +1,29 @@
+{
+  "_que_es": "El registro de la medición que originó este proyecto. Se cuenta una vez y se cita; no se recalcula. Lo lee apertura.py para la toma de apertura del vídeo.",
+  "fecha": "2026-08-26",
+  "sistema": "Our own customer-request queue",
+  "entorno": "PREPRODUCTION — agents deliberately not in front of customers yet",
+  "conteos": [
+    {
+      "valor": 58,
+      "etiqueta": "ROWS SIGNED \"HUMAN\"",
+      "significa": "closed by a machine, attributed to a person",
+      "color_rojo": true
+    },
+    {
+      "valor": 4,
+      "etiqueta": "OF THOSE, DISMISSED",
+      "significa": "the machine absolved itself of a customer claim",
+      "color_rojo": true
+    },
+    {
+      "valor": 0,
+      "etiqueta": "WRONG ROWS SINCE THE FIX",
+      "significa": "no new misattributed signature after the authority ceiling",
+      "color_rojo": false
+    }
+  ],
+  "causa": "La función que cerraba peticiones firmaba «humano» por defecto, la consola no exponía ninguna bandera para declarar otra cosa, y un modelo solo podía escribir el estado «abierta». La única forma de que un agente cerrara una petición era firmando como persona.",
+  "fuente": "Counted 2026-08-26 in preproduction. Narrative: README.md, ENTREGA.md, MEDICION_articulo.md, ARTICULO.en.md",
+  "por_que_no_se_consulta_en_vivo": "Los datos originales son de la operación real de la casa y llevan datos personales: no salen del sistema donde se midieron ni entran a este repositorio. Lo que viaja es el conteo, con su fecha y su alcance. Fingir una consulta en vivo sobre datos que no están aquí sería la clase de evidencia cosmética que este proyecto existe para impedir."
+}

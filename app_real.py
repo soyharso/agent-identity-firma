@@ -46,16 +46,22 @@ def api_firmar():
         key_name = data.get("key", "clave-agente") 
         content = data.get("content", "default_content")
         
-        # Simulamos la regla de Cloud IAM localmente si las llaves fallan o no están configuradas 
-        # en la máquina local para demostrar el 403.
+        # AVISO — este 403 lo decide esta línea, no Cloud IAM. Es un maniquí de interfaz
+        # para que el tablero local tenga algo que pintar sin credenciales.
+        # El 403 REAL, el que vale como evidencia, lo devuelve Cloud KMS en
+        # `servicio/main.py` (/intentar-suplantar), que sí llama a las dos claves.
+        # No grabar esta ruta como prueba de la frontera criptográfica.
         if key_name == "clave-agente" and data.get("id") == "PET-002":
-             return jsonify({"error": "PERMISSION_DENIED"}), 403
-             
+             return jsonify({
+                 "error": "PERMISSION_DENIED",
+                 "_aviso": "403 de maqueta, decidido por la aplicación local. El 403 real lo da Cloud KMS en /intentar-suplantar.",
+             }), 403
+
         sobre = {
             "peticion_id": data.get("id", "PET-000"),
             "estado_destino": data.get("estado", "abierta"),
             "tipo_firmante": "MAQUINA" if key_name == "clave-agente" else "HUMANO",
-            "curado_por": "agente-curador" if key_name == "clave-agente" else "gerencia@softronica.com.co",
+            "curado_por": "agente-curador" if key_name == "clave-agente" else "persona-operador",
             "hash_contenido": resumen(content),
             "marca_temporal": int(time.time()),
             "algoritmo": "EC_SIGN_P256_SHA256"

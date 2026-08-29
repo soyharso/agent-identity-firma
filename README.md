@@ -116,15 +116,30 @@ puede producirla.
 
 ## Las pruebas que lo cierran
 
-Todas se ejecutan, ninguna es decorativa:
+**Son nueve**, todas se ejecutan y ninguna es decorativa. Las nueve de una vez, con su resumen:
 
 ```bash
-python3 agente/killtest_inyeccion.py     # texto envenenado contra el techo de autoridad
-python3 agente/killtest_alcance.py       # el alcance por clave, con firmas reales
-python3 agente/killtest_canonico.py      # el que firma y el que verifica producen los mismos bytes
-python3 agente/killtest_blindaje.py      # ¿caza el filtro del fabricante NUESTRO ataque?
-python3 agente/killtest_durabilidad.py   # la pausa sobrevive a que el proceso muera (5 pasos, 5 procesos)
+./pruebas_de_ruptura.sh              # las nueve en bloque (~2 min)
+./pruebas_de_ruptura.sh --resumen    # el resultado de la última corrida, con su fecha
 ```
+
+Una por una:
+
+```bash
+python3 agente/killtest_canonico.py         # el que firma y el que verifica producen los mismos bytes
+python3 agente/killtest_puerto_canal.py     # el canal de WhatsApp está desacoplado de la firma
+python3 agente/killtest_blindaje.py         # ¿caza el filtro del fabricante NUESTRO ataque? (pide credenciales)
+python3 agente/killtest_inyeccion.py        # texto envenenado contra el techo de autoridad
+python3 agente/killtest_alcance.py          # el alcance por clave, con firmas reales
+python3 agente/killtest_agente_comercial.py # dos agentes no pueden tomar prestada la clave del otro
+python3 agente/killtest_voz.py              # un juicio dictado por voz sigue exigiendo firma humana
+python3 agente/killtest_cerco_semantico.py  # el banco adversarial: 9/9 cazados, 2 falsos positivos declarados
+python3 agente/killtest_durabilidad.py      # la pausa sobrevive a que el proceso muera (5 pasos, 5 procesos)
+```
+
+Ocho de las nueve corren **sin sesión de `gcloud`**; `killtest_blindaje.py` consulta el filtro
+gestionado del proveedor y necesita credenciales. Las nueve tardan unos dos minutos: la más lenta
+es la de durabilidad, 47 segundos, porque arranca cinco procesos de verdad.
 
 ### El dato que justifica toda la arquitectura
 
