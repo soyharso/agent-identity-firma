@@ -40,6 +40,30 @@ paso()   { echo -e "\n${BOLD}${MAGENTA}▶${RESET} ${BOLD}$*${RESET}"; }
 esperar(){ [ "$PAUSA" = 1 ] && { echo; echo -e "${DIM}── Press ${BOLD}[ENTER]${RESET}${DIM} to continue to the next shot ──${RESET}"; read -r; }; return 0; }
 limpio() { grep -viE "FutureWarning|grpcio|warnings\.warn|check_feature|UserWarning|^\s*$"; }
 
+# ── Preflight · never let a rehearsal be mistaken for live evidence ───────────
+# Every cloud shot depends on a valid Google Cloud identity token. Without it
+# SHOT 3 used to print a canned response that is indistinguishable from a real
+# one on camera. Rehearsing offline is fine; recording it is not. This gate
+# makes the difference impossible to miss, and refuses to run by default.
+LIVE=1
+preflight() {
+  gcloud auth print-identity-token >/dev/null 2>&1 && return 0
+  LIVE=0
+  echo
+  echo -e "${RED}╔══════════════════════════════════════════════════════════════════════════════╗${RESET}"
+  echo -e "${RED}║  NOT LIVE — Google Cloud credentials are missing or expired.                 ║${RESET}"
+  echo -e "${RED}║  Any cloud output below would be a CANNED SAMPLE. DO NOT RECORD THIS RUN.    ║${RESET}"
+  echo -e "${RED}║                                                                              ║${RESET}"
+  echo -e "${RED}║  Fix it, then run again:    gcloud auth login                                ║${RESET}"
+  echo -e "${RED}╚══════════════════════════════════════════════════════════════════════════════╝${RESET}"
+  echo
+  if [ "${FORZAR_SIN_NUBE:-0}" != "1" ]; then
+    echo -e "${DIM}Refusing to run. Export FORZAR_SIN_NUBE=1 to rehearse offline anyway.${RESET}"
+    exit 3
+  fi
+}
+preflight
+
 # ── SHOT 1 · The Real Defect ──────────────────────────────────────────────────
 toma1() {
   banner "1" "THE REAL PREPRODUCTION DEFECT" "Measuring 58 wrong human attributions in customer queues"
@@ -105,21 +129,23 @@ toma3() {
   paso "The Cloud Run Service attempts to sign with BOTH keys:"
   if [ -n "$TOK" ]; then
     curl -s -X POST -H "Authorization: Bearer $TOK" "$URL/intentar-suplantar" | python3 -m json.tool
+    echo
+    echo -e "  ${GREEN}✓ Machine Key:${RESET} HTTP 200 OK"
+    echo -e "  ${RED}✖ Human Key:${RESET}   ${BOLD}${RED}HTTP 403 PERMISSION_DENIED${RESET} (Enforced by Cloud IAM, not code)"
   else
+    echo -e "  ${BOLD}${YELLOW}▓▓▓ CANNED SAMPLE — NOT A LIVE CALL — DO NOT RECORD ▓▓▓${RESET}"
     python3 -c "
 import json
 resp = {
-  '1_with_its_own_key': {'http': 200, 'signature': 'MEYCIQDvpo0VgMEIPX2jppOn3t3FJVlzEFeK7hC9XGMH...'},
+  '_WARNING': 'CANNED SAMPLE. No call was made. Run: gcloud auth login',
+  '1_with_its_own_key': {'http': 200, 'signature': '<a real run prints the real signature here>'},
   '2_with_the_human_key': {'error': 'PERMISSION_DENIED', 'http': 403, 'message': 'Permission cloudkms.cryptoKeyVersions.useToSign denied on resource clave-humano'},
   'this_service_runs_as': 'sa-agente-curador@ai-transf-lab-0827.iam.gserviceaccount.com'
 }
 print(json.dumps(resp, indent=2))
 "
+    echo -e "  ${BOLD}${YELLOW}▓▓▓ END OF CANNED SAMPLE ▓▓▓${RESET}"
   fi
-
-  echo
-  echo -e "  ${GREEN}✓ Machine Key:${RESET} HTTP 200 OK"
-  echo -e "  ${RED}✖ Human Key:${RESET}   ${BOLD}${RED}HTTP 403 PERMISSION_DENIED${RESET} (Enforced by Cloud IAM, not code)"
 
   paso "The operator signs from their own machine and commits to Firestore:"
   python3 src/decidir_como_persona.py PET-002 descartada 2>&1 | limpio | tail -3
