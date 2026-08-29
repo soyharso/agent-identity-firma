@@ -19,21 +19,25 @@ The identity should feel like a precise developer tool, not a security vendor or
 - On a light background, place the primary lockup inside a dark rectangle rather than changing
   the blue/green relationships.
 
-## Color tokens
+## Color tokens (Updated Palette)
 
 | Token | Hex | Use |
 |---|---|---|
-| `ink` | `#0B1020` | Main background, title cards |
-| `surface` | `#151D33` | Panels, code blocks |
-| `text` | `#F8FAFC` | Primary text |
-| `muted` | `#A8B3C7` | Captions and secondary labels |
-| `agent-blue` | `#4285F4` | Machine path and Gemini/Cloud path |
-| `agent-blue-soft` | `#8AB4F8` | Links and secondary highlights |
-| `verified-green` | `#34A853` | Verified signatures and successful checks |
-| `pause-amber` | `#F9AB00` | Human handoff and paused state |
-| `denied-red` | `#EA4335` | IAM denial only |
+| `obsidian-navy` | `#06111F` | Fondo principal y sensación de confianza. |
+| `deep-harbor` | `#0B2940` | Superficies, bloques y contraste profundo. |
+| `electric-cyan` | `#27E6D2` | Firma criptográfica y señal primaria. |
+| `agent-blue` | `#4B6BFF` | Acciones y conexiones entre inteligencias. |
+| `trust-violet` | `#8D72FF` | Consejo multiagente y capa secundaria. |
+| `ice` | `#E9FFFB` | Texto principal y máxima claridad. |
+| `slate` | `#93A8B8` | Metadatos y texto secundario. |
+| `signal-coral` | `#FF6B6B` | Alertas y excepciones puntuales. |
 
-Use red sparingly. A page dominated by red looks like a breach demo; one red `403` is evidence.
+**Combinaciones recomendadas:**
+- **Base segura:** Obsidian Navy + Ice
+- **Señal verificada:** Obsidian Navy + Electric Cyan
+- **Consejo multiagente:** Deep Harbor + Agent Blue + Trust Violet
+
+*(Nota: Reemplaza o complementa los tokens heredados anteriores)*
 
 ## Typography
 
