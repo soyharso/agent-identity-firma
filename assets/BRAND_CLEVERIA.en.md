@@ -10,9 +10,9 @@ The identity should feel like a precise developer tool, not a security vendor or
 
 ## Logo usage
 
-- Primary lockup: `brand/cleveria-logo.svg` on `#06111F` (Obsidian Navy).
-- App/favicon mark: `brand/cleveria-mark.svg`.
-- Full-colour raster, for slides and video: `brand/cleveria_logo.png`.
+- Primary lockup: `assets/cleveria-logo.svg` on `#06111F` (Obsidian Navy).
+- App/favicon mark: `assets/cleveria-mark.svg`.
+- Full-colour raster, for slides and video: `assets/cleveria_logo.png`.
 - Clear space: at least the height of the green node on every side.
 - Minimum lockup width: 180 px digital, 35 mm print.
 - Use the SVG source; do not redraw, stretch, add shadows, or place it over busy screenshots.
