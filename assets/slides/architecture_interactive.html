@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cleveria — Interactive Fleet Architecture</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #151e2e;
+      --border: #334155;
+      --cyan: #38bdf8;
+      --blue: #0284c7;
+      --green: #4ade80;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 2rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    
+    .container { max-width: 1300px; width: 100%; background: #0f172a; border: 2px solid var(--border); border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+    
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+    .title h1 { font-size: 2rem; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+    .title p { color: var(--cyan); font-size: 1.1rem; font-weight: 500; margin-top: 4px; }
+    .badge { background: #1e293b; border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; color: var(--cyan); }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; position: relative; }
+    
+    .column { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .col-header { font-size: 1rem; font-weight: 800; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
+    
+    .node { background: #0b1120; border: 1.5px solid var(--border); border-radius: 10px; padding: 1rem; transition: all 0.3s ease; position: relative; }
+    .node.active { border-color: var(--cyan); box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+    .node.denied { border-color: var(--red); box-shadow: 0 0 15px rgba(248, 113, 113, 0.4); }
+    .node.success { border-color: var(--green); box-shadow: 0 0 15px rgba(74, 222, 128, 0.3); }
+
+    .node-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .node-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+    .tag { font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+    .tag-blue { background: var(--blue); color: #fff; }
+    .tag-yellow { background: var(--yellow); color: #000; }
+    .tag-red { background: var(--red); color: #000; }
+    .tag-green { background: var(--green); color: #000; }
+
+    .interactive-bar { margin-top: 2rem; background: #1e293b; border-radius: 12px; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
+    .btn { background: var(--blue); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn:hover { background: #0369a1; transform: translateY(-1px); }
+    .status-text { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">
+        <h1>CLEVERIA FLEET ENGINE</h1>
+        <p>Cryptographic Authority Boundary &amp; Scoped Execution on Google Cloud</p>
+      </div>
+      <div class="badge">THE FORTIFIED ENTERPRISE FLEET</div>
+    </header>
+
+    <div class="grid">
+      <!-- Col 1: Ingestion & Registry -->
+      <div class="column">
+        <div class="col-header">1. Registry &amp; Ingestion</div>
+        <div class="node active" id="node-scheduler">
+          <div class="node-title">Cloud Scheduler <span class="tag tag-blue">TRIGGER</span></div>
+          <div class="node-desc">Wakes fleet every 15 min with OIDC identity (sa-temporizador).</div>
+        </div>
+        <div class="node" id="node-cards">
+          <div class="node-title">Agent Cards Catalog <span class="tag tag-blue">REGISTRY</span></div>
+          <div class="node-desc">Versioned cards generated from directorio.json (agente-curador, agente-comercial).</div>
+        </div>
+        <div class="node" id="node-voice">
+          <div class="node-title">Voice / WhatsApp <span class="tag tag-yellow">MULTIMODAL</span></div>
+          <div class="node-desc">Speech-to-Text transducer converts audio into data without expanding authority.</div>
+        </div>
+      </div>
+
+      <!-- Col 2: ADK Routing & Dual Models -->
+      <div class="column">
+        <div class="col-header">2. ADK Runtime &amp; Safety</div>
+        <div class="node" id="node-fence">
+          <div class="node-title">Semantic Fence <span class="tag tag-yellow">INJECTION NET</span></div>
+          <div class="node-desc">gemini-embedding-001 (Vertex AI). Can only demand human caution, never grant authority.</div>
+        </div>
+        <div class="node active" id="node-gemini">
+          <div class="node-title">Gemini 3.6 Flash <span class="tag tag-blue">ADJUDICATION</span></div>
+          <div class="node-desc">The ONLY deciding model. Evaluates evidence and proposes task state.</div>
+        </div>
+        <div class="node" id="node-router">
+          <div class="node-title">Deterministic Router <span class="tag tag-green">6 FUNCTIONS</span></div>
+          <div class="node-desc">Takes MIN(model, ceiling). Routes proven evidence to Machine Sign; pauses on liability.</div>
+        </div>
+      </div>
+
+      <!-- Col 3: Cloud KMS & Trust Anchor -->
+      <div class="column">
+        <div class="col-header">3. Cloud Boundary &amp; Audit</div>
+        <div class="node success" id="node-kms-agent">
+          <div class="node-title">clave-agente (MAQ) <span class="tag tag-green">HTTP 200 OK</span></div>
+          <div class="node-desc">Cloud KMS allows sa-agente-curador to sign [cerrada, abierta].</div>
+        </div>
+        <div class="node denied" id="node-kms-human">
+          <div class="node-title">clave-humano (HUM) <span class="tag tag-red">HTTP 403 DENIED</span></div>
+          <div class="node-desc">Cloud IAM strictly denies machine attempts. "It's not that the agent won't; it can't."</div>
+        </div>
+        <div class="node" id="node-verifier">
+          <div class="node-title">RFC 8785 Verifier <span class="tag tag-blue">TRUST ANCHOR</span></div>
+          <div class="node-desc">100% Offline pure verification. Zero cloud credentials required to audit signatures.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="interactive-bar">
+      <div class="status-text" id="sim-status">System Status: Fleet Idle • Ready for execution</div>
+      <button class="btn" onclick="runSimulation()">Trigger Cloud Run Simulation</button>
+    </div>
+  </div>
+
+  <script>
+    function runSimulation() {
+      const status = document.getElementById('sim-status');
+      status.innerHTML = '<span style="color: #38bdf8;">⚡ Cloud Scheduler triggered... Gemini adjudicating evidence...</span>';
+      
+      setTimeout(() => {
+        status.innerHTML = '<span style="color: #fbbf24;">⏸️ Judgement detected in PET-002: Workflow paused for Human Signature.</span>';
+      }, 1200);
+
+      setTimeout(() => {
+        status.innerHTML = '<span style="color: #f87171;">🚫 Machine attempted clave-humano: HTTP 403 PERMISSION_DENIED (IAM Enforced).</span>';
+      }, 2500);
+
+      setTimeout(() => {
+        status.innerHTML = '<span style="color: #4ade80;">✓ Human signed from terminal • RFC 8785 verified • Firestore committed.</span>';
+      }, 3800);
+    }
+  </script>
+</body>
+</html>
