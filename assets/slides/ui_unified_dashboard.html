@@ -3,119 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cleveria — Unified Fleet Command</title>
+    <title>Cleveria Identity — Liability Audit Ledger</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #06111F; color: #E9FFFB; margin: 0; padding: 20px; }
-        .header { margin-bottom: 20px; border-bottom: 1px solid #0B2940; padding-bottom: 10px; }
-        .header h1 { color: #E9FFFB; margin: 0; font-size: 1.5rem; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .panel { background: #0B2940; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        h2 { color: #27E6D2; font-size: 1.2rem; margin-top: 0; display: flex; justify-content: space-between; }
-        .audit-row { background: #06111F; padding: 15px; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #93A8B8; font-size: 0.9rem; }
-        .audit-row.ok { border-left-color: #27E6D2; }
-        .audit-row.denied { border-left-color: #FF6B6B; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; background: #4B6BFF; color: white; }
-        .badge.human { background: #8D72FF; }
-        .badge.fail { background: #FF6B6B; }
-        .hash-str { font-family: monospace; color: #93A8B8; font-size: 0.8rem; word-break: break-all; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #151D33; }
-        th { color: #93A8B8; }
-        .btn { background: #4B6BFF; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #06111F; color: #E9FFFB; margin: 0; padding: 30px; }
+        .header { margin-bottom: 30px; border-bottom: 1px solid #0B2940; padding-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { color: #E9FFFB; margin: 0; font-size: 1.6rem; font-weight: 600; display: flex; align-items: center; gap: 15px; }
+        .header img { height: 35px; }
+        .subtitle { color: #93A8B8; font-size: 0.9rem; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        
+        .dashboard { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        .panel { background: #0B2940; padding: 25px; border-radius: 12px; }
+        h2 { color: #27E6D2; font-size: 1.2rem; margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #151D33; padding-bottom: 15px; }
+        
+        /* Expediente styling */
+        .expediente { background: #06111F; border: 1px solid #151D33; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+        .exp-header { background: #151D33; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .exp-id { font-weight: 700; font-size: 1.1rem; color: #E9FFFB; }
+        .exp-asunto { color: #93A8B8; font-size: 0.9rem; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; }
+        .exp-padre { font-size: 0.8rem; color: #8D72FF; font-weight: bold; margin-left: 10px; }
+        
+        /* History styling */
+        .history-list { padding: 15px 20px; display: flex; flex-direction: column; gap: 12px; }
+        .history-item { padding: 12px; border-radius: 6px; border-left: 4px solid #93A8B8; font-size: 0.85rem; background: rgba(11, 41, 64, 0.5); position: relative; }
+        .history-item.ok-maquina { border-left-color: #4B6BFF; }
+        .history-item.ok-humano { border-left-color: #27E6D2; }
+        .history-item.rechazado { border-left-color: #FF6B6B; background: rgba(255, 107, 107, 0.1); }
+        
+        .hist-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .hist-time { color: #93A8B8; font-family: monospace; }
+        
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+        .badge.verdict-ok { background: #27E6D2; color: #06111F; }
+        .badge.verdict-reject { background: #FF6B6B; color: white; }
+        .badge.verdict-pending { background: #93A8B8; color: #06111F; }
+        
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; color: #E9FFFB; }
+        .meta-label { color: #93A8B8; font-size: 0.75rem; text-transform: uppercase; }
+        .hash-str { font-family: monospace; color: #4B6BFF; margin-top: 8px; word-break: break-all; font-size: 0.8rem; }
+        
+        /* Pruebas table */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #151D33; }
+        th { color: #93A8B8; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+        .pass { color: #27E6D2; font-weight: bold; }
+        .fail { color: #FF6B6B; font-weight: bold; }
+        
+        .btn { background: #4B6BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
         .btn:hover { background: #3b5bdb; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Cleveria Identity — Liability Audit Ledger</h1>
-        <p style="color: #93A8B8; font-size: 0.9rem; margin: 5px 0 0 0;">LIVE TELEMETRY FROM CLOUD KMS & OFFLINE VERIFIER</p>
-    </div>
-
-    <div style="margin-bottom: 20px;">
+        <div>
+            <h1><img src="/ui/cleveria-logo.svg" alt="Cleveria Logo" onerror="this.style.display='none'"> Cleveria Identity — Liability Audit Ledger</h1>
+            <div class="subtitle">LIVE TELEMETRY FROM CLOUD KMS & OFFLINE VERIFIER</div>
+        </div>
         <button class="btn" onclick="fetchData()">🔄 Sync Ledger Data</button>
     </div>
 
     <div class="dashboard">
-        <!-- FIRMAS GRAFO -->
+        <!-- EXPEDIENTES (FIRMÁ GRAFO) -->
         <div class="panel">
-            <h2>Cryptographic Ledger (firmas_grafo.jsonl) <span class="badge" id="ledger-count">0</span></h2>
-            <div id="ledger-container">Loading...</div>
+            <h2>Expedientes Auditables <span id="exp-count" style="color:#93A8B8;font-size:1rem;">0</span></h2>
+            <div id="ledger-container">Cargando telemetría...</div>
         </div>
 
         <!-- PRUEBAS DE RUPTURA -->
         <div class="panel">
-            <h2>Integrity Verifier (pruebas_de_ruptura.json) <span class="badge human" id="test-date">...</span></h2>
+            <h2>Integrity Verifier <span id="test-date" style="color:#93A8B8;font-size:0.8rem;">...</span></h2>
             <table>
                 <thead>
                     <tr>
                         <th>Test Case</th>
                         <th>Rompe</th>
                         <th>Verdict</th>
-                        <th>Time</th>
                     </tr>
                 </thead>
                 <tbody id="tests-container">
-                    <tr><td colspan="4">Loading...</td></tr>
+                    <tr><td colspan="3">Cargando...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
     <script>
+        function formatTime(ts) {
+            const d = new Date(ts * 1000);
+            return d.toLocaleTimeString('en-US', {hour12:false}) + '.' + d.getMilliseconds().toString().padStart(3,'0');
+        }
+
         async function fetchData() {
-            document.getElementById('ledger-container').innerHTML = 'Syncing...';
-            document.getElementById('tests-container').innerHTML = '<tr><td colspan="4">Syncing...</td></tr>';
+            document.getElementById('ledger-container').innerHTML = 'Sincronizando...';
             try {
                 const res = await fetch('/api/auditoria_datos');
                 const data = await res.json();
                 
-                // Render Ledger
+                // Agrupar firmas por expediente (peticion_id)
+                const expedientes = {};
+                data.firmas.forEach(f => {
+                    const pid = f.peticion_id;
+                    if (!expedientes[pid]) expedientes[pid] = { id: pid, historia: [] };
+                    expedientes[pid].historia.push(f);
+                });
+
                 const ledgerEl = document.getElementById('ledger-container');
                 ledgerEl.innerHTML = '';
-                document.getElementById('ledger-count').textContent = data.firmas.length;
                 
-                data.firmas.reverse().forEach(f => {
-                    const statusClass = f.veredicto === 'OK' ? 'ok' : 'denied';
-                    const badgeClass = f.sobre && f.sobre.tipo_firmante === 'HUMANO' ? 'badge human' : 'badge';
-                    const failClass = f.veredicto !== 'OK' ? 'badge fail' : '';
+                // Ordenar expedientes por la firma más reciente
+                const expArray = Object.values(expedientes).sort((a, b) => {
+                    const lastA = Math.max(...a.historia.map(h => h.ts));
+                    const lastB = Math.max(...b.historia.map(h => h.ts));
+                    return lastB - lastA;
+                });
+
+                document.getElementById('exp-count').textContent = `${expArray.length} expedientes`;
+
+                expArray.forEach(exp => {
+                    // Ordenar historia cronológicamente (más reciente arriba)
+                    exp.historia.sort((a, b) => b.ts - a.ts);
                     
-                    const div = document.createElement('div');
-                    div.className = `audit-row ${statusClass}`;
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                            <strong>${f.peticion_id}</strong>
-                            <span class="${failClass || badgeClass}">${f.veredicto}</span>
-                        </div>
-                        <div><strong>Propuesto por:</strong> ${f.sobre ? f.sobre.origen || 'sistema' : 'N/A'}</div>
-                        <div><strong>Aprobado por:</strong> ${f.sobre ? f.sobre.curado_por || 'N/A' : 'N/A'}</div>
-                        <div><strong>Veredicto Offline:</strong> ${f.veredicto} ${f.dictamen ? `(${f.dictamen})` : ''}</div>
-                        ${f.sobre ? `<div class="hash-str" style="margin-top:5px;">Hash: ${f.sobre.hash_contenido}</div>` : ''}
+                    // Texto del asunto
+                    let asunto = data.peticiones && data.peticiones[exp.id] && data.peticiones[exp.id].texto 
+                                 ? data.peticiones[exp.id].texto 
+                                 : "Asunto no disponible en peticiones.json";
+                    if (asunto.length > 90) asunto = asunto.substring(0, 90) + '...';
+
+                    // Encontrar si hay un padre en la historia
+                    let padre = null;
+                    const conPadre = exp.historia.find(h => h.sobre && h.sobre.peticion_padre);
+                    if (conPadre) padre = conPadre.sobre.peticion_padre;
+
+                    let html = `
+                        <div class="expediente">
+                            <div class="exp-header">
+                                <div>
+                                    <div class="exp-id">${exp.id} ${padre ? `<span class="exp-padre">↳ Anidado de ${padre}</span>` : ''}</div>
+                                    <div class="exp-asunto">"${asunto}"</div>
+                                </div>
+                            </div>
+                            <div class="history-list">
                     `;
-                    ledgerEl.appendChild(div);
+
+                    exp.historia.forEach(h => {
+                        const isOk = h.veredicto === 'OK';
+                        const isReject = !isOk && h.veredicto !== 'SIN_FIRMA';
+                        
+                        let tipoFirma = 'Desconocido';
+                        if (h.sobre) tipoFirma = h.sobre.tipo_firmante;
+
+                        let styleClass = '';
+                        if (isReject) styleClass = 'rechazado';
+                        else if (isOk && tipoFirma === 'HUMANO') styleClass = 'ok-humano';
+                        else if (isOk) styleClass = 'ok-maquina';
+
+                        let badgeClass = isReject ? 'verdict-reject' : (isOk ? 'verdict-ok' : 'verdict-pending');
+
+                        html += `
+                            <div class="history-item ${styleClass}">
+                                <div class="hist-top">
+                                    <span class="hist-time">${formatTime(h.ts)}</span>
+                                    <span class="badge ${badgeClass}">${h.veredicto}</span>
+                                </div>
+                                <div class="meta-grid">
+                                    <div><span class="meta-label">Propuesto por:</span> ${h.sobre && h.sobre.emisor ? h.sobre.emisor : (h.sobre && h.sobre.origen ? h.sobre.origen : 'sistema')}</div>
+                                    <div><span class="meta-label">Aprobado por:</span> ${h.sobre && h.sobre.sobre_quien ? h.sobre.sobre_quien : (h.sobre && h.sobre.curado_por ? h.sobre.curado_por : 'N/A')}</div>
+                                    <div><span class="meta-label">Tipo Firma:</span> ${tipoFirma}</div>
+                                    <div><span class="meta-label">Estado:</span> ${h.dictamen || 'N/A'}</div>
+                                </div>
+                                ${h.sobre && h.sobre.hash_contenido ? `<div class="hash-str">Hash: ${h.sobre.hash_contenido}</div>` : ''}
+                            </div>
+                        `;
+                    });
+
+                    html += `</div></div>`;
+                    ledgerEl.innerHTML += html;
                 });
 
                 // Render Tests
                 const testsEl = document.getElementById('tests-container');
                 testsEl.innerHTML = '';
-                document.getElementById('test-date').textContent = data.pruebas_fecha;
+                document.getElementById('test-date').textContent = data.pruebas_fecha || 'Sin fecha';
                 
-                data.pruebas_tests.forEach(t => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${t.nombre}</td>
-                        <td style="color:#93A8B8; font-size:0.8rem;">${t.rompe}</td>
-                        <td style="color: ${t.ok ? '#27E6D2' : '#FF6B6B'}"><strong>${t.ok ? 'PASS' : 'FAIL'}</strong></td>
-                        <td>${t.segundos}s</td>
-                    `;
-                    testsEl.appendChild(tr);
-                });
+                if (data.pruebas_tests && data.pruebas_tests.length > 0) {
+                    data.pruebas_tests.forEach(t => {
+                        const isPass = t.ok;
+                        testsEl.innerHTML += `
+                            <tr>
+                                <td>${t.nombre}</td>
+                                <td style="color:#93A8B8; font-size:0.8rem;">${t.rompe}</td>
+                                <td class="${isPass ? 'pass' : 'fail'}">${isPass ? 'PASS' : 'FAIL'}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    testsEl.innerHTML = '<tr><td colspan="3">No hay pruebas de ruptura disponibles</td></tr>';
+                }
 
             } catch(e) {
                 document.getElementById('ledger-container').innerHTML = '<span style="color:#FF6B6B">Network Error fetching /api/auditoria_datos</span>';
             }
         }
         
-        // Auto-fetch on load
         fetchData();
     </script>
 </body>
