@@ -201,6 +201,12 @@ que el trabajo se reanuda solo.
 >
 > No hay que tocar nada ni apagar nada. **Siembra y arranca entre el :01 y el :11**, y el
 > despertador no se cruza.
+>
+> **Y NO SE TE OCURRA PAUSARLO.** Es la solución que parece obvia y **rompe la toma 3**: `demo.sh`
+> lo dispara a mano dos veces durante esa toma, y con el trabajo pausado `gcloud scheduler jobs
+> run` devuelve `FAILED_PRECONDITION: Job.state must be ENABLED`. Perderías la toma justo en el
+> momento en que se demuestra que el trabajo se reanuda solo. La ventana del reloj no es una
+> comodidad: es la única mitigación que no rompe nada.
 
 **Antes de pulsar grabar** (fuera de cámara, en otra terminal):
 
