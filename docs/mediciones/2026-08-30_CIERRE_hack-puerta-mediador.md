@@ -102,9 +102,14 @@ mide: el primer sobre escribe, el segundo no reescribe la firma y el registro no
 
 ## Las pruebas
 
-`./pruebas_de_ruptura.sh` — 13/13 en verde, 147 s, invocación estándar, 2026-08-30 16:45:46 -05.
-Eran doce y ahora son trece: **ninguna de las doce anteriores se debilitó ni se retiró**, se
-añadió una. Cada una intenta romper una promesa concreta del sistema y falla al intentarlo.
+`./pruebas_de_ruptura.sh` — **16/16 en verde**, 195 s, invocación estándar, 2026-08-30
+17:11:07 -05, **después de fusionar `origin/main`**. Eran doce cuando empezó este frente.
+Ninguna de las doce se debilitó ni se retiró. Se añadió una aquí, `write-gate`, y tres
+llegaron de las dos ramas hermanas al fusionar. Cada prueba intenta romper una promesa
+concreta del sistema y falla al intentarlo.
+
+Antes de fusionar, este frente solo tenía trece delante: 13/13 en verde, 147 s, a las
+16:45:46. Las dos cifras están en el registro crudo (M8 y M13).
 
 | # | Prueba | Qué rompe |
 |---|---|---|
@@ -120,7 +125,10 @@ añadió una. Cada una intenta romper una promesa concreta del sistema y falla a
 | 10 | semantic-fence | 9/9 cazados, 2 falsos positivos declarados |
 | 11 | durability | 5 pasos, 5 procesos, sobrevive a una muerte abrupta |
 | 12 | co-signer | una segunda familia de modelos tiene que coincidir; su silencio cierra la puerta |
-| **13** | **write-gate** | **7 cierres falsos rechazados; el registro no cambia** |
+| 13 | ledger-chain | borrar una fila del libro deja de ser indetectable *(de `hack-libro-encadenado`)* |
+| 14 | ledger-order | reordenar dos filas, sin tocar ninguna firma, también se caza *(de `hack-libro-encadenado`)* |
+| 15 | double-fence | dos modelos de parecidos; cualquiera de los dos puede exigir una persona *(de `hack-segundo-cerco`)* |
+| **16** | **write-gate** | **7 cierres falsos rechazados; el registro no cambia** *(de este frente)* |
 
 La decimotercera, con detalle (`python3 agente/killtest_puerta.py`):
 
@@ -210,14 +218,13 @@ con el temporizador activo: 13/13. O sea que el banco pasa igual — pero si un 
   `⚠ still not ready after 90s` amarillo en cámara. **Es anterior a este frente**: la ruta de la
   pausa tampoco llegaba antes al registro. Y `demo.sh` no es de este frente. **Decisión del
   operador.**
-- **El libro en disco sigue escribiéndose con `FIRMAS.open("a")`.** El frente
-  `hack-libro-encadenado` migró ese punto a `libro_cadena.anexar(FIRMAS, fila)` en su propia rama;
-  `src/libro_cadena.py` no existe en esta, así que importarlo aquí habría tumbado el banco entero.
-  Regla de conflicto acordada con ese frente y confirmada por él palabra por palabra: **se queda el
-  cuerpo de `registrar()` de este frente. Dentro, la escritura del libro en disco es
-  `libro_cadena.anexar(FIRMAS, fila)`, sin `FIRMAS.parent.mkdir(...)`. La aplica quien fusione
-  segundo.** El orden importa: la escritura del libro va **antes** de la bifurcación, para que
-  quede rastro también de lo que la puerta rechazó.
+- **El libro encadenado: RESUELTO, ya no es un pendiente.** Cuando este frente iba a cerrar,
+  `origin/main` ya se había movido: las dos ramas hermanas fusionaron, y con ellas llegó
+  `src/libro_cadena.py`. Así que este frente resultó ser **el segundo en fusionar**, y le tocó
+  aplicar la regla que los dos habíamos acordado por escrito. Dice esto: se queda el cuerpo de
+  `registrar()` de este frente. Dentro, el libro en disco se escribe con
+  `libro_cadena.anexar(FIRMAS, fila)`, sin `FIRMAS.parent.mkdir(...)`. Hecho, y con el orden que exigía la regla: el libro se escribe
+  **antes** de la bifurcación, para que quede rastro también de lo que la puerta rechazó.
 
 ## Palancas del método, con su rastro
 
@@ -265,3 +272,19 @@ PASA
   código de salida de trece pruebas, la respuesta de la nube, y el contenido del documento antes
   y después. Donde hay oráculo, la medición de la casa dio 3,0× de coste y 0 errores cazados por
   la disidencia. Se verificó con el oráculo y se cerró.
+
+## La fusión con `origin/main`, que llegó al final
+
+Este frente salió de `b415034`, la etiqueta `entrega-hackathon-preflota`, y no de la punta de
+`origin/main`. Mientras trabajaba, las dos ramas hermanas fusionaron y `origin/main` avanzó once
+commits. **Este frente fue el segundo en llegar**, y le tocó resolver los dos choques:
+
+| Archivo | Choque | Cómo se resolvió |
+|---|---|---|
+| `agente/grafo.py` | las dos ramas reescribieron `registrar()` | la regla acordada: el cuerpo de este frente, con `libro_cadena.anexar` dentro |
+| `pruebas_de_ruptura.sh` | las dos añadieron pruebas al final | se quedan todas, y `write-gate` va la última |
+
+Después de fusionar se volvió a construir la imagen y se volvieron a desplegar **los dos**
+servicios con el código fusionado. Y se volvió a medir todo: 16/16 en el banco, `demo.sh` 1 a 5
+en verde, y la puerta contestando `403 PERMISSION_DENIED` al agente desplegado. Las cifras de
+antes de la fusión siguen en el registro crudo: no se borran, se fechan.
