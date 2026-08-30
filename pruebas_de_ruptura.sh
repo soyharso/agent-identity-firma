@@ -34,6 +34,7 @@ PRUEBAS=(
   "co-signer:agente/killtest_cofirmante.py:a second model family must agree; its silence closes the door"
   "ledger-chain:agente/killtest_libro_encadenado.py:deleting a row from the ledger is no longer undetectable"
   "ledger-order:agente/killtest_libro_reordenado.py:reordering two rows, touching no signature, is caught too"
+  "double-fence:agente/killtest_cerco_doble.py:two embedding models, either one can demand a human; false positives still 2"
 )
 
 resumen() {
