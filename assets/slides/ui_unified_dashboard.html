@@ -1,210 +1,202 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cleveria Identity — Liability Audit Ledger</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #06111F; color: #E9FFFB; margin: 0; padding: 30px; }
-        .header { margin-bottom: 30px; border-bottom: 1px solid #0B2940; padding-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
-        .header h1 { color: #E9FFFB; margin: 0; font-size: 1.6rem; font-weight: 600; display: flex; align-items: center; gap: 15px; }
-        .header img { height: 35px; }
-        .subtitle { color: #93A8B8; font-size: 0.9rem; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        
-        .dashboard { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
-        .panel { background: #0B2940; padding: 25px; border-radius: 12px; }
-        h2 { color: #27E6D2; font-size: 1.2rem; margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #151D33; padding-bottom: 15px; }
-        
-        /* Expediente styling */
-        .expediente { background: #06111F; border: 1px solid #151D33; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
-        .exp-header { background: #151D33; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .exp-id { font-weight: 700; font-size: 1.1rem; color: #E9FFFB; }
-        .exp-asunto { color: #93A8B8; font-size: 0.9rem; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; }
-        .exp-padre { font-size: 0.8rem; color: #8D72FF; font-weight: bold; margin-left: 10px; }
-        
-        /* History styling */
-        .history-list { padding: 15px 20px; display: flex; flex-direction: column; gap: 12px; }
-        .history-item { padding: 12px; border-radius: 6px; border-left: 4px solid #93A8B8; font-size: 0.85rem; background: rgba(11, 41, 64, 0.5); position: relative; }
-        .history-item.ok-maquina { border-left-color: #4B6BFF; }
-        .history-item.ok-humano { border-left-color: #27E6D2; }
-        .history-item.rechazado { border-left-color: #FF6B6B; background: rgba(255, 107, 107, 0.1); }
-        
-        .hist-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
-        .hist-time { color: #93A8B8; font-family: monospace; }
-        
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
-        .badge.verdict-ok { background: #27E6D2; color: #06111F; }
-        .badge.verdict-reject { background: #FF6B6B; color: white; }
-        .badge.verdict-pending { background: #93A8B8; color: #06111F; }
-        
-        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; color: #E9FFFB; }
-        .meta-label { color: #93A8B8; font-size: 0.75rem; text-transform: uppercase; }
-        .hash-str { font-family: monospace; color: #4B6BFF; margin-top: 8px; word-break: break-all; font-size: 0.8rem; }
-        
-        /* Pruebas table */
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #151D33; }
-        th { color: #93A8B8; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
-        .pass { color: #27E6D2; font-weight: bold; }
-        .fail { color: #FF6B6B; font-weight: bold; }
-        
-        .btn { background: #4B6BFF; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; }
-        .btn:hover { background: #3b5bdb; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cleveria — Authority Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Paleta CLEVERIA. Esta pantalla es la capa de agentes, no el canal del cliente: el portal
+   lleva la marca de Qnowa, clara y azul, y aquí el fondo se vuelve oscuro. El salto entre las
+   dos cuenta la historia sin narrarla — delante, atención al cliente; detrás, la frontera. */
+:root{
+  --navy:#06111F; --harbor:#0B2940; --cyan:#27E6D2; --agent:#4B6BFF;
+  --violet:#8D72FF; --ice:#E9FFFB; --slate:#93A8B8; --coral:#FF6B6B;
+  --linea:rgba(147,168,184,.18);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--navy);color:var(--ice);font:14px/1.5 Inter,system-ui,sans-serif}
+.top{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--linea);
+     background:linear-gradient(180deg,rgba(11,41,64,.85),transparent)}
+.top img{height:24px}
+.top h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px}
+.top .sub{font-size:11.5px;color:var(--slate)}
+.vivo{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--slate)}
+.pulso{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 rgba(39,230,210,.7);
+       animation:p 2s infinite}
+@keyframes p{70%{box-shadow:0 0 0 9px rgba(39,230,210,0)}}
+button.ref{background:rgba(75,107,255,.16);border:1px solid rgba(75,107,255,.5);color:var(--ice);
+           font:600 11.5px Inter,sans-serif;padding:7px 13px;border-radius:8px;cursor:pointer}
+button.ref:hover{background:rgba(75,107,255,.32)}
+.wrap{display:grid;grid-template-columns:1fr 348px;gap:18px;padding:18px 22px;align-items:start}
+@media(max-width:1080px){.wrap{grid-template-columns:1fr}}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--slate);margin:0 0 4px}
+.ayuda{font-size:11.5px;color:var(--slate);margin:0 0 12px;max-width:74ch}
+.exp{background:var(--harbor);border:1px solid var(--linea);border-radius:13px;padding:14px 16px;margin-bottom:12px}
+.exp.espera{border-left:3px solid var(--violet)}
+.exp.rechazo{border-left:3px solid var(--coral)}
+.exp.cerrado{border-left:3px solid var(--cyan)}
+.cab{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pid{font:600 13px JetBrains Mono,monospace;color:var(--cyan)}
+.asunto{flex:1;min-width:200px;font-size:13.5px}
+.de{font-size:11px;color:var(--slate)}
+.tag{font:600 10px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;
+     border-radius:999px;white-space:nowrap}
+.t-maq{background:rgba(75,107,255,.18);color:#A9BCFF;border:1px solid rgba(75,107,255,.45)}
+.t-hum{background:rgba(39,230,210,.14);color:var(--cyan);border:1px solid rgba(39,230,210,.4)}
+.t-esp{background:rgba(141,114,255,.16);color:#C3B4FF;border:1px solid rgba(141,114,255,.45)}
+.t-rec{background:rgba(255,107,107,.14);color:var(--coral);border:1px solid rgba(255,107,107,.45)}
+.padre{background:rgba(141,114,255,.14);color:#C3B4FF;border:1px solid rgba(141,114,255,.4);
+       font:600 10px Inter,sans-serif;padding:3px 8px;border-radius:999px}
+.hist{margin-top:11px;border-top:1px solid var(--linea);padding-top:9px;display:flex;flex-direction:column;gap:7px}
+.ev{display:grid;grid-template-columns:66px 128px 1fr auto;gap:10px;align-items:center;font-size:12px}
+.ev .h{font:400 11px JetBrains Mono,monospace;color:var(--slate)}
+.ev .quien{font-size:11.5px;color:var(--slate)}
+.ev .hash{font:400 10.5px JetBrains Mono,monospace;color:var(--slate);opacity:.75}
+.lado{background:var(--harbor);border:1px solid var(--linea);border-radius:13px;padding:15px 16px;margin-bottom:14px}
+.lado h3{margin:0 0 3px;font-size:12.5px;font-weight:600}
+.lado .cuando{font-size:11px;color:var(--slate);margin-bottom:11px}
+.pr{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:12px;border-top:1px solid var(--linea)}
+.pr:first-of-type{border-top:0}
+.pr .n{flex:1}
+.pr .s{font:400 10.5px JetBrains Mono,monospace;color:var(--slate)}
+.ok{color:var(--cyan)} .no{color:var(--coral)}
+.rompe{font-size:10.5px;color:var(--slate);padding:0 0 4px 26px;line-height:1.35}
+.vacio{color:var(--slate);font-size:12.5px;padding:14px 0}
+</style>
 </head>
 <body>
-    <div class="header">
-        <div>
-            <h1><img src="/ui/cleveria-logo.svg" alt="Cleveria Logo" onerror="this.style.display='none'"> Cleveria Identity — Liability Audit Ledger</h1>
-            <div class="subtitle">LIVE TELEMETRY FROM CLOUD KMS & OFFLINE VERIFIER</div>
-        </div>
-        <button class="btn" onclick="fetchData()">🔄 Sync Ledger Data</button>
+<div class="top">
+  <img src="/ui/cleveria-logo.svg" alt="Cleveria"
+       onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'Cleveria'}))">
+  <div>
+    <h1>Authority Ledger</h1>
+    <div class="sub">Who proposed it, who approved it, and every attempt that was refused</div>
+  </div>
+  <div class="vivo">
+    <span class="pulso"></span><span id="fuente">…</span>
+    <button class="ref" onclick="cargar()">Refresh</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <section>
+    <h2>Case queue</h2>
+    <p class="ayuda">One card per case, most recently touched first — the order the queue is
+       actually worked in. Under each case, its full history: every signature and every refused
+       attempt, with the time it happened and who was behind it.</p>
+    <div id="expedientes"><div class="vacio">Loading…</div></div>
+  </section>
+
+  <aside>
+    <div class="lado">
+      <h3>Break tests</h3>
+      <div class="cuando" id="corrida">—</div>
+      <div id="pruebas"></div>
     </div>
-
-    <div class="dashboard">
-        <!-- EXPEDIENTES (FIRMÁ GRAFO) -->
-        <div class="panel">
-            <h2>Expedientes Auditables <span id="exp-count" style="color:#93A8B8;font-size:1rem;">0</span></h2>
-            <div id="ledger-container">Cargando telemetría...</div>
-        </div>
-
-        <!-- PRUEBAS DE RUPTURA -->
-        <div class="panel">
-            <h2>Integrity Verifier <span id="test-date" style="color:#93A8B8;font-size:0.8rem;">...</span></h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Test Case</th>
-                        <th>Rompe</th>
-                        <th>Verdict</th>
-                    </tr>
-                </thead>
-                <tbody id="tests-container">
-                    <tr><td colspan="3">Cargando...</td></tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="lado">
+      <h3>Legend</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:9px">
+        <div><span class="tag t-maq">machine signed</span> <span class="de">evidence the agent can prove</span></div>
+        <div><span class="tag t-hum">human signed</span> <span class="de">judgement about a person</span></div>
+        <div><span class="tag t-esp">awaiting human</span> <span class="de">the flow stopped on purpose</span></div>
+        <div><span class="tag t-rec">refused</span> <span class="de">an attempt that did not pass</span></div>
+      </div>
     </div>
+  </aside>
+</div>
 
-    <script>
-        function formatTime(ts) {
-            const d = new Date(ts * 1000);
-            return d.toLocaleTimeString('en-US', {hour12:false}) + '.' + d.getMilliseconds().toString().padStart(3,'0');
-        }
+<script>
+// Todo lo que se pinta sale de /api/auditoria_datos. Si un dato no está, se deja vacío o se
+// dice que falta: nunca se rellena con un ejemplo. Un panel que inventa es indistinguible en
+// cámara de uno que mide, y este producto existe justamente para hacer visible esa diferencia.
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hora = ts => ts ? new Date(ts*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '—';
+const RECHAZOS = new Set(['CONTENIDO_ALTERADO','CONTEXTO_AJENO','ACTO_AJENO','ACTO_INCOMPLETO',
+                          'FUERA_DE_ALCANCE','RECHAZADO_SUPLANTACION','FIRMANTE_DESCONOCIDO',
+                          'SOBRE_INCOMPLETO','FIRMA_ILEGIBLE','ALGORITMO_INESPERADO']);
 
-        async function fetchData() {
-            document.getElementById('ledger-container').innerHTML = 'Sincronizando...';
-            try {
-                const res = await fetch('/api/auditoria_datos');
-                const data = await res.json();
-                
-                // Agrupar firmas por expediente (peticion_id)
-                const expedientes = {};
-                data.firmas.forEach(f => {
-                    const pid = f.peticion_id;
-                    if (!expedientes[pid]) expedientes[pid] = { id: pid, historia: [] };
-                    expedientes[pid].historia.push(f);
-                });
+async function cargar(){
+  let d;
+  try{ d = await (await fetch('/api/auditoria_datos')).json(); }
+  catch(e){ expedientes.innerHTML = '<div class="vacio">No response from the backend.</div>'; return; }
 
-                const ledgerEl = document.getElementById('ledger-container');
-                ledgerEl.innerHTML = '';
-                
-                // Ordenar expedientes por la firma más reciente
-                const expArray = Object.values(expedientes).sort((a, b) => {
-                    const lastA = Math.max(...a.historia.map(h => h.ts));
-                    const lastB = Math.max(...b.historia.map(h => h.ts));
-                    return lastB - lastA;
-                });
+  fuente.textContent = d.duradero ? 'Firestore · durable' : 'container disk · not durable';
+  fuente.style.color = d.duradero ? 'var(--cyan)' : 'var(--coral)';
 
-                document.getElementById('exp-count').textContent = `${expArray.length} expedientes`;
+  // Cada fila del libro es UNA operación. Se agrupan por expediente porque lo que se audita es
+  // el caso, no la fila: doce intentos sobre el mismo caso son una historia, no doce asuntos.
+  const peticiones = d.peticiones || {};
+  const porCaso = {};
+  for(const f of (d.firmas || [])){
+    const s = f.sobre || {};
+    const id = f.peticion_id || s.peticion_id || '—';
+    (porCaso[id] = porCaso[id] || []).push(f);
+  }
+  for(const id of Object.keys(peticiones)) porCaso[id] = porCaso[id] || [];
 
-                expArray.forEach(exp => {
-                    // Ordenar historia cronológicamente (más reciente arriba)
-                    exp.historia.sort((a, b) => b.ts - a.ts);
-                    
-                    // Texto del asunto
-                    let asunto = data.peticiones && data.peticiones[exp.id] && data.peticiones[exp.id].texto 
-                                 ? data.peticiones[exp.id].texto 
-                                 : "Asunto no disponible en peticiones.json";
-                    if (asunto.length > 90) asunto = asunto.substring(0, 90) + '...';
+  const casos = Object.entries(porCaso).map(([id, evs]) => {
+    evs.sort((a,b) => (b.ts||0) - (a.ts||0));
+    return {id, evs, ultimo: evs[0]?.ts || 0, pet: peticiones[id] || {}};
+  }).sort((a,b) => (b.ultimo - a.ultimo) || b.id.localeCompare(a.id));
 
-                    // Encontrar si hay un padre en la historia
-                    let padre = null;
-                    const conPadre = exp.historia.find(h => h.sobre && h.sobre.peticion_padre);
-                    if (conPadre) padre = conPadre.sobre.peticion_padre;
+  expedientes.innerHTML = casos.length ? casos.map(pinta).join('')
+    : '<div class="vacio">The queue is empty.</div>';
 
-                    let html = `
-                        <div class="expediente">
-                            <div class="exp-header">
-                                <div>
-                                    <div class="exp-id">${exp.id} ${padre ? `<span class="exp-padre">↳ Anidado de ${padre}</span>` : ''}</div>
-                                    <div class="exp-asunto">"${asunto}"</div>
-                                </div>
-                            </div>
-                            <div class="history-list">
-                    `;
+  corrida.textContent = d.pruebas_fecha
+    ? `last run ${esc(d.pruebas_fecha)}${d.pruebas_segundos ? ' · ' + d.pruebas_segundos + 's' : ''}`
+    : 'no run recorded';
+  const ps = d.pruebas_tests || [];
+  const verdes = ps.filter(p => p.ok).length;
+  pruebas.innerHTML = ps.length
+    ? `<div class="pr" style="font-weight:600"><span class="n">${verdes}/${ps.length} green</span></div>` +
+      ps.map(p => `<div class="pr"><span class="${p.ok?'ok':'no'}">${p.ok?'✓':'✗'}</span>
+         <span class="n">${esc(p.nombre)}</span><span class="s">${(p.segundos??0).toFixed(1)}s</span></div>
+         <div class="rompe">${esc(p.rompe||'')}</div>`).join('')
+    : '<div class="vacio">No run recorded. Run ./pruebas_de_ruptura.sh</div>';
+}
 
-                    exp.historia.forEach(h => {
-                        const isOk = h.veredicto === 'OK';
-                        const isReject = !isOk && h.veredicto !== 'SIN_FIRMA';
-                        
-                        let tipoFirma = 'Desconocido';
-                        if (h.sobre) tipoFirma = h.sobre.tipo_firmante;
+function pinta(c){
+  const rechazos = c.evs.filter(e => RECHAZOS.has(e.veredicto));
+  const ultimo = c.evs[0] || {};
+  const s0 = ultimo.sobre || {};
+  const espera = (ultimo.dictamen === 'exige_humano') || (!c.evs.length);
+  const clase = rechazos.length ? 'rechazo' : espera ? 'espera' : 'cerrado';
+  const etiqueta = rechazos.length ? '<span class="tag t-rec">refused attempt</span>'
+                 : espera ? '<span class="tag t-esp">awaiting human</span>'
+                 : (s0.tipo_firmante === 'HUMANO' ? '<span class="tag t-hum">human signed</span>'
+                                                  : '<span class="tag t-maq">machine signed</span>');
+  const asunto = c.pet.texto ? esc(String(c.pet.texto).slice(0,120))
+                             : '<i style="color:var(--slate)">no subject on file</i>';
+  const refPadre = c.pet.peticion_padre || s0.peticion_padre;
+  const padre = refPadre ? `<span class="padre">↳ from ${esc(refPadre)}</span>` : '';
 
-                        let styleClass = '';
-                        if (isReject) styleClass = 'rechazado';
-                        else if (isOk && tipoFirma === 'HUMANO') styleClass = 'ok-humano';
-                        else if (isOk) styleClass = 'ok-maquina';
+  const hist = c.evs.slice(0,6).map(e => {
+    const s = e.sobre || {};
+    const malo = RECHAZOS.has(e.veredicto);
+    const quien = s.emisor || s.curado_por || (s.tipo_firmante === 'HUMANO' ? 'person' : 'agent');
+    const aQuien = (s.sobre_quien && s.sobre_quien !== 'sin_declarar') ? ` → ${esc(s.sobre_quien)}` : '';
+    const h = String(s.hash_contenido || '').replace('sha256:','').slice(0,12);
+    const et = malo ? 't-rec' : (s.tipo_firmante === 'HUMANO' ? 't-hum' : 't-maq');
+    return `<div class="ev">
+      <span class="h">${hora(e.ts)}</span>
+      <span class="tag ${et}">${esc(malo ? e.veredicto : (e.dictamen || 'signed'))}</span>
+      <span class="quien">${esc(quien)}${aQuien}</span>
+      <span class="hash">${h || '—'}</span></div>`;
+  }).join('');
 
-                        let badgeClass = isReject ? 'verdict-reject' : (isOk ? 'verdict-ok' : 'verdict-pending');
+  const mas = c.evs.length > 6 ? `<div class="de" style="padding-left:76px">+${c.evs.length-6} earlier</div>` : '';
+  const origen = [c.pet.de ? 'from ' + esc(c.pet.de) : '', c.pet.origen ? 'via ' + esc(c.pet.origen) : '',
+                  `${c.evs.length} operation(s)`].filter(Boolean).join(' · ');
+  return `<div class="exp ${clase}">
+    <div class="cab"><span class="pid">${esc(c.id)}</span><span class="asunto">${asunto}</span>${padre}${etiqueta}</div>
+    <div class="de">${origen}</div>
+    <div class="hist">${hist || '<span class="vacio">No operation yet — this case is still waiting.</span>'}</div>
+    ${mas}</div>`;
+}
 
-                        html += `
-                            <div class="history-item ${styleClass}">
-                                <div class="hist-top">
-                                    <span class="hist-time">${formatTime(h.ts)}</span>
-                                    <span class="badge ${badgeClass}">${h.veredicto}</span>
-                                </div>
-                                <div class="meta-grid">
-                                    <div><span class="meta-label">Propuesto por:</span> ${h.sobre && h.sobre.emisor ? h.sobre.emisor : (h.sobre && h.sobre.origen ? h.sobre.origen : 'sistema')}</div>
-                                    <div><span class="meta-label">Aprobado por:</span> ${h.sobre && h.sobre.sobre_quien ? h.sobre.sobre_quien : (h.sobre && h.sobre.curado_por ? h.sobre.curado_por : 'N/A')}</div>
-                                    <div><span class="meta-label">Tipo Firma:</span> ${tipoFirma}</div>
-                                    <div><span class="meta-label">Estado:</span> ${h.dictamen || 'N/A'}</div>
-                                </div>
-                                ${h.sobre && h.sobre.hash_contenido ? `<div class="hash-str">Hash: ${h.sobre.hash_contenido}</div>` : ''}
-                            </div>
-                        `;
-                    });
-
-                    html += `</div></div>`;
-                    ledgerEl.innerHTML += html;
-                });
-
-                // Render Tests
-                const testsEl = document.getElementById('tests-container');
-                testsEl.innerHTML = '';
-                document.getElementById('test-date').textContent = data.pruebas_fecha || 'Sin fecha';
-                
-                if (data.pruebas_tests && data.pruebas_tests.length > 0) {
-                    data.pruebas_tests.forEach(t => {
-                        const isPass = t.ok;
-                        testsEl.innerHTML += `
-                            <tr>
-                                <td>${t.nombre}</td>
-                                <td style="color:#93A8B8; font-size:0.8rem;">${t.rompe}</td>
-                                <td class="${isPass ? 'pass' : 'fail'}">${isPass ? 'PASS' : 'FAIL'}</td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    testsEl.innerHTML = '<tr><td colspan="3">No hay pruebas de ruptura disponibles</td></tr>';
-                }
-
-            } catch(e) {
-                document.getElementById('ledger-container').innerHTML = '<span style="color:#FF6B6B">Network Error fetching /api/auditoria_datos</span>';
-            }
-        }
-        
-        fetchData();
-    </script>
+cargar();
+setInterval(cargar, 15000);
+</script>
 </body>
 </html>
