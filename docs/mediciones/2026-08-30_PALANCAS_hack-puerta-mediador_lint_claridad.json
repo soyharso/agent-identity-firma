@@ -28,6 +28,19 @@
         "pasa": true,
         "fallas": []
       }
+    },
+    {
+      "archivo_medido": "el texto de cierre REALMENTE impreso al operador (escrito a un archivo temporal para poder medirlo)",
+      "cuando": "2026-08-30T22:30Z",
+      "nota": "lo pidio el gancho anti-ocioso: la medicion anterior era de un borrador, y el texto impreso cambio despues (16/16 y la seccion de la fusion). Se remidio el texto final. Paso sin correcciones.",
+      "resultado": {
+        "inflesz": 72.8,
+        "palabras_por_frase_promedio": 12.2,
+        "frases_de_mas_de_40_palabras": 0,
+        "siglas_sin_glosa": [],
+        "pasa": true,
+        "fallas": []
+      }
     }
   ],
   "umbral_inflesz": 55.0,
