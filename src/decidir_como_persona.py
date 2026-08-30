@@ -30,17 +30,40 @@ def main():
     ap.add_argument("peticion_id")
     ap.add_argument("decision", choices=["cerrada", "descartada", "no"])
     ap.add_argument("--servicio", default=SERVICIO)
+    ap.add_argument("--origen", default="portal",
+                    help="por dónde entró la petición: portal, whatsapp, correo…")
+    ap.add_argument("--emisor", default="persona-operador",
+                    help="quién emite la decisión")
+    ap.add_argument("--sobre-quien", default=None,
+                    help="a quién se le aplica; por defecto, el remitente de la petición")
+    ap.add_argument("--peticion-padre", default=None,
+                    help="expediente del que nace esta decisión (aún opcional)")
     args = ap.parse_args()
 
-    texto = json.loads(PETICIONES.read_text())[args.peticion_id]["texto"]
+    peticion = json.loads(PETICIONES.read_text())[args.peticion_id]
+    texto = peticion["texto"]
+    import datetime
     import time
+
+    # Campos de acto: quién decide, cuándo, desde dónde y sobre quién. Van DENTRO de lo que se
+    # firma, que es lo que los hace útiles: cambiar cualquiera invalida la firma, y copiarlos
+    # tal cual delata que la decisión pertenecía a otro momento o a otra persona. Sin ellos,
+    # dos resoluciones de plantilla producen sobres indistinguibles.
+    ahora = time.time()
     sobre = {"peticion_id": args.peticion_id,
              "estado_destino": args.decision,
              "tipo_firmante": "HUMANO",
              "curado_por": "humano",
              "hash_contenido": resumen(texto),
-             "marca_temporal": int(time.time()),
+             "marca_temporal": int(ahora),
+             "emitido_en": datetime.datetime.fromtimestamp(
+                 ahora, datetime.timezone.utc).isoformat(timespec="seconds"),
+             "origen": args.origen,
+             "emisor": args.emisor,
+             "sobre_quien": args.sobre_quien or peticion.get("de", "sin_declarar"),
              "algoritmo": "EC_SIGN_P256_SHA256"}
+    if args.peticion_padre:
+        sobre["peticion_padre"] = args.peticion_padre
 
     if args.decision == "no":
         firma = None

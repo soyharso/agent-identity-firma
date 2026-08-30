@@ -22,6 +22,7 @@ BOLD="\033[1m"; DIM="\033[2m"; GREEN="\033[32m"; RED="\033[31m"; YELLOW="\033[33
 PRUEBAS=(
   "canonical-json:agente/killtest_canonico.py:RFC 8785 byte-for-byte, accents and integers included"
   "signature-replay:agente/killtest_reutilizacion.py:a genuine human approval cannot be moved to another case"
+  "act-binding:agente/killtest_acto.py:two identical rulings do not produce interchangeable envelopes"
   "channel-port:agente/killtest_puerto_canal.py:the WhatsApp channel is decoupled from signing"
   "managed-filter:agente/killtest_blindaje.py:the vendor filter misses our Spanish attack"
   "prompt-injection:agente/killtest_inyeccion.py:8 injections, 4 languages, stopped by the ceiling"

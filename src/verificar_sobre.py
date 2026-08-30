@@ -33,6 +33,30 @@ CLAVES = RAIZ / "claves"
 # incoherencias: NUNCA para conceder. La clase la decide qué clave validó, y punto.
 CAMPOS = ("peticion_id", "estado_destino", "hash_contenido", "marca_temporal", "algoritmo")
 
+# CAMPOS DE ACTO — quién decidió qué, cuándo, sobre quién y viniendo de dónde.
+#
+# Por qué existen, y es el hallazgo que los trajo: un sobre que solo firma el CONTENIDO no
+# distingue dos decisiones idénticas. Y en atención al cliente las resoluciones son de
+# plantilla: la misma frase resuelve cientos de expedientes. Dos aprobaciones con el mismo
+# texto producen el mismo hash, así que una firma auténtica se puede reciclar de un
+# expediente a otro sin romper nada.
+#
+# Firmar también el acto —momento, origen, quién emite y a quién se aplica— hace que cada
+# sobre sea único por construcción, sin necesidad de un contador ni de una marca de un solo
+# uso. Dos decisiones distintas difieren al menos en el instante o en el destinatario, y
+# entonces difieren en la firma.
+#
+# LÍMITE QUE HAY QUE DECIR EN VOZ ALTA: el momento tiene resolución de un segundo. Dos
+# decisiones sobre el MISMO destinatario, el MISMO origen y el MISMO emisor dentro del mismo
+# segundo seguirían colisionando. Eso lo cierra `peticion_padre`, que ata la decisión al
+# expediente del que nació; queda declarado abajo y todavía no es obligatorio.
+CAMPOS_ACTO = ("emitido_en", "origen", "emisor", "sobre_quien")
+
+# Opcional hoy, obligatorio cuando el canal de peticiones lo entregue: el expediente del que
+# nace la decisión. Es lo que hace imposible la colisión incluso en decisiones inmediatas y
+# repetidas, porque dos peticiones distintas nunca comparten padre e instante.
+CAMPO_PADRE = "peticion_padre"
+
 
 # La raíz del repositorio entra en la ruta de módulos ANTES de importar `src.*`. Sin esto, el
 # primer comando que el README le pide teclear a un jurado —`python3 src/verificar_sobre.py …`
@@ -66,7 +90,8 @@ def quien_firmo(directorio, mensaje: bytes, firma: bytes):
 
 
 def verificar(sobre: dict, firma_b64: str, texto_actual: str | None = None,
-              directorio=None, peticion_esperada: str | None = None) -> tuple[str, dict]:
+              directorio=None, peticion_esperada: str | None = None,
+              acto_esperado: dict | None = None) -> tuple[str, dict]:
     directorio = directorio if directorio is not None else cargar_directorio()
 
     faltan = [c for c in CAMPOS if c not in sobre]
@@ -97,6 +122,22 @@ def verificar(sobre: dict, firma_b64: str, texto_actual: str | None = None,
             "firmado_para": sobre["peticion_id"],
             "presentado_en": peticion_esperada,
             "por_que": "la firma es válida, pero aprobaba otro caso"}
+
+    # El acto, si el sobre lo declara, tiene que ser el que se espera. Un sobre que dice a
+    # quién se aplica y cuándo se emitió no se puede trasplantar aunque el texto sea idéntico:
+    # la firma cubre esos campos, así que cambiarlos la invalida y copiarlos tal cual delata
+    # que la decisión era de otro momento o de otra persona.
+    if acto_esperado:
+        for campo, esperado in acto_esperado.items():
+            if campo not in sobre:
+                return "ACTO_INCOMPLETO", {
+                    "firmante": nombre, "falta": campo,
+                    "por_que": "se exige comprobar ese campo y el sobre no lo declara"}
+            if sobre[campo] != esperado:
+                return "ACTO_AJENO", {
+                    "firmante": nombre, "campo": campo,
+                    "firmado_con": sobre[campo], "presentado_con": esperado,
+                    "por_que": "la firma es válida, pero aprobaba otro acto"}
 
     # Anti-obsolescencia: no se acepta un juicio sobre un texto que ya cambió.
     if texto_actual is not None:
