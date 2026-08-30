@@ -104,7 +104,7 @@ voice family behind the spoken reply. Both are named in the code you can read.
 
 > **If you try #2 and the reply says `gemini`, nothing is broken — and please read this.**
 >
-> Speech-to-Text is the primary transcriber. Measured on 2026-08-30 across 28 production calls, it
+> Speech-to-Text is the primary transcriber. Measured on 2026-08-30 across 28 live calls against the deployed service, it
 > answers `503 Service Unavailable` on roughly **80 % of individual attempts** from our service
 > account, while the identical request from a user credential returns `200` every time. It is not
 > our quota — the project is billed and allows 900 requests/minute — it is **provider flakiness**,
