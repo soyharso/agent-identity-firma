@@ -104,15 +104,21 @@ Graba primero lo difícil, con la máquina fresca y tú también:
 
 ---
 
-## 6. Piezas visuales que faltan
+## 6. Piezas visuales — ya preparadas
 
-| Pieza | Para qué | Coste |
+Todas en `assets/slides/`, listas para arrastrar a OBS:
+
+| Pieza | Archivo | Cómo se usa |
 |---|---|---|
-| Tarjeta de portada | 3 s de identidad al abrir y cerrar | el logotipo existe; falta componerla |
-| Rótulo `unedited — single take` | que el jurado sepa qué está viendo | un texto en OBS |
-| Diagrama por capas | que la arquitectura se construya en pantalla | `ARCHITECTURE.svg` ya existe; se revela por grupos |
-| Tarjeta de las tres identidades | las tres claves y su alcance, lado a lado | media hora |
-| Marca de agua discreta | Cleveria abajo a la derecha | inmediato |
+| **Portada** | `portada.png` (1920×1080) | escena 1, primeros 3 s y antes del cierre |
+| **Cierre** | `cierre.png` (1920×1080) | escena 7, la tesis en los últimos 20 s |
+| **Rótulo de toma única** | `rotulo_toma_unica.png` (640×100, con transparencia) | **superpuesto durante toda la demostración**, esquina superior izquierda |
+| **Marca de agua** | `marca_agua.png` (260×108, al 50 %) | esquina inferior derecha, todo el vídeo |
+| **Diagrama que se construye** | `ARCHITECTURE_animado.svg` | fuente de navegador; al recargar, las cuatro capas aparecen en cascada de 0,8 s |
+
+El diagrama animado **no toca el original**: es el mismo `ARCHITECTURE.svg` con una hoja de
+estilo que escalona la aparición de sus grupos. El que ve el jurado en el repositorio sigue
+siendo el estático.
 
 **Lo que NO conviene**: imágenes generadas de relleno. En un vídeo cuya tesis es que la evidencia
 se prueba, una ilustración decorativa resta.
