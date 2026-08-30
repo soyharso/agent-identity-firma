@@ -54,7 +54,18 @@ def _avisar(datos: dict, ident: str) -> bool:
     igual y la respuesta lo dice: es mejor un aviso pendiente que un envío inventado.
     """
     usuario = os.environ.get("SMTP_USUARIO")
-    clave = os.environ.get("SMTP_CLAVE")
+    # La clave llega MONTADA DESDE SECRET MANAGER, no escrita en la configuración del servicio.
+    # La diferencia importa y no es teórica: una variable de entorno en texto plano la ve
+    # cualquiera que pueda describir el servicio, sale en los volcados de configuración y se
+    # arrastra a cada despliegue. Un secreto montado se versiona, se revoca sin redesplegar, y
+    # su lectura queda registrada. Aquí se leen las dos formas —la variable sigue valiendo para
+    # una prueba local— pero la de producción es el archivo.
+    ruta_secreto = os.environ.get("SMTP_CLAVE_ARCHIVO", "/secretos/smtp-clave")
+    clave = None
+    try:
+        clave = Path(ruta_secreto).read_text().strip() or None
+    except OSError:
+        clave = os.environ.get("SMTP_CLAVE")
     if not (usuario and clave):
         return False
     try:
@@ -140,9 +151,13 @@ def salud():
     """
     usuario = os.environ.get("SMTP_USUARIO") or ""
     dominio = usuario.rsplit("@", 1)[-1].lower() if "@" in usuario else None
+    ruta = os.environ.get("SMTP_CLAVE_ARCHIVO", "/secretos/smtp-clave")
+    hay_secreto = Path(ruta).exists() and bool(Path(ruta).read_text().strip())
     return jsonify({
         "ok": True,
-        "correo_configurado": bool(usuario and os.environ.get("SMTP_CLAVE")),
+        "correo_configurado": bool(usuario) and (hay_secreto or bool(os.environ.get("SMTP_CLAVE"))),
+        "clave_desde": "secret-manager" if hay_secreto else (
+            "variable-de-entorno" if os.environ.get("SMTP_CLAVE") else None),
         "buzon_dominio": dominio,
         "servidor_deducido": os.environ.get("SMTP_HOST") or (
             {"yahoo.com": "smtp.mail.yahoo.com", "yahoo.com.mx": "smtp.mail.yahoo.com",
