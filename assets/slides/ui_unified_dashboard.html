@@ -101,6 +101,18 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--slat
     <p class="ayuda">One card per case, most recently touched first — the order the queue is
        actually worked in. Under each case, its full history: every signature and every refused
        attempt, with the time it happened and who was behind it.</p>
+    <!-- Este aviso existe porque el panel pinta las etiquetas de rechazo con `veredicto`, y ese
+         campo vive FUERA del sobre firmado: nadie lo firma. Medido el 2026-08-30. Lo que sí está
+         firmado —y es lo que decide— son `estado_destino`, `curado_por` y `tipo_firmante`. No es
+         un agujero de autoridad: nadie puede fabricar un cierre firmado. Pero un libro que se
+         llama de autoridad no puede dejar que el lector confunda su índice con su prueba. -->
+    <p class="ayuda" style="border-left:2px solid var(--linea);padding-left:11px">
+       <b>What is signed, and what is only an index.</b> The signature covers the envelope:
+       <span class="hash">estado_destino</span>, <span class="hash">curado_por</span>,
+       <span class="hash">tipo_firmante</span>, <span class="hash">hash_contenido</span>. The
+       row's own <span class="hash">veredicto</span>, <span class="hash">dictamen</span> and
+       <span class="hash">ts</span> sit outside it — useful for reading the queue,
+       <b>not evidence</b>. Re-verify against the envelope, never against the label.</p>
     <div id="expedientes"><div class="vacio">Loading…</div></div>
   </section>
 
