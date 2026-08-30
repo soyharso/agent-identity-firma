@@ -524,33 +524,72 @@ footer a:hover{color:var(--ice)}
 </section>
 
 <script>
-// El formulario compone el correo y se lo entrega al operador para que lo revise antes de
-// enviarlo. Es deliberado: no hay servidor detrás de esta página, y un formulario que finge
-// haber enviado algo mientras lo pierde es peor que no tenerlo. Además funciona igual aquí y
-// donde esta página acabe alojada.
-document.getElementById('form').addEventListener('submit', function (e) {
+// El formulario ENVÍA de verdad, y dice la verdad de lo que pasó. Un lector sin contexto leyó la
+// versión anterior —que abría el programa de correo del visitante— como desconfianza. Pero la
+// solución no es fingir: es recibirlo. El servidor guarda primero y avisa después, así que aquí
+// solo hay tres finales posibles, y los tres son ciertos:
+//   · guardado            → «Recibido. Le respondemos el mismo día hábil.»
+//   · no se pudo guardar  → se dice, y se ofrece el correo directo. Nada se pierde en silencio.
+//   · no hay red          → igual: se dice, con el correo a mano.
+document.getElementById('form').addEventListener('submit', async function (e) {
   e.preventDefault();
+  const boton = e.target.querySelector('button[type=submit]');
+  const pie = document.getElementById('pie');
   const d = new FormData(e.target);
-  const v = n => (d.get(n) || '').toString().trim();
-  const cuerpo = [
-    'Nombre:   ' + v('nombre'),
-    'Empresa:  ' + (v('empresa') || '—'),
-    'Correo:   ' + v('correo'),
-    'Teléfono: ' + (v('telefono') || '—'),
+  const cuerpo = Object.fromEntries([...d.entries()].map(([k, v]) => [k, String(v).trim()]));
+
+  boton.disabled = true;
+  const antes = boton.textContent;
+  boton.textContent = 'Enviando…';
+  pie.textContent = '';
+
+  try {
+    const r = await fetch('/api/contacto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.ok) {
+      e.target.querySelectorAll('input, textarea').forEach(c => { c.value = ''; });
+      boton.textContent = 'Enviado';
+      pie.innerHTML = '<b>' + (j.mensaje || 'Recibido.') + '</b>';
+      return;
+    }
+    boton.disabled = false;
+    boton.textContent = antes;
+    porCorreo(cuerpo, pie, j.mensaje || 'No pudimos recibirlo aquí.');
+  } catch (err) {
+    boton.disabled = false;
+    boton.textContent = antes;
+    porCorreo(cuerpo, pie, 'No pudimos recibirlo aquí.');
+  }
+});
+
+// La salida de emergencia. Si el servidor no está —porque aún no se ha desplegado, o porque se
+// cayó—, el mensaje NO se pierde ni se queda en un «inténtelo más tarde»: se compone el correo
+// con lo que la persona ya escribió y se le abre para que lo envíe. Se le dice exactamente qué
+// pasó, porque el visitante tiene derecho a saber si su mensaje salió o no.
+function porCorreo(cuerpo, pie, motivo) {
+  const texto = [
+    'Nombre:   ' + (cuerpo.nombre || ''),
+    'Empresa:  ' + (cuerpo.empresa || '—'),
+    'Correo:   ' + (cuerpo.correo || ''),
+    'Teléfono: ' + (cuerpo.telefono || '—'),
     '',
-    'Necesita: ' + v('asunto'),
+    'Necesita: ' + (cuerpo.asunto || ''),
     '',
-    v('detalle') || '(sin detalle)',
+    cuerpo.detalle || '(sin detalle)',
     '',
     '— enviado desde cleveria.co'
   ].join('\n');
-  const asunto = 'Cleveria · ' + (v('empresa') || v('nombre'));
-  location.href = 'mailto:info@cleveria.co'
-    + '?subject=' + encodeURIComponent(asunto)
-    + '&body=' + encodeURIComponent(cuerpo);
-  document.getElementById('pie').textContent =
-    'Listo: revise el mensaje en su correo y envíelo. Si no se abrió, escríbanos a info@cleveria.co';
-});
+  const asunto = 'Cleveria · ' + (cuerpo.empresa || cuerpo.nombre || 'contacto');
+  location.href = 'mailto:info@cleveria.co?subject=' + encodeURIComponent(asunto) +
+                  '&body=' + encodeURIComponent(texto);
+  pie.innerHTML = motivo + ' <b>Le abrimos su correo con el mensaje ya escrito</b> — solo tiene ' +
+    'que darle a enviar. Si no se abrió, escríbanos a ' +
+    '<a href="mailto:info@cleveria.co">info@cleveria.co</a>.';
+}
 </script>
 
 <footer>
