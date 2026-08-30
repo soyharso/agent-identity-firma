@@ -16,11 +16,20 @@ Registro crudo con el que rehacer cada número:
 [`MEDICION_puerta_mediadora.jsonl`](MEDICION_puerta_mediadora.jsonl). Cada línea lleva su
 comando.
 
+## Qué es un sobre, en una frase
+
+Un **sobre** es el papelito firmado que acompaña a un cierre. Dice qué petición se cierra, en
+qué estado queda, el resumen del texto que se juzgó y cuándo se decidió. Va firmado con una
+clave de Cloud KMS: la del agente, o la de la persona. El **verificador** lo comprueba sin red y
+sin credenciales, así que cualquiera puede repetirlo. Y **el registro** es lo duradero: el
+documento de Firestore donde vive el estado de cada petición.
+
 ## La frase que antes no se podía decir
 
 **Sin sobre válido, no ocurre nada.**
 
-Hasta hoy el agente tenía `roles/datastore.user` y escribía el estado él mismo. El sobre
+Hasta hoy el agente tenía `roles/datastore.user` —el permiso de ESCRIBIR en Firestore— y
+escribía el estado él mismo. El sobre
 firmado se producía, se guardaba y probaba **después** quién cerró qué — pero nada rechazaba un
 cierre que llegara sin él. Era un recibo, no una puerta.
 
@@ -81,9 +90,10 @@ quien verifica, nunca el sobre—; lo que faltaba era llamarla.
 ## La reserva de un solo uso: por qué no es `reservar()` a secas
 
 El encargo pedía «llamar a `estado.reservar()` antes de aplicar». No sirve, y se comprobó
-corriéndolo: `reserva_hash` **ya la tiene puesta** el despertar antes de llamar al modelo
-(`grafo.correr_para_servicio`), así que pedirla otra vez dentro de la puerta devuelve `False` en
-el **primer cierre legítimo**.
+corriéndolo: `reserva_hash` **ya la tiene puesta** el despertar —la pasada que arranca cuando el
+temporizador llama a `/despertar` y procesa lo que haya pendiente— antes de llamar al modelo
+(`grafo.correr_para_servicio`). Es su candado para no gastar el modelo dos veces. Así que pedirla
+otra vez dentro de la puerta devuelve `False` en el **primer cierre legítimo**.
 
 Lo que hay es `estado.reservar_cierre()`: el mismo patrón transaccional, diez líneas, marcado con
 la huella de la **firma** en vez del hash del texto. Dos sobres distintos no comparten huella. No
@@ -93,7 +103,8 @@ mide: el primer sobre escribe, el segundo no reescribe la firma y el registro no
 ## Las pruebas
 
 `./pruebas_de_ruptura.sh` — 13/13 en verde, 147 s, invocación estándar, 2026-08-30 16:45:46 -05.
-Ninguna de las doce anteriores se debilitó ni se retiró: el banco solo creció.
+Eran doce y ahora son trece: **ninguna de las doce anteriores se debilitó ni se retiró**, se
+añadió una. Cada una intenta romper una promesa concreta del sistema y falla al intentarlo.
 
 | # | Prueba | Qué rompe |
 |---|---|---|
@@ -138,8 +149,10 @@ contestara 200, esta ruta lo enseñaría igual.
 1. Construir la puerta y desviar los dos cierres, con el rol todavía puesto.
 2. `demo.sh 1-5` en verde y **las doce anteriores en verde** (M6: 12/13 — la decimotercera roja a
    propósito, porque es justo lo que mide).
-3. **Solo entonces**: `roles/datastore.viewer` primero —para no dejar al agente ciego en el
-   camino— y `roles/datastore.user` fuera después.
+3. **Solo entonces**, y en este orden, que importa: primero se le **concede**
+   `roles/datastore.viewer` (leer) y después se le **quita** `roles/datastore.user` (leer y
+   escribir). Al revés habría un momento en que el agente no puede ni leer, y el agente lee
+   todo el rato: reconstruye el estado del dominio en cada pasada.
 4. Re-pasar `demo.sh 1-5` (M10) y las trece (M8). Idénticos a antes, sin el permiso de escribir.
 
 ## Lo que hay que saber para deshacerlo
@@ -192,16 +205,54 @@ con el temporizador activo: 13/13. O sea que el banco pasa igual — pero si un 
   puede llamar en vivo (`/intentar-escribir-directo`), pero no está en ninguna toma. `demo.sh`
   está fuera de la frontera de escritura de este frente. **Decisión del operador.**
 - **`demo.sh` toma 2 espera 90 segundos por una condición que no se puede cumplir.** Espera a que
-  las cuatro peticiones tengan veredicto, y dos de ellas se detienen a esperar a una persona: un
+  las cuatro peticiones tengan veredicto. Dos de ellas se detienen a esperar a una persona, y un
   flujo detenido nunca llega al nodo que escribe el veredicto. El resultado es un
-  `⚠ still not ready after 90s` amarillo en cámara. **Es anterior a este frente** —la ruta de la
-  pausa no llegaba al registro tampoco antes— y `demo.sh` no es de este frente. **Decisión del
+  `⚠ still not ready after 90s` amarillo en cámara. **Es anterior a este frente**: la ruta de la
+  pausa tampoco llegaba antes al registro. Y `demo.sh` no es de este frente. **Decisión del
   operador.**
 - **El libro en disco sigue escribiéndose con `FIRMAS.open("a")`.** El frente
   `hack-libro-encadenado` migró ese punto a `libro_cadena.anexar(FIRMAS, fila)` en su propia rama;
   `src/libro_cadena.py` no existe en esta, así que importarlo aquí habría tumbado el banco entero.
   Regla de conflicto acordada con ese frente y confirmada por él palabra por palabra: **se queda el
-  cuerpo de `registrar()` de este frente, y dentro, la escritura del libro en disco es
-  `libro_cadena.anexar(FIRMAS, fila)` —sin `FIRMAS.parent.mkdir(...)`—; la aplica quien fusione
+  cuerpo de `registrar()` de este frente. Dentro, la escritura del libro en disco es
+  `libro_cadena.anexar(FIRMAS, fila)`, sin `FIRMAS.parent.mkdir(...)`. La aplica quien fusione
   segundo.** El orden importa: la escritura del libro va **antes** de la bifurcación, para que
   quede rastro también de lo que la puerta rechazó.
+
+## Palancas del método, con su rastro
+
+- **Lint de claridad** sobre este mismo documento
+  (`tools/comunicacion/lint_claridad.py`): **PASA**. INFLESZ (el índice que mide lo fácil de leer
+  que es un texto en español; más alto, más fácil) da 76,0 sobre un umbral de 55,0, con 13,7 palabras por frase. Ninguna frase pasa de 40
+  palabras y no queda ninguna sigla sin glosa. Dos correcciones
+  entraron por él: HTTP y RFC 8785 no estaban glosadas, y ahora lo están. Se intentó declarar un
+  waiver por «sigla canónica» y **la herramienta lo rechazó**: la puerta de claridad está activa
+  desde 2026-08-17, así que el hallazgo se corrige, no se declara.
+
+- **Lector ingenuo** (subagente barato, sin contexto, sobre este informe y sobre el texto de
+  cierre). Veredicto: entendió la pieza central —«se construyó una puerta para que un agente no
+  pueda escribir sin un documento firmado válido»— y devolvió **nueve cosas que no se entendían y
+  tres dudosas**. Cuatro se corrigieron y están arriba:
+  1. **«sobre» no se definía en ninguna parte.** Se añadió la sección «Qué es un sobre».
+  2. **«el despertar» aparecía sin explicar quién es.** Ahora se dice.
+  3. **«el banco solo creció» no decía de qué banco.** Ahora dice que eran doce y son trece.
+  4. **El orden de la permuta de permisos parecía invertido** («si le quitan `user` primero,
+     queda sin poder escribir»). Se reescribió diciendo cuál se concede y cuál se quita.
+
+  Lo que **no** se corrigió, y por qué. `PET-002`, `CONTEXTO_AJENO`, `FUERA_DE_ALCANCE` y los
+  demás códigos de rechazo son vocabulario del propio sistema. Quien lee este documento los usa a
+  diario, y glosarlos aquí duplicaría el directorio de claves y el verificador, que es donde
+  viven.
+
+- **Kill-test de mundo real EJECUTADO antes de cerrar**: `agente/killtest_puerta.py`, y no contra
+  un doble — el último ataque lo lanza el servicio desplegado con su identidad real contra la
+  nube real.
+
+- **Registro crudo re-evaluable**: [`MEDICION_puerta_mediadora.jsonl`](MEDICION_puerta_mediadora.jsonl),
+  doce mediciones con su comando.
+
+- **Disidente y juez: NO se montaron, y es una decisión declarada del arnés**, no un olvido. El
+  perfil de este frente trae el gate de oráculo (D5). Esta tarea tiene oráculo determinista: el
+  código de salida de trece pruebas, la respuesta de la nube, y el contenido del documento antes
+  y después. Donde hay oráculo, la medición de la casa dio 3,0× de coste y 0 errores cazados por
+  la disidencia. Se verificó con el oráculo y se cerró.
