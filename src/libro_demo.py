@@ -117,7 +117,27 @@ def nueva_peticion(texto: str, de: str = "cliente-portal", origen: str = "portal
 
 
 def firmas() -> list:
-    """El libro de firmas, del repositorio y de lo firmado en vivo, en orden de tiempo."""
+    """El libro de operaciones de la demostración, en orden de tiempo.
+
+    NO MEZCLA el libro del desarrollo. `libro/firmas_grafo.jsonl` acumula dos días de corridas
+    de prueba: veintisiete operaciones sobre el mismo caso, veinte de ellas con el hash
+    idéntico porque era el mismo texto una y otra vez. En pantalla parecían veintisiete
+    intentos distintos y no eran nada. Ese fichero sigue siendo válido —es lo que el
+    verificador sin credenciales comprueba en el vídeo— pero es historia de desarrollo, no la
+    cola de atención que se está enseñando.
+
+    Cuando Firestore está, el libro vivo es Firestore y solo Firestore. El fichero se lee
+    únicamente si no hay Firestore, para que en local siga habiendo algo que mirar.
+    """
+    c = _c()
+    if c is not None:
+        try:
+            filas = [d.to_dict() or {} for d in c.collection(COL_FIRMAS).stream()]
+            filas.sort(key=lambda f: f.get("ts") or 0)
+            return filas
+        except Exception:                                        # noqa: BLE001
+            pass
+
     filas = []
     try:
         for linea in F_FIRMAS.read_text(encoding="utf-8").splitlines():
@@ -125,15 +145,6 @@ def firmas() -> list:
                 filas.append(json.loads(linea))
     except Exception:                                            # noqa: BLE001
         pass
-
-    c = _c()
-    if c is not None:
-        try:
-            for d in c.collection(COL_FIRMAS).stream():
-                filas.append(d.to_dict() or {})
-        except Exception:                                        # noqa: BLE001
-            pass
-
     filas.sort(key=lambda f: f.get("ts") or 0)
     return filas
 

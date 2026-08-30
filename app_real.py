@@ -249,12 +249,18 @@ def serve_ui(name):
     elif name == "portal":
         return send_file(os.path.join(base_path, "assets", "slides", "ui_portal_cliente.html"))
     # Marca: Qnowa da la cara al cliente en el portal, Cleveria gobierna por dentro.
-    marca = {"qnowa-logo.svg": ("assets", "qnowa", "qnowa-logo.svg"),
-             "qnowa-mark.svg": ("assets", "qnowa", "qnowa-mark.svg"),
-             "cleveria-logo.svg": ("assets", "cleveria-logo.svg"),
-             "cleveria-mark.svg": ("assets", "cleveria-mark.svg")}
+    marca = {"qnowa-logo.svg": (("assets", "qnowa", "qnowa-logo.svg"), "image/svg+xml"),
+             "qnowa-mark.svg": (("assets", "qnowa", "qnowa-mark.svg"), "image/svg+xml"),
+             "cleveria-mark.svg": (("assets", "cleveria-mark.svg"), "image/svg+xml"),
+             # El logotipo sellado por el operador. Dos versiones: la de tinta para fondo
+             # claro y la de hielo para el panel oscuro. Un logotipo oscuro sobre fondo
+             # oscuro no se ve, y en cámara eso se nota más que cualquier otra cosa.
+             "cleveria-logo.png": (("assets", "cleveria-logo.png"), "image/png"),
+             "cleveria-logo-dark.png": (("assets", "cleveria-logo-dark.png"), "image/png"),
+             "cleveria-logo.svg": (("assets", "cleveria-logo.svg"), "image/svg+xml")}
     if name in marca:
-        return send_file(os.path.join(base_path, *marca[name]), mimetype="image/svg+xml")
+        ruta, mime = marca[name]
+        return send_file(os.path.join(base_path, *ruta), mimetype=mime)
     return "UI no encontrada", 404
 
 if __name__ == "__main__":
