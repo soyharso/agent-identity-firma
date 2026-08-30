@@ -99,7 +99,18 @@ def api_contacto():
 
 @app.route("/")
 def home():
-    return send_file(AQUI / "cleveria-home.html")
+    """La página la sirve Firebase Hosting, no este servicio.
+
+    Se deja la ruta por una razón práctica: si algún día el reenvío de Hosting se cae, quien
+    llegue aquí debe entender qué es esto en vez de encontrarse un error sin explicación.
+    """
+    pagina = AQUI / "cleveria-home.html"
+    if pagina.exists():
+        return send_file(pagina)
+    return jsonify({"servicio": "cleveria-web",
+                    "para": "recibir el formulario de contacto de cleveria.co",
+                    "endpoints": ["/api/contacto", "/salud"],
+                    "la_pagina": "la sirve Firebase Hosting"}), 200
 
 
 @app.route("/salud")
