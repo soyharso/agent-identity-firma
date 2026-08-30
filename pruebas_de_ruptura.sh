@@ -32,6 +32,8 @@ PRUEBAS=(
   "semantic-fence:agente/killtest_cerco_semantico.py:9/9 caught, 2 false positives declared"
   "durability:agente/killtest_durabilidad.py:5 steps, 5 processes, survives an abrupt kill"
   "co-signer:agente/killtest_cofirmante.py:a second model family must agree; its silence closes the door"
+  "ledger-chain:agente/killtest_libro_encadenado.py:deleting a row from the ledger is no longer undetectable"
+  "ledger-order:agente/killtest_libro_reordenado.py:reordering two rows, touching no signature, is caught too"
 )
 
 resumen() {

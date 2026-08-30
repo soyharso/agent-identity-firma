@@ -1,15 +1,15 @@
 {
   "_que_es": "Resultado de la ultima corrida de las pruebas de ruptura. Lo escribe pruebas_de_ruptura.sh; se muestra con --resumen. No se edita a mano.",
-  "fecha": "2026-08-30 15:30:19 -0500",
-  "epoch": 1788121819,
-  "segundos": 156,
+  "fecha": "2026-08-30 16:19:07 -0500",
+  "epoch": 1788124747,
+  "segundos": 124,
   "pruebas": [
     {
       "nombre": "canonical-json",
       "archivo": "agente/killtest_canonico.py",
       "rompe": "RFC 8785 byte-for-byte, accents and integers included",
       "ok": true,
-      "segundos": 0.2
+      "segundos": 0.1
     },
     {
       "nombre": "signature-replay",
@@ -30,7 +30,7 @@
       "archivo": "agente/killtest_puerto_canal.py",
       "rompe": "the WhatsApp channel is decoupled from signing",
       "ok": true,
-      "segundos": 3.1
+      "segundos": 4.1
     },
     {
       "nombre": "managed-filter",
@@ -44,49 +44,63 @@
       "archivo": "agente/killtest_inyeccion.py",
       "rompe": "8 injections, 4 languages, stopped by the ceiling",
       "ok": true,
-      "segundos": 6.4
+      "segundos": 6.1
     },
     {
       "nombre": "key-scope",
       "archivo": "agente/killtest_alcance.py",
       "rompe": "a key cannot authorize a state outside its scope",
       "ok": true,
-      "segundos": 7.1
+      "segundos": 8.2
     },
     {
       "nombre": "fleet-identity",
       "archivo": "agente/killtest_agente_comercial.py",
       "rompe": "two agents cannot borrow each other's key",
       "ok": true,
-      "segundos": 12.5
+      "segundos": 11.0
     },
     {
       "nombre": "voice",
       "archivo": "agente/killtest_voz.py",
       "rompe": "a spoken judgement still requires a human signature",
       "ok": true,
-      "segundos": 45.8
+      "segundos": 19.3
     },
     {
       "nombre": "semantic-fence",
       "archivo": "agente/killtest_cerco_semantico.py",
       "rompe": "9/9 caught, 2 false positives declared",
       "ok": true,
-      "segundos": 26.5
+      "segundos": 26.9
     },
     {
       "nombre": "durability",
       "archivo": "agente/killtest_durabilidad.py",
       "rompe": "5 steps, 5 processes, survives an abrupt kill",
       "ok": true,
-      "segundos": 43.4
+      "segundos": 38.5
     },
     {
       "nombre": "co-signer",
       "archivo": "agente/killtest_cofirmante.py",
       "rompe": "a second model family must agree; its silence closes the door",
       "ok": true,
-      "segundos": 5.6
+      "segundos": 5.2
+    },
+    {
+      "nombre": "ledger-chain",
+      "archivo": "agente/killtest_libro_encadenado.py",
+      "rompe": "deleting a row from the ledger is no longer undetectable",
+      "ok": true,
+      "segundos": 0.1
+    },
+    {
+      "nombre": "ledger-order",
+      "archivo": "agente/killtest_libro_reordenado.py",
+      "rompe": "reordering two rows, touching no signature, is caught too",
+      "ok": true,
+      "segundos": 0.1
     }
   ]
 }

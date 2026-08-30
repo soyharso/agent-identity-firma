@@ -66,6 +66,7 @@ CAMPO_PADRE = "peticion_padre"
 # tal como está escrito en el README.
 sys.path.insert(0, str(RAIZ))
 
+from src import libro_cadena       # noqa: E402
 from src.canonico import canonico  # noqa: E402
 
 
@@ -198,7 +199,48 @@ def main():
               f"{json.dumps(det, ensure_ascii=False)}")
     print(f"\nfirmas inválidas: {malos} · filas sin firma (no se firmó, y está bien): "
           f"{sin_firmar}")
-    sys.exit(1 if malos else 0)
+
+    # LA CADENA — la pregunta que hasta hoy este verificador no podía contestar.
+    #
+    # Todo lo de arriba comprueba que CADA FILA es auténtica: la firma es buena, el firmante
+    # está en el directorio, el estado cae en su alcance. Ninguna de esas comprobaciones nota
+    # que falte una fila, porque cada firma solo cubre su propio sobre. Se podía borrar una
+    # fila entera y las demás seguían saliendo OK.
+    #
+    # La cadena contesta la otra mitad: ¿está TODO lo que hubo? Cada fila nueva lleva el
+    # resumen de la anterior, así que borrar una, reordenar dos o editar una rompe el
+    # encadenado y sale nombrada con su número de línea.
+    cadena = libro_cadena.verificar(args.libro, tolerar_convivencia=True)
+    # Hallazgo 6 de la fase cero, en el titular: un libro sin ninguna fila encadenada sale de
+    # `verificar()` como `integra` —lo es, trivialmente, porque no hay cadena que romper— y
+    # ese titular se lee como si hubiera cobertura. Aquí se llama SIN_CADENA, que es lo que es.
+    titular = "SIN_CADENA" if cadena["encadenadas"] == 0 else cadena["clase"].upper()
+    print(f"\ncadena de continuidad · {titular}")
+    if cadena["encadenadas"] == 0:
+        # Hallazgo 6 de la fase cero: reusar aquí el mensaje genérico imprimía «cadena
+        # íntegra» con cero filas encadenadas, y eso se lee —en una toma grabada o de reojo—
+        # como si hubiera cobertura de cadena donde no la hay. Este caso dice lo que pasa.
+        print(f"  sin filas encadenadas: este archivo no usa la cadena, o todavía no se le ha "
+              f"escrito ninguna fila nueva. {cadena['total']} fila(s) leída(s).")
+        print("  NO se puede afirmar que el libro esté completo: solo que lo que hay es "
+              "auténtico.")
+    else:
+        print(f"  {cadena['mensaje']}")
+        if cadena["prefijo"]:
+            # Un libro que empieza a encadenar a mitad NO PUEDE declarar completo lo anterior.
+            # Se declara en vez de fingirse.
+            print(f"  DECLARADO: las {cadena['prefijo']} primeras filas son anteriores a la "
+                  f"cadena. De ellas se puede decir que son auténticas, NO que estén todas.")
+        if cadena["roto_en"]:
+            print(f"  primera línea implicada: {cadena['roto_en']}")
+
+    # `convivencia` avisa y no tumba: es un escritor sin migrar, no una alteración.
+    # `alterada`, `ilegible` y `ausente` sí tumban: son exactamente lo que la cadena existe
+    # para cazar, y un verificador que las deja pasar con salida cero no sirve de nada.
+    cadena_mala = cadena["clase"] in ("alterada", "ilegible", "ausente")
+    if cadena_mala:
+        print(f"  ✗ {cadena['mensaje']}")
+    sys.exit(1 if (malos or cadena_mala) else 0)
 
 
 if __name__ == "__main__":
