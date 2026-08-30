@@ -102,9 +102,9 @@ on resource '…/cryptoKeys/clave-humano'
 > "Agent Registry. Agent identity. Cloud Run. Cloud KMS. Firestore. Six fleet capabilities
 > backed by first-party implementations, and the seventh declared absent rather than faked.
 >
-> Cleveria isn't a brake — it is the license for enterprise fleets to automate 90% of critical
-> workflows, with the mathematical guarantee that the remaining 10% stays locked behind hardware
-> and Cloud KMS.
+> Cleveria isn't a brake — it is the license for enterprise fleets to automate what a machine can
+> prove, with one guarantee that is arithmetic and not a promise: **the machine cannot produce a
+> human signature**, because Cloud IAM refuses it the permission to try.
 >
 > Cleveria, by Softronica — built for the All Things Agentic Hackathon. **Because compliance facts are never paraphrased.**"
 
