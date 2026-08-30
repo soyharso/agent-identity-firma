@@ -64,7 +64,7 @@
 
   <!-- SECTION: ADK RUNTIME & DUAL-MODEL SAFETY -->
   <g transform="translate(330, 105)">
-    <rect x="0" y="0" width="370" height="520" rx="12" fill="#151e2e" stroke="#334155" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="370" height="530" rx="12" fill="#151e2e" stroke="#334155" filter="url(#shadow)"/>
     <text x="20" y="35" font-size="15" font-weight="bold" fill="#38bdf8">2. ADK WORKFLOW &amp; SAFETY</text>
 
     <!-- Authority Ceiling & Semantic Fence -->
@@ -78,7 +78,7 @@
     <!-- Gemini Adjudication -->
     <rect x="15" y="185" width="340" height="100" rx="8" fill="#0b1120" stroke="#0284c7" stroke-width="1.5"/>
     <text x="25" y="210" font-size="13" font-weight="bold" fill="#38bdf8">Gemini 3.6 Flash Adjudication</text>
-    <text x="25" y="232" font-size="11" font-weight="bold" fill="#ffffff">The ONLY deciding model in the workflow.</text>
+    <text x="25" y="232" font-size="11" font-weight="bold" fill="#ffffff">The only model that PROPOSES a state. It cannot sign one.</text>
     <text x="25" y="252" font-size="11" fill="#cbd5e1">Evaluates evidence &amp; proposes task state.</text>
     <text x="25" y="272" font-size="10" fill="#94a3b8">Bound by router taking MIN(model, ceiling)</text>
 
@@ -91,6 +91,15 @@
     <text x="25" y="385" font-size="11" font-weight="bold" fill="#fbbf24">• Exige Humano (Judgement/Risk) ➔ Pause Flow</text>
     <text x="25" y="410" font-size="11" font-weight="bold" fill="#94a3b8">• Open / Unsigned (No Evidence) ➔ Return</text>
     <text x="25" y="433" font-size="10" fill="#f87171">Dead branches route to safe fallback (Default Route)</text>
+
+    <!-- Co-signer. Añadido el 2026-08-30, el día que entró: es el PRIMER modelo del reclamo de
+         bonificación, así que un diagrama sin él contradecía la propia entrega. Va DESPUÉS del
+         router a propósito — el router decide que se PUEDE firmar, y aun así hace falta que otra
+         familia de modelos esté de acuerdo. -->
+    <rect x="15" y="462" width="340" height="54" rx="8" fill="#0b1120" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="25" y="481" font-size="12" font-weight="bold" fill="#c4b5fd">Gemma 4 Co-Signature <tspan font-size="9" fill="#94a3b8">(Vertex AI Model Garden)</tspan></text>
+    <text x="25" y="497" font-size="10" font-weight="bold" fill="#ffffff">A DIFFERENT model family must ALLOW, or nothing is signed.</text>
+    <text x="25" y="510" font-size="9" fill="#f87171">Fail-closed: silence, timeout or ambiguity ➔ DENY ➔ waits for a person.</text>
   </g>
 
   <!-- Flow arrows to Infrastructure -->

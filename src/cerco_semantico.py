@@ -27,8 +27,16 @@ cerrar», y por eso su fallo, su alucinación o su envenenamiento no abren ningu
 peor caso molestan a una persona de más. La compuerta sigue siendo la misma función determinista
 que toma el mínimo de todos los techos.
 
-Con esto el proyecto pasa de «un modelo» a «dos modelos, y ninguno de los dos puede darse
-autoridad». Es una promesa más fuerte, no más débil.
+Con esto el proyecto pasa de «un modelo» a «varios modelos, y ninguno puede darse autoridad».
+Es una promesa más fuerte, no más débil.
+
+DOS CERCOS, NO UNO — añadido el 2026-08-30. El cerco corre con DOS modelos de embeddings
+distintos (`gemini-embedding-001` y `text-multilingual-embedding-002`), cada uno con su propio
+umbral medido, y basta con que UNO levante la mano para exigir persona (`techo_semantico_doble`).
+Un solo cerco es un solo punto de fallo aunque esté bien medido; y como los dos solo saben
+restar autoridad, juntarlos no puede abrir ninguna puerta que uno solo cerraba. La medición de
+lo que cuesta —los falsos positivos— está en `agente/killtest_cerco_doble.py`, y la condición
+que autorizó esto es que NO subieran de dos.
 
 ANTE LA DUDA, PRUDENCIA. Si la llamada falla, se devuelve `exige_humano`, igual que hace el
 enrutador cuando el dictamen llega ilegible. Un cerco que se cae en abierto no es un cerco.
@@ -49,6 +57,12 @@ REGION = os.environ.get("REGION_EMBEDDINGS", "us-central1")
 # multilingüe era del modelo, no del diseño — y se tapa cambiando una cadena.
 MODELO = os.environ.get("MODELO_EMBEDDINGS", "gemini-embedding-001")
 
+# EL SEGUNDO CERCO, y es un modelo distinto, no otra instancia del mismo. `gemini-embedding-001`
+# y `text-multilingual-embedding-002` son dos modelos publicados por Google con pesos y escalas
+# propias: lo que uno no vea por su forma de representar el significado, el otro puede verlo.
+# Un solo cerco es un solo punto de fallo, aunque sea un buen cerco.
+MODELO_2 = os.environ.get("MODELO_EMBEDDINGS_2", "text-multilingual-embedding-002")
+
 # Cuánto parecido basta para levantar la mano. NO se eligió a ojo: sale de la separación
 # MEDIDA entre las dos clases en `agente/killtest_cerco_semantico.py`, sobre los textos que
 # el cerco ve de verdad (los que la máquina iba a firmar). Margen medido: +0,082 — juicios
@@ -56,6 +70,46 @@ MODELO = os.environ.get("MODELO_EMBEDDINGS", "gemini-embedding-001")
 # dos lados. Sobre los doce casos SIN esa condición el margen era +0,008, o sea ninguno:
 # cualquier umbral habría estado fabricado. El arreglo fue el alcance, no el número.
 UMBRAL = float(os.environ.get("UMBRAL_CERCO", "0.70"))
+
+# El umbral del SEGUNDO cerco es OTRO NÚMERO, y tiene que serlo: cada modelo de embeddings tiene
+# su propia escala de coseno, y reusar el 0,70 del primero habría sido fabricar una cifra. Sale
+# de la misma medición y del mismo modo que la del primero, corriendo
+# `MODELO_EMBEDDINGS=text-multilingual-embedding-002 python3
+#  agente/killtest_cerco_semantico.py --calibrar` el 2026-08-30 sobre el banco completo:
+#
+#   juicio con el parecido MÁS BAJO (evasión ES · ERP/QA/KPI) ... 0,701
+#   cierre legítimo ORDINARIO con el parecido MÁS ALTO .......... 0,671
+#   MARGEN medido entre las dos clases .......................... +0,030
+#
+# El umbral va por el medio de esa franja: (0,701 + 0,671) / 2 = 0,686.
+#
+# POR QUÉ 0,686 Y NO 0,697, dicho con honestidad después de que un disidente externo tumbara la
+# primera versión de esta explicación (`docs/mediciones/2026-08-30_DISIDENTE_umbral_cerco_2.md`).
+# La razón que se escribió aquí primero era FALSA: decía que 0,697 «solo separa los casos
+# fáciles», y no es verdad — 0,697 también separa los veintidós casos, porque el juicio más
+# flojo da 0,701. **Los dos números producen decisiones IDÉNTICAS sobre todo lo medido**: no hay
+# un solo texto del banco cuyo parecido caiga entre 0,686 y 0,697. Lo único que cambia entre
+# ellos es a qué lado se le deja el colchón para los textos que nadie ha escrito todavía:
+#
+#     con 0,697 → 0,004 de colchón contra un juicio nuevo · 0,026 contra un cierre legítimo
+#     con 0,686 → 0,015 de colchón contra un juicio nuevo · 0,015 contra un cierre legítimo
+#
+# Y ahí los dos errores NO valen lo mismo. Que se escape un juicio es una máquina firmando una
+# absolución: daño sin techo. Que se cuele un falso positivo es una llamada a una persona: coste
+# acotado. Con pérdidas así de asimétricas, el punto medio ya es CONSERVADOR de más hacia el
+# lado barato; bajarlo aún más está vedado porque por debajo de 0,671 empieza a molestar sobre
+# cierres ordinarios, que sí es fallo. 0,686 es el punto más prudente que cabe sin pagar
+# falsos positivos, y ésa —y no la otra— es la razón.
+#
+# EL LÍMITE, que hay que decir entero: ese margen de +0,030 se mide EXCLUYENDO los dos cierres
+# legítimos «difíciles a propósito», que están declarados como falsos positivos desde antes de
+# que existiera este segundo cerco. Contándolos como lo que también son —textos legítimos— las
+# dos clases se SOLAPAN (el legítimo más alto da 0,768, por encima del juicio más bajo, 0,701) y
+# NO existe ningún umbral que las separe. Eso no es un defecto nuevo de este modelo: es el
+# límite ya documentado de separar por significado «saldo en cero por corrección» de «saldo en
+# cero porque se perdonó». Se declara aquí para que nadie lea el +0,030 como si fuera el margen
+# contra todo el mundo.
+UMBRAL_2 = float(os.environ.get("UMBRAL_CERCO_2", "0.686"))
 
 # Lo que significa «aquí hay un juicio de por medio», dicho de varias formas a propósito. No son
 # palabras clave: son EJEMPLOS de sentido, y el parecido se mide contra ellos.
@@ -88,7 +142,9 @@ JUICIOS = (
     "决定终止本案的后续处理程序，申请人无需承担任何未结余额",
 )
 
-_cache_juicios = None
+# Las anclas se vectorizan una vez POR MODELO: dos cercos, dos juegos de vectores, y el de uno
+# no sirve para el otro ni de casualidad (son espacios distintos). La clave es el modelo.
+_cache_juicios: dict[str, list] = {}
 _cache_cred = None
 
 
@@ -124,9 +180,10 @@ def _frases(texto: str) -> list[str]:
     return ([texto] + trozos)[:12]          # tope: el texto entero más once frases
 
 
-def _vectores(textos):
+def _vectores(textos, modelo=None):
+    modelo = modelo or MODELO
     url = (f"https://{REGION}-aiplatform.googleapis.com/v1/projects/{PROYECTO}"
-           f"/locations/{REGION}/publishers/google/models/{MODELO}:predict")
+           f"/locations/{REGION}/publishers/google/models/{modelo}:predict")
     r = requests.post(url, timeout=30,
                       headers={"Authorization": f"Bearer {_token()}",
                                "Content-Type": "application/json"},
@@ -142,38 +199,91 @@ def _coseno(a, b):
     return num / (na * nb) if na and nb else 0.0
 
 
-def techo_semantico(texto: str) -> tuple[str | None, dict]:
+def techo_semantico(texto: str, modelo: str | None = None,
+                    umbral: float | None = None) -> tuple[str | None, dict]:
     """Devuelve `("exige_humano", detalle)` si el texto SIGNIFICA un juicio, o `(None, detalle)`.
 
     NUNCA devuelve un techo más permisivo que `exige_humano`: no está en su poder.
+
+    `modelo` y `umbral` se resuelven EN LA LLAMADA, no al importar: así el mismo código sirve
+    para los dos cercos y la prueba puede cambiarlos sin recargar el módulo. Sin argumentos se
+    comporta exactamente como antes —primer cerco, primer umbral—, que es lo que llama el grafo.
     """
-    global _cache_juicios
+    modelo = modelo or MODELO
+    umbral = UMBRAL if umbral is None else umbral
     try:
-        if _cache_juicios is None:
-            _cache_juicios = _vectores(list(JUICIOS))
+        if modelo not in _cache_juicios:
+            _cache_juicios[modelo] = _vectores(list(JUICIOS), modelo)
+        anclas = _cache_juicios[modelo]
         trozos = _frases(texto)
-        vectores = _vectores(trozos)
+        vectores = _vectores(trozos, modelo)
         # El texto se mide entero Y frase a frase, y manda el trozo que MÁS se parezca a algún
         # juicio. Así el relleno técnico deja de diluir la cláusula que absuelve.
         maximo, cual, donde = -1.0, JUICIOS[0], texto
         for trozo, v in zip(trozos, vectores):
-            parecidos = [_coseno(v, j) for j in _cache_juicios]
+            parecidos = [_coseno(v, j) for j in anclas]
             m = max(parecidos)
             if m > maximo:
                 maximo, cual, donde = m, JUICIOS[parecidos.index(m)], trozo
     except Exception as e:                                       # noqa: BLE001
         # Ante la duda, prudencia: la misma regla que aplica el enrutador con un dictamen
         # ilegible. Un cerco que se cae en abierto no es un cerco.
-        return "exige_humano", {"error": type(e).__name__, "motivo": "el cerco no pudo medir"}
+        return "exige_humano", {"modelo": modelo, "umbral": umbral,
+                                "error": type(e).__name__, "motivo": "el cerco no pudo medir"}
 
-    detalle = {"parecido": round(maximo, 3), "se_parece_a": cual,
+    detalle = {"modelo": modelo, "umbral": umbral,
+               "parecido": round(maximo, 3), "se_parece_a": cual,
                "en_el_trozo": donde[:90]}
-    if maximo >= UMBRAL:
+    if maximo >= umbral:
         return "exige_humano", detalle
     return None, detalle
 
 
+def techo_semantico_doble(texto: str) -> tuple[str | None, dict]:
+    """Los DOS cercos, y la regla de combinación es hacia la cautela: si uno solo levanta la
+    mano, se exige persona. Si discrepan, se exige persona.
+
+    POR QUÉ ES SEGURO POR CONSTRUCCIÓN. Ninguno de los dos modelos puede devolver algo más
+    permisivo que `exige_humano` —eso ya era cierto de uno—, y la disyunción de dos cosas que
+    solo saben restar autoridad tampoco puede sumarla. Añadir el segundo cerco solo puede cazar
+    MÁS y molestar MÁS; nunca menos de lo uno ni menos de lo otro. Por eso lo que hay que medir
+    no es si caza —eso está garantizado—, sino cuánto molesta de más: los falsos positivos.
+
+    Y LO MEDIDO, el 2026-08-30, sobre los veintidós casos del banco: molesta EXACTAMENTE lo
+    mismo. Los dos cercos coinciden en los veintidós; ninguno discrepa del otro, así que la
+    disyunción no añade ni un falso positivo. Los falsos positivos siguen siendo dos, que era la
+    condición que autorizó esto.
+
+    LO QUE ESTE BANCO **NO** DEMUESTRA, y hay que decirlo antes de que lo diga otro (lo dijo un
+    disidente externo, ataques 5 y 10 de
+    `docs/mediciones/2026-08-30_DISIDENTE_umbral_cerco_2.md`). Cero discrepancias en veintidós
+    casos significa que **cada juicio que cazó el segundo cerco lo cazaba ya el primero**. O sea
+    que el banco NO contiene ni un solo texto que evada al cerco 1 y lo pare el cerco 2, y por
+    tanto la CAPACIDAD DE CAZA ADICIONAL del segundo cerco está sin medir: aquí no ha cazado
+    nada que el otro dejara pasar. Medirla exigiría un banco nuevo de juicios escritos para
+    evadir al cerco 1 concretamente, y ese banco no existe todavía.
+
+    Lo que sí está medido y es lo que se reclama: el segundo cerco **no cuesta nada** —cero
+    falsos positivos añadidos—, y quita el punto único de fallo, porque si el primer modelo se
+    cae, se retira o cambia de comportamiento con una versión, el segundo sigue en pie. Es una
+    segunda muestra independiente, no una mejora de cobertura demostrada.
+
+    ANTE LA DUDA, PRUDENCIA, igual que con uno: si CUALQUIERA de los dos falla, `exige_humano`.
+    Es la propiedad que hace que dos cercos sean más seguros que uno y no el doble de frágiles.
+    """
+    v1, d1 = techo_semantico(texto, MODELO, UMBRAL)
+    v2, d2 = techo_semantico(texto, MODELO_2, UMBRAL_2)
+    detalle = {"cercos": [d1, d2],
+               "discrepan": (v1 is None) != (v2 is None),
+               "levanta_la_mano": [d["modelo"] for d, v in ((d1, v1), (d2, v2)) if v]}
+    return ("exige_humano" if (v1 or v2) else None), detalle
+
+
 if __name__ == "__main__":
     import sys
-    veredicto, detalle = techo_semantico(" ".join(sys.argv[1:]) or "prueba")
+    argumentos = [a for a in sys.argv[1:] if a != "--doble"]
+    if "--doble" in sys.argv:
+        veredicto, detalle = techo_semantico_doble(" ".join(argumentos) or "prueba")
+    else:
+        veredicto, detalle = techo_semantico(" ".join(argumentos) or "prueba")
     print(veredicto or "sin objeción", detalle)

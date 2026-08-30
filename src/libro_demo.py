@@ -26,7 +26,10 @@ seco es peor que uno que avisa.
 import json
 import os
 import pathlib
+import sys
 import time
+
+from src import libro_cadena
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 LIBRO = RAIZ / "libro"
@@ -150,7 +153,29 @@ def firmas() -> list:
 
 
 def anotar_firma(fila: dict) -> None:
-    """Añade una operación al libro. Nunca modifica ni borra: el libro solo crece."""
+    """Añade una operación al libro. Nunca modifica ni borra: el libro solo crece.
+
+    ENCADENADA desde 2026-08-30. Antes, cada fila cubría solo su propio sobre y ninguna
+    apuntaba a la anterior: se podía borrar una fila entera y las demás seguían verificando.
+    Ahora la fila del ARCHIVO lleva `n`, `prev` y `hash`, y `prev` queda cubierto por `hash`,
+    así que borrar o reordenar una fila deja de ser indetectable. Lo comprueban
+    `agente/killtest_libro_encadenado.py` y `agente/killtest_libro_reordenado.py`.
+
+    LO QUE LA CADENA CUBRE Y LO QUE NO, declarado y no maquillado: cubre el ARCHIVO. Cuando
+    hay credenciales, esta función escribe en Firestore y el archivo ni se toca, así que
+    **Firestore queda FUERA de la cadena**.
+
+    Y la razón hay que darla entera, porque la versión corta era tramposa. «`flock` no sirve
+    entre instancias de Cloud Run» es cierto, pero responde al mecanismo equivocado: Firestore
+    tiene su propio primitivo para exactamente este problema —una transacción optimista, que sí
+    cruza instancias— y con ella la cadena SÍ se podría llevar a la colección. No se hace aquí
+    por **alcance y tiempo del frente**, no por imposibilidad técnica: exige un documento de
+    cabeza, reintentos y una prueba de concurrencia real contra el proyecto, y este frente
+    entrega antes de las 08:00 del 2026-08-31. Queda propuesto, no resuelto.
+
+    Mientras tanto, lo que la cadena cubre es el archivo — que es justamente lo que verifica
+    `src/verificar_sobre.py` sin credenciales, y lo que el paquete de entrega enseña.
+    """
     fila.setdefault("ts", int(time.time()))
     c = _c()
     if c is not None:
@@ -159,8 +184,20 @@ def anotar_firma(fila: dict) -> None:
             return
         except Exception:                                        # noqa: BLE001
             pass
+    # EL SILENCIO SE ACABA AQUÍ, y lo señaló el frente de la puerta revisando este archivo.
+    # Antes esto era `except Exception: pass`, heredado de cuando la fila era un simple
+    # `write`. Con la cadena esa misma línea se vuelve el fallo del que va este frente: si
+    # anexar falla, la fila no entra en la cadena, la siguiente encadena contra una cabeza que
+    # no es la que el llamador cree, y **no queda rastro de que faltara nada**. Un libro que
+    # promete estar completo no puede perder filas en silencio.
+    #
+    # Se sigue sin reventar el demo por esto —esa decisión no cambia—, pero el fallo se dice
+    # por `stderr`, que es donde lo verá quien corra el kill-test o lea los registros de la
+    # instancia. Y el verificador lo cazará después de todos modos: una fila que falta parte la
+    # cadena y sale nombrada con su número de línea.
     try:
-        with F_FIRMAS.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(fila, ensure_ascii=False) + "\n")
-    except Exception:                                            # noqa: BLE001
-        pass
+        libro_cadena.anexar(F_FIRMAS, fila)
+    except Exception as e:                                       # noqa: BLE001
+        print(f"[libro] NO SE PUDO ANOTAR EN LA CADENA ({type(e).__name__}: {e}). "
+              f"La fila de {fila.get('peticion_id', '?')} NO entró en el libro y la cadena "
+              f"queda incompleta a partir de aquí.", file=sys.stderr)

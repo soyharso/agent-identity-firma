@@ -1,12 +1,19 @@
 # RUNBOOK DE GRABACIÓN — CLEVERIA · v3
 
-**Fecha:** 2026-08-30 · **Versión:** 5.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+**Fecha:** 2026-08-30 · **Versión:** 6.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+*(v6: la toma 3 dura 13 s y no hay espera; la toma 2 acaba en aviso amarillo; el banner de la 4
+miente a medias; y se retiró el residuo que aún mandaba desconectar el cable)*
 *(v5: NO desconectar la red en la toma 4, la ventana del reloj :01–:11, y el plazo del cofirmante)*
 *(v4: la regla de edición corregida contra la rúbrica, OBS montado, la toma 3 paso a paso)*
 
-> **Las tres correcciones de la v5 no salieron de leer este documento: salieron de ejecutarlo.**
-> Dos de ellas desmienten instrucciones que estaban escritas aquí y sonaban razonables. Si vas con
-> prisa, lee al menos los tres recuadros marcados con ⏰ y ⚠ — cada uno evita una toma perdida.
+> ### Este documento ha mentido cinco veces, y las cinco sonaban razonables
+>
+> Ninguna se cazó leyéndolo: **las cinco se cazaron ejecutándolo**. Y la quinta es la que mejor
+> enseña por qué: la v5 declaraba corregida la instrucción de desconectar el cable **y la
+> instrucción seguía viva ochenta líneas más abajo**, justo donde se lee al terminar la toma 3.
+> Corregir el sitio donde uno recuerda haberlo escrito no es corregir el documento.
+>
+> Si vas con prisa, lee solo los recuadros marcados ⏰ y ⚠. **Cada uno evita una toma perdida.**
 
 > **La v2 decía que había tres planes de grabación incompatibles. Ya no**, y por una razón mejor
 > que la que teníamos.
@@ -65,8 +72,15 @@ Con la sesión de Google Cloud abierta, las cinco tomas corren:
 | `bash demo.sh 1` | ✅ | la cola, con las peticiones que exigen persona marcadas |
 | `bash demo.sh 2` | ✅ | el despertador dispara y la flota dictamina en la nube |
 | `bash demo.sh 3` | ✅ **el corazón** | **403 real de Cloud KMS**, con el recurso completo |
-| `bash demo.sh 4` | ✅ **sin credenciales** | el verificador sin red y las pruebas de ruptura |
+| `bash demo.sh 4` | ⚠ **a medias** | el verificador **sí** corre sin credenciales; su otra mitad, no |
 | `bash demo.sh 5` | ✅ | Cloud Run, Scheduler, el llavero y sus políticas |
+
+> **⚠ El fotograma final de la toma 4 dice algo que no es cierto.** Imprime
+> `COMPLETE — verified with no network and no credentials` justo después de **cuatro llamadas
+> HTTPS autenticadas** a Model Armor. La primera mitad —el verificador puro— sí corre sin red ni
+> credenciales, y esa es la parte fuerte; la segunda no. **Si grabas esa toma, no dejes ese banner
+> como último plano**, o corta antes. Es el mismo pecado que este runbook lleva todo el día
+> corrigiendo: una afirmación absoluta sobre algo que solo es cierto a medias.
 
 **La toma 3 es el vídeo entero.** Esta línea no la puede imprimir un `print()`:
 
@@ -187,9 +201,26 @@ Graba primero lo difícil, con la máquina fresca y tú también:
 
 ### 4.1 La toma 3, paso a paso
 
-Es la única que no se puede repetir mal, así que va escrita entera. Dura entre **50 y 80
-segundos** de reloj: casi todo es la espera del despertador, que **no se corta** — es la prueba de
-que el trabajo se reanuda solo.
+Es la única que no se puede repetir mal, así que va escrita entera.
+
+> ### ⏱ Dura **13 segundos**, no 80. Y no hay espera del despertador.
+>
+> **Corregido el 2026-08-30 midiéndolo**: `time bash demo.sh 3` → `real 0m12,5s`, con la línea
+> `✓ done in 0s`. Aquí ponía «entre 50 y 80 segundos, casi todo la espera del despertador, que es
+> la prueba de que el trabajo se reanuda solo». **Esa espera no existe en este guion.**
+>
+> La razón está en el código: `/decidir` (`servicio/main.py:112`) escribe el sobre **en el mismo
+> momento** en que la persona firma, y el sondeo de `demo.sh` espera exactamente eso. Se cumple
+> antes de que el despertador haga nada. La escena del reloj, la narración «el trabajo se reanuda
+> solo» y el aviso de «si el paso 6 agota los 90 segundos» describían **una toma que este guion no
+> produce**.
+>
+> **Qué hacer con eso, y es una decisión, no un arreglo:**
+> - **Grábala tal cual, en 13 segundos**, y narra lo que de verdad ocurre: la persona firma y el
+>   cierre queda verificado. Es cierto, es rápido, y **sobra tiempo de vídeo** — que hoy es un
+>   problema que teníamos al revés.
+> - Si quieres la escena de la reanudación, hay que hacer que el sondeo espere algo que **sí**
+>   dependa del despertador. Eso es tocar código a horas de grabar, y no lo recomiendo.
 
 > ### ⏰ MIRA EL RELOJ ANTES DE SEMBRAR. La ventana buena es del minuto :01 al :11
 >
@@ -201,6 +232,12 @@ que el trabajo se reanuda solo.
 >
 > No hay que tocar nada ni apagar nada. **Siembra y arranca entre el :01 y el :11**, y el
 > despertador no se cruza.
+>
+> **Y NO SE TE OCURRA PAUSARLO.** Es la solución que parece obvia y **rompe la toma 3**: `demo.sh`
+> lo dispara a mano dos veces durante esa toma, y con el trabajo pausado `gcloud scheduler jobs
+> run` devuelve `FAILED_PRECONDITION: Job.state must be ENABLED`. Perderías la toma justo en el
+> momento en que se demuestra que el trabajo se reanuda solo. La ventana del reloj no es una
+> comodidad: es la única mitigación que no rompe nada.
 
 **Antes de pulsar grabar** (fuera de cámara, en otra terminal):
 
@@ -246,22 +283,29 @@ bash demo.sh 3
 | 3 | **`403 PERMISSION_DENIED`** sobre `clave-humano`, con el recurso completo | **Aquí se para de hablar.** Deja el 403 en pantalla dos segundos enteros. Es el plano del vídeo. |
 | 4 | La persona firma desde su máquina: `decidir_como_persona.py PET-002 descartada` | «La autorización la firma una persona, con una llave que el programa no puede pedir.» |
 | 5 | El despertador se dispara (`scheduler jobs run despertar-candado`) | «Nadie vuelve a tocar nada.» |
-| 6 | La espera, hasta 90 s, sondeando | **No la cortes.** «El trabajo se reanuda solo.» |
-| 7 | `PET-002 closed → signer=HUMANO` | «Y se cierra con la firma de la persona, no con la del programa.» |
+| 6 | **`✓ done in 0s`** — no hay espera; el sondeo se cumple al instante | **No narres una espera que no ocurre.** Di lo que se ve: «y el cierre ya está.» |
+| 7 | `PET-002 closed → signer=HUMANO` | «Se cierra con la firma de la persona, no con la del programa.» |
 
 **Lo que puede salir mal, y qué hacer:**
 
-- **El paso 6 agota los 90 segundos.** El despertador corre cada quince minutos; si acaba de
-  pasar, la reanudación tarda. Repite la toma, no la edites.
+- **`PET-002` sigue cerrada de un ensayo anterior, y volver a sembrar NO la resetea.** Medido:
+  `sembrar_demo.py` escribe `PET-006` en adelante, en otra colección, mientras las tomas 1, 2 y 3
+  leen el fichero horneado con `PET-001..005`. Y `--borrar` **no toca el estado**, que es donde
+  quedó la decisión humana del ensayo. El remedio real es **correr la toma 2**, que reinicia ese
+  estado, o borrar el documento a mano.
 - **El `403` no sale.** Compruébalo a demanda **antes** de apostar el vídeo a una sola toma:
   `curl -s -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" "$URL/intentar-suplantar"`.
   Si no es reproducible ahora, no lo será en cámara.
 - **Sale un correo o una ruta del disco.** Corta y repite: `/decidir` ya devuelve solo el dominio,
   pero este dato ha reaparecido tres veces en sitios distintos.
-- **`PET-002` ya estaba cerrada** (por el ensayo). Vuelve a sembrar.
+- **La toma 2 se cuelga 90 segundos y acaba con un aviso amarillo en cámara.** Medido:
+  `real 3m33s`, terminando en `⚠ still not ready after 90s`. No es un fallo del sistema — su
+  sondeo exige veredicto en las cuatro peticiones, y dos de ellas **esperan a una persona y no lo
+  tendrán nunca**. Si la grabas tal cual, ese aviso sale en el vídeo. **Grábala sabiéndolo**, o
+  corta esa toma del guion: lo que demuestra ya lo demuestra la toma 3.
 
-**Después de la toma 3, y en este orden**: la toma 4 desconectando la red de verdad, luego 1, 2 y
-5, luego el portal con una nota de voz, y la narración al final.
+**Después de la toma 3, y en este orden**: la toma 4 **con la red puesta** —ver el aviso de la
+§4—, luego 1, 2 y 5, luego el portal con una nota de voz, y la narración al final.
 
 ## 5. El montaje
 

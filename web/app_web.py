@@ -54,22 +54,50 @@ def _avisar(datos: dict, ident: str) -> bool:
     igual y la respuesta lo dice: es mejor un aviso pendiente que un envío inventado.
     """
     usuario = os.environ.get("SMTP_USUARIO")
-    clave = os.environ.get("SMTP_CLAVE")
+    # La clave llega MONTADA DESDE SECRET MANAGER, no escrita en la configuración del servicio.
+    # La diferencia importa y no es teórica: una variable de entorno en texto plano la ve
+    # cualquiera que pueda describir el servicio, sale en los volcados de configuración y se
+    # arrastra a cada despliegue. Un secreto montado se versiona, se revoca sin redesplegar, y
+    # su lectura queda registrada. Aquí se leen las dos formas —la variable sigue valiendo para
+    # una prueba local— pero la de producción es el archivo.
+    ruta_secreto = os.environ.get("SMTP_CLAVE_ARCHIVO", "/secretos/smtp-clave")
+    clave = None
+    try:
+        clave = Path(ruta_secreto).read_text().strip() or None
+    except OSError:
+        clave = os.environ.get("SMTP_CLAVE")
     if not (usuario and clave):
         return False
     try:
+        # El servidor se DEDUCE del correo, y no se deja a que alguien recuerde otra variable.
+        # Costó una prueba: el buzón que se configuró es de Yahoo y aquí estaba puesto Gmail por
+        # defecto, así que el envío fallaba en silencio mientras la respuesta decía —con razón—
+        # que no había avisado. Un valor por defecto que solo acierta con un proveedor es una
+        # trampa esperando: quien configura el correo no tiene por qué saber qué servidor toca.
+        dominio = usuario.rsplit("@", 1)[-1].lower()
+        SERVIDORES = {
+            "yahoo.com": "smtp.mail.yahoo.com", "yahoo.com.mx": "smtp.mail.yahoo.com",
+            "yahoo.es": "smtp.mail.yahoo.com", "ymail.com": "smtp.mail.yahoo.com",
+            "gmail.com": "smtp.gmail.com", "googlemail.com": "smtp.gmail.com",
+            "outlook.com": "smtp-mail.outlook.com", "hotmail.com": "smtp-mail.outlook.com",
+            "live.com": "smtp-mail.outlook.com",
+        }
+        # Un dominio propio con correo de Google —el caso de esta casa— también sale por Gmail.
+        host = os.environ.get("SMTP_HOST") or SERVIDORES.get(dominio, "smtp.gmail.com")
         m = EmailMessage()
         m["Subject"] = f"cleveria.co — {datos.get('empresa') or datos.get('nombre') or 'contacto'}"
         m["From"] = usuario
         m["To"] = DESTINO
         m["Reply-To"] = datos.get("correo") or usuario
         m.set_content("\n".join(f"{k}: {v}" for k, v in datos.items()) + f"\n\nid: {ident}")
-        with smtplib.SMTP_SSL(os.environ.get("SMTP_HOST", "smtp.gmail.com"),
-                              int(os.environ.get("SMTP_PUERTO", "465")), timeout=15) as s:
+        with smtplib.SMTP_SSL(host, int(os.environ.get("SMTP_PUERTO", "465")), timeout=15) as s:
             s.login(usuario, clave)
             s.send_message(m)
         return True
-    except Exception:                                        # noqa: BLE001
+    except Exception as e:                                   # noqa: BLE001
+        # Se registra el motivo, SIN la credencial: un aviso que falla en silencio es un aviso
+        # que nadie arregla. El visitante no ve esto — a él se le dice que quedó guardado.
+        print(f"aviso no enviado · servidor={host} · motivo={str(e)[:160]}", flush=True)
         return False
 
 
@@ -115,4 +143,28 @@ def home():
 
 @app.route("/salud")
 def salud():
-    return jsonify({"ok": True, "correo_configurado": bool(os.environ.get("SMTP_USUARIO"))}), 200
+    """Estado del servicio, **sin exponer ni la cuenta ni la clave**.
+
+    Devuelve el DOMINIO del buzón y el servidor deducido, que es justo lo que hace falta para
+    ver por qué un aviso no sale: si la clave es de un proveedor y la cuenta de otro, aquí se
+    ve en una línea. La cuenta completa y la clave no salen de aquí nunca.
+    """
+    usuario = os.environ.get("SMTP_USUARIO") or ""
+    dominio = usuario.rsplit("@", 1)[-1].lower() if "@" in usuario else None
+    ruta = os.environ.get("SMTP_CLAVE_ARCHIVO", "/secretos/smtp-clave")
+    hay_secreto = Path(ruta).exists() and bool(Path(ruta).read_text().strip())
+    return jsonify({
+        "ok": True,
+        "correo_configurado": bool(usuario) and (hay_secreto or bool(os.environ.get("SMTP_CLAVE"))),
+        "clave_desde": "secret-manager" if hay_secreto else (
+            "variable-de-entorno" if os.environ.get("SMTP_CLAVE") else None),
+        "buzon_dominio": dominio,
+        "servidor_deducido": os.environ.get("SMTP_HOST") or (
+            {"yahoo.com": "smtp.mail.yahoo.com", "yahoo.com.mx": "smtp.mail.yahoo.com",
+             "yahoo.es": "smtp.mail.yahoo.com", "ymail.com": "smtp.mail.yahoo.com",
+             "gmail.com": "smtp.gmail.com", "googlemail.com": "smtp.gmail.com",
+             "outlook.com": "smtp-mail.outlook.com", "hotmail.com": "smtp-mail.outlook.com",
+             "live.com": "smtp-mail.outlook.com"}.get(dominio, "smtp.gmail.com")
+            if dominio else None),
+        "destino": DESTINO,
+    }), 200

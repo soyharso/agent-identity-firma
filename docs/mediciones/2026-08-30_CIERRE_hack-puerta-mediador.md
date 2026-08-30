@@ -13,7 +13,7 @@ entrega: >
 **Entorno**: preproducción, proyecto `ai-transf-lab-0827`. Nada de esto es producción.
 
 Registro crudo con el que rehacer cada número:
-[`MEDICION_puerta_mediadora.jsonl`](MEDICION_puerta_mediadora.jsonl). Cada línea lleva su
+[`docs/mediciones/puerta_mediadora.jsonl`](puerta_mediadora.jsonl). Cada línea lleva su
 comando.
 
 ## Qué es un sobre, en una frase
@@ -225,7 +225,7 @@ Salida literal de la herramienta sobre este documento, para que la cifra no depe
 cuente esta prosa:
 
 ```
-$ python3 tools/comunicacion/lint_claridad.py MEDICION_puerta_mediadora.md
+$ python3 tools/comunicacion/lint_claridad.py docs/mediciones/2026-08-30_CIERRE_hack-puerta-mediador.md
 INFLESZ=76.0 (umbral 55.0) · 13.7 pal/frase · largas>40: 0 · siglas sin glosa: 0
 PASA
 ```
@@ -257,7 +257,7 @@ PASA
   un doble — el último ataque lo lanza el servicio desplegado con su identidad real contra la
   nube real.
 
-- **Registro crudo re-evaluable**: [`MEDICION_puerta_mediadora.jsonl`](MEDICION_puerta_mediadora.jsonl),
+- **Registro crudo re-evaluable**: [`docs/mediciones/puerta_mediadora.jsonl`](puerta_mediadora.jsonl),
   doce mediciones con su comando.
 
 - **Disidente y juez: NO se montaron, y es una decisión declarada del arnés**, no un olvido. El

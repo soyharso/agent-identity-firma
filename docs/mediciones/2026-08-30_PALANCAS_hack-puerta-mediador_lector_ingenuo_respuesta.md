@@ -10,14 +10,14 @@ entrega: >
 **Frente**: hack-puerta-mediador · **Fecha**: 2026-08-30 · **Titular del papel**: `claude-haiku`
 (subagente barato, sin contexto del proyecto, sin acceso al código).
 
-**Qué se le dio a leer**, y nada más: `MEDICION_puerta_mediadora.md` y el borrador del texto de
+**Qué se le dio a leer**, y nada más: `docs/mediciones/2026-08-30_CIERRE_hack-puerta-mediador.md` y el borrador del texto de
 cierre al operador. Instrucción explícita de NO abrir el repositorio: «si un texto solo se
 entiende abriendo el código, eso es exactamente el defecto que tienes que reportar».
 
 C1 — se buscó antes de crear este archivo, por nombre (`*abrir*`, `*acces*`, `*barat*`,
 `*ingenuo*`, `*medic*`, `*clari*`, `*lint*`, `*lector*`) y por contenido («lector ingenuo»,
 «subagente barato», «sin contexto», `INFLESZ`). Lo único que apareció fue
-`MEDICION_puerta_mediadora.md`, que cita el veredicto **en prosa**, y `web/app_web.py`, que usa
+`docs/mediciones/2026-08-30_CIERRE_hack-puerta-mediador.md`, que cita el veredicto **en prosa**, y `web/app_web.py`, que usa
 «sin contexto» hablando de otra cosa. La prosa dejó de contar como rastro el 2026-08-25, así que
 este archivo no duplica al informe: es la evidencia material que al informe le falta.
 

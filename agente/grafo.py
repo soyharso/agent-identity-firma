@@ -31,6 +31,7 @@ from google.adk.workflow import DEFAULT_ROUTE, START, FunctionNode, Workflow  # 
 from google.genai import types                                         # noqa: E402
 
 from src import estado                                                  # noqa: E402
+from src import libro_cadena                                            # noqa: E402
 from src.cerco_semantico import techo_semantico                        # noqa: E402
 from src.cofirmante import cofirmar, linea_de_registro                # noqa: E402
 from src.verificar_sobre import verificar as verificar_sobre           # noqa: E402
@@ -336,19 +337,30 @@ def verificar(ctx):
 
 
 def registrar(ctx):
-    """El libro se escribe siempre; el REGISTRO, solo por la puerta.
+    """El libro se escribe siempre y ENCADENADO; el REGISTRO, solo por la puerta.
 
-    Antes este nodo escribía el estado él mismo, firma incluida, con la credencial del agente. Se
-    presentaba el sobre y se guardaba en el mismo gesto: nadie comprobaba nada en el camino de
-    escritura, así que el sobre era un recibo. Ahora hay dos caminos y ninguno se los salta:
+    Dos frentes se cruzaron en esta función el 2026-08-30, y la regla de fusión la acordaron
+    los dos por escrito:
 
-      · hay sobre y firma  →  `aplicar_cierre`, que VERIFICA contra esta petición y, si no
-                              cuadra, deja el registro exactamente como estaba;
-      · no hay firma       →  `anotar_resultado`, que anota el desenlace y tiene prohibido
-                              escribir `sobre`, `firma` o `hash_contenido`.
+      · `hack-libro-encadenado` encontró que ESTE era el segundo escritor del libro en disco.
+        `src/libro_demo.py` no era el único: aquí se escribía directo con `FIRMAS.open("a")`, y
+        por eso un `grep -rn 'anotar_firma|F_FIRMAS'` no lo veía. Migrar solo uno es peor que no
+        migrar ninguno: el que encadena y el que solo anexa conviven, y la cadena se corta sin
+        que nadie haya hecho nada malo. Por eso ahora va `libro_cadena.anexar`, que hace el
+        `mkdir` por su cuenta y pone `n`, `prev` y `hash` bajo su propio candado.
+      · `hack-puerta-mediador` quitó de aquí la escritura del registro. Antes este nodo lo
+        escribía él mismo, firma incluida, con la credencial del agente: se presentaba el sobre
+        y se guardaba en el mismo gesto, sin que nadie comprobara nada en el camino de
+        escritura. El sobre era un recibo. Ahora hay dos caminos y ninguno se los salta:
 
-    El libro en disco sigue registrando TODAS las pasadas, también las que no firmaron nada y
-    las que la puerta rechazó: es el rastro de lo que se intentó, y por eso se escribe antes.
+          · hay sobre y firma  →  `aplicar_cierre`, que VERIFICA contra esta petición y, si no
+                                  cuadra, deja el registro exactamente como estaba;
+          · no hay firma       →  `anotar_resultado`, que anota el desenlace y tiene prohibido
+                                  escribir `sobre`, `firma` o `hash_contenido`.
+
+    EL ORDEN IMPORTA y es parte de la regla: el libro se escribe ANTES de la bifurcación. Así
+    queda rastro también de las pasadas que no firmaron nada y de las que la puerta rechazó,
+    que es justo lo que hay que poder auditar.
     """
     sobre = ctx.state.get("sobre")
     firma = (ctx.state.get("resultado_firma") or {}).get("firma")
@@ -356,9 +368,7 @@ def registrar(ctx):
     fila = {"ts": int(time.time()), "peticion_id": ctx.state["peticion_id"],
             "dictamen": ctx.state.get("dictamen"), "veredicto": ctx.state["veredicto"],
             "sobre": sobre, "firma": firma}
-    FIRMAS.parent.mkdir(parents=True, exist_ok=True)
-    with FIRMAS.open("a") as fh:
-        fh.write(json.dumps(fila, ensure_ascii=False) + "\n")
+    libro_cadena.anexar(FIRMAS, fila)
 
     if sobre and firma and ctx.state["veredicto"] == "OK":
         aplicado, detalle = estado.aplicar_cierre(ctx.state["peticion_id"], sobre, firma,

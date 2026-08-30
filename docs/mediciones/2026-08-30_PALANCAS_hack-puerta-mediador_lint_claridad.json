@@ -3,7 +3,7 @@
   "frente": "hack-puerta-mediador",
   "fecha": "2026-08-30",
   "comando": "python3 tools/comunicacion/lint_claridad.py --json MEDICION_puerta_mediadora.md",
-  "archivo_medido": "MEDICION_puerta_mediadora.md",
+  "archivo_medido": "docs/mediciones/2026-08-30_CIERRE_hack-puerta-mediador.md",
   "resultado": {
     "inflesz": 75.9,
     "frases": 135,
