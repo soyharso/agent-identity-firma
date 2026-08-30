@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cleveria — Authority Ledger</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* Paleta CLEVERIA. Esta pantalla es la capa de agentes, no el canal del cliente: el portal
    lleva la marca de Qnowa, clara y azul, y aquí el fondo se vuelve oscuro. El salto entre las
@@ -19,6 +19,10 @@ body{margin:0;background:var(--navy);color:var(--ice);font:14px/1.5 Inter,system
 .top{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--linea);
      background:linear-gradient(180deg,rgba(11,41,64,.85),transparent)}
 .top img{height:24px}
+/* La marca, exactamente como en cleveria.co: Chivo 900, el nudo a la izquierda, sin caja. */
+.marca{display:flex;align-items:center;gap:10px;font-family:Chivo,Inter,sans-serif;font-weight:900;
+       font-size:1.02rem;letter-spacing:-.02em;color:var(--ice);text-decoration:none;flex:none}
+.nudo{width:24px;height:24px;flex:none}
 .top h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px}
 .top .sub{font-size:11.5px;color:var(--slate)}
 .vivo{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--slate)}
@@ -62,13 +66,25 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--slat
 .pr .s{font:400 10.5px JetBrains Mono,monospace;color:var(--slate)}
 .ok{color:var(--cyan)} .no{color:var(--coral)}
 .rompe{font-size:10.5px;color:var(--slate);padding:0 0 4px 26px;line-height:1.35}
+/* Lo que la máquina NO pudo hacer, junto a lo que sí hizo. Va en el color del texto secundario
+   y sangrado bajo su evento: es una aclaración del renglón de arriba, no un evento más. */
+.alcance{font-size:10.5px;color:var(--slate);line-height:1.35;padding:1px 0 5px 76px;
+         border-left:2px solid var(--linea);margin-left:2px}
 .vacio{color:var(--slate);font-size:12.5px;padding:14px 0}
 </style>
 </head>
 <body>
 <div class="top">
-  <img src="/ui/cleveria-logo-dark.png" alt="Cleveria" style="height:30px"
-       onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'Cleveria'}))">
+  <!-- La misma marca que la portada de cleveria.co: el nudo de dos hexágonos y la palabra, no
+       un logotipo de mapa de bits sobre fondo claro. Dos presentaciones distintas de la misma
+       empresa en dos pantallas del mismo vídeo restan más de lo que cuesta unificarlas. -->
+  <a class="marca" href="/" aria-label="Cleveria">
+    <svg class="nudo" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+      <path d="M50 8 82 26v36L50 80 18 62V26z" stroke="#27E6D2" stroke-width="6"/>
+      <path d="M50 26 68 36v20L50 66 32 56V36z" stroke="#8D72FF" stroke-width="6"/>
+    </svg>
+    Cleveria
+  </a>
   <div>
     <h1>Authority Ledger</h1>
     <div class="sub">Who proposed it, who approved it, and every attempt that was refused</div>
@@ -178,11 +194,20 @@ function pinta(c){
     const aQuien = (s.sobre_quien && s.sobre_quien !== 'sin_declarar') ? ` → ${esc(s.sobre_quien)}` : '';
     const h = String(s.hash_contenido || '').replace('sha256:','').slice(0,12);
     const et = malo ? 't-rec' : (s.tipo_firmante === 'HUMANO' ? 't-hum' : 't-maq');
+    // Una máquina que cierra un caso «sobre» un cliente lo ÚNICO que hace es contestarle. Sin
+    // esta línea, una petición como «confirmen que el reembolso llegó a mi cuenta» se lee como
+    // si el agente hubiera mirado el saldo — y no puede: leer una cuenta no está en su alcance.
+    // Lo que se firma es el aviso, no una comprobación bancaria, y eso tiene que verse sin que
+    // nadie lo explique.
+    const aviso = (!malo && s.tipo_firmante !== 'HUMANO' && s.sobre_quien
+                   && s.sobre_quien !== 'sin_declarar')
+      ? `<div class="alcance">notice sent to ${esc(s.sobre_quien)} — the agent cannot read the
+         account; answering is inside its scope, checking the balance is not</div>` : '';
     return `<div class="ev">
       <span class="h">${hora(e.ts)}</span>
       <span class="tag ${et}">${esc(malo ? e.veredicto : (e.dictamen || 'signed'))}</span>
       <span class="quien">${esc(quien)}${aQuien}</span>
-      <span class="hash">${h || '—'}</span></div>`;
+      <span class="hash">${h || '—'}</span></div>${aviso}`;
   }).join('');
 
   const mas = c.evs.length > 6 ? `<div class="de" style="padding-left:76px">+${c.evs.length-6} earlier</div>` : '';

@@ -232,13 +232,81 @@ def api_auditoria_datos():
 
 @app.route("/")
 def index():
-    html = """
-    <h1>🎬 Cleveria Director's Dashboard</h1>
-    <ul>
-        <li><a href="/ui/portal" target="_blank">✅ ACT I: Portal Cliente Multimodal</a></li>
-        <li><a href="/ui/unified" target="_blank">✅ ACT II & III: Unified Fleet Command (Curador, HITL, Auditoría)</a></li>
-    </ul>
+    """La puerta de `demo.cleveria.co`.
+
+    Esta página se ve antes que ninguna otra, y hasta hoy era una lista sin formato con la
+    palabra «ACT I» encima. Un jurado que llega por el enlace de la inscripción no sabe qué son
+    los actos ni le importan: quiere saber qué va a ver y por qué le debería interesar. Se
+    reescribe con la misma marca oscura del libro de autoridad, y cada puerta dice lo que
+    demuestra, no en qué orden se rodó.
     """
+    html = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cleveria — Live demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#06111F;--harbor:#0B2940;--cyan:#27E6D2;--agent:#4B6BFF;--violet:#8D72FF;
+      --ice:#E9FFFB;--slate:#93A8B8;--linea:rgba(147,168,184,.18)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--navy);color:var(--ice);
+     font:16px/1.6 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.env{max-width:880px;margin:0 auto;padding:64px 26px 72px}
+.marca{display:flex;align-items:center;gap:11px;font-family:Chivo,sans-serif;font-weight:900;
+       font-size:1.15rem;letter-spacing:-.02em;color:var(--ice);text-decoration:none}
+.nudo{width:26px;height:26px;flex:none}
+h1{font-family:Chivo,sans-serif;font-weight:900;letter-spacing:-.028em;line-height:1.06;
+   font-size:clamp(2rem,5vw,3.1rem);margin:38px 0 14px;text-wrap:balance}
+.entrada{color:var(--slate);font-size:1.06rem;max-width:60ch;margin:0 0 40px}
+.puertas{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+a.puerta{display:block;text-decoration:none;color:inherit;background:var(--harbor);
+         border:1px solid var(--linea);border-radius:15px;padding:22px 22px 20px;
+         transition:border-color .18s,transform .18s}
+a.puerta:hover,a.puerta:focus-visible{border-color:var(--cyan);transform:translateY(-2px)}
+.puerta h2{font-family:Chivo,sans-serif;font-weight:700;font-size:1.16rem;margin:0 0 7px;
+           letter-spacing:-.01em}
+.puerta p{margin:0;color:var(--slate);font-size:14px;line-height:1.5}
+.puerta .prueba{display:block;margin-top:13px;padding-top:11px;border-top:1px solid var(--linea);
+                font:400 12px JetBrains Mono,monospace;color:var(--cyan)}
+.pie{margin-top:44px;padding-top:22px;border-top:1px solid var(--linea);
+     color:var(--slate);font-size:13.5px;line-height:1.6}
+.pie b{color:var(--ice);font-weight:600}
+</style></head><body>
+<div class="env">
+  <a class="marca" href="/">
+    <svg class="nudo" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+      <path d="M50 8 82 26v36L50 80 18 62V26z" stroke="#27E6D2" stroke-width="6"/>
+      <path d="M50 26 68 36v20L50 66 32 56V36z" stroke="#8D72FF" stroke-width="6"/>
+    </svg>
+    Cleveria
+  </a>
+
+  <h1>An agent can close your cases.<br>It cannot sign as a person.</h1>
+  <p class="entrada">Two live screens, running on Google Cloud. The first is what a customer
+     sees; the second is what the people who answer them see. Both read the same ledger, and
+     nothing on either page is staged.</p>
+
+  <div class="puertas">
+    <a class="puerta" href="/ui/portal">
+      <h2>The customer's channel</h2>
+      <p>A support portal that takes a real voice note, transcribes it and files the case.
+         Speak into it and watch the request appear in the queue.</p>
+      <span class="prueba">the request enters here</span>
+    </a>
+    <a class="puerta" href="/ui/unified">
+      <h2>The authority ledger</h2>
+      <p>Every case with who proposed it, who approved it, and every attempt that was refused —
+         plus the ten break tests, with the time each one took.</p>
+      <span class="prueba">the decision is proved here</span>
+    </a>
+  </div>
+
+  <p class="pie"><b>Why two screens and not one.</b> The customer's channel is deliberately
+     ordinary: any company could have one. What is not ordinary is that the program answering it
+     has no key to commit the company. The refusal is the product, and it lives on the second
+     screen.</p>
+</div>
+</body></html>"""
     return render_template_string(html)
 
 @app.route("/ui/<path:name>")
