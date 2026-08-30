@@ -106,10 +106,11 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 ## 2. Antes de encender la cámara
 
 1. **Sesión de nube abierta** — `gcloud auth print-identity-token | head -c 20` debe devolver algo.
-2. **Corre las doce pruebas** y deja el resumen listo: `./pruebas_de_ruptura.sh` (unos 2½ minutos).
-   La duodécima es `co-signer` y **llama al modelo de verdad**: si no hay red o Model Garden no
-   responde, sale roja y el resumen no sirve para grabar. El resumen avisa solo si la corrida
-   tiene más de una hora — córrela justo antes, no por la mañana.
+2. **Corre las dieciséis pruebas** y deja el resumen listo: `./pruebas_de_ruptura.sh`
+   (**204 segundos**, medidos en la corrida 16/16 de las 17:28 de hoy — no 150).
+   **Tres de las dieciséis llaman a la nube de verdad**: `co-signer`, `double-fence` y
+   `write-gate`. Si no hay red, salen rojas y el resumen no sirve para grabar. El resumen avisa
+   solo si la corrida tiene más de una hora — córrela justo antes, no por la mañana.
 3. **Siembra la cola**: `python3 sembrar_demo.py --borrar && python3 sembrar_demo.py`.
 4. **Ensayo en frío de la toma 3**, que es la que no se puede repetir mal.
 5. **Modo no molestar**, sin notificaciones ni segundas ventanas.
@@ -435,7 +436,12 @@ Es el 30 %, y se gana enseñando **decisiones**, no cajas:
 4. **El despertador con identidad propia**: `sa-temporizador` llamando por OIDC a `/despertar`
    cada quince minutos. **Dos cuentas de servicio para dos papeles** es justo lo que se premia.
 5. **El diagrama**, ya en la rama que ve el jurado.
-6. **Las doce pruebas**, con la invitación a correrlas.
+6. **Las dieciséis pruebas**, con la invitación a correrlas.
+7. **El segundo rechazo, que es nuevo y no es el mismo que el `403` de la llave.**
+   `POST /intentar-escribir-directo` devuelve `403 PERMISSION_DENIED` sobre el **almacén**: el
+   agente perdió la escritura y solo `sa-mediador` la tiene. Aquel `403` era sobre una llave;
+   este es sobre donde las cosas pasan de verdad. **Y hay segundos para él sin quitarle nada a
+   nadie**, porque la toma 3 dura 13 y no 80.
 7. **La cofirma en pantalla, y esto lo pidió el organizador por escrito**: una línea por cierre
    con el nombre del modelo — `model=google/gemma-4-26b-a4b-it-maas channel=vertex allow=false
    reason=missing_human_key`. Sale sola al correr `python3 agente/grafo.py`, y también con
