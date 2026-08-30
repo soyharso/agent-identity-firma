@@ -1,5 +1,9 @@
 .git
 __pycache__
 agente/.adk
-libro/firmas*.jsonl
 spike/
+
+# `libro/firmas*.jsonl` estuvo aquí y se sacó el 2026-08-29. Tenía sentido cuando el servicio
+# solo firmaba: el libro era salida, no entrada, y subirlo era peso muerto. Dejó de tenerlo
+# cuando el panel de auditoría empezó a LEERLO: sin él, el panel llega vacío a la nube y en
+# cámara se ve una tabla sin una sola firma. Son 35 líneas.
