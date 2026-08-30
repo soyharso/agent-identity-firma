@@ -112,6 +112,42 @@ def escuchar_con_gemini(audio: bytes, codificacion: str = "WEBM_OPUS") -> str:
     return ""
 
 
+def transcribir(audio: bytes, idioma: str = None, codificacion: str = "WEBM_OPUS"):
+    """La cadena de dos motores, en UN solo sitio. Devuelve `(motor, texto, fallos)`.
+
+    POR QUÉ EXISTE. Esta cadena vivía dentro del endpoint del portal, y la prueba de ruptura de
+    voz llamaba a `escuchar()` a pelo. Resultado medido el 2026-08-30: Speech-to-Text devolvió
+    `429 Too Many Requests` —cuota por minuto agotada por las corridas del día— y **la prueba se
+    puso en rojo mientras el producto seguía funcionando**, porque el producto tenía respaldo y
+    la prueba no. Una prueba más frágil que aquello que prueba no mide el sistema: mide la suerte.
+
+    EL REINTENTO NO ES MAQUILLAJE. El `429` es un límite por minuto, no un fallo del candado; lo
+    que esta prueba afirma es que un juicio hablado acaba en manos de una persona, y eso no
+    cambia porque se agote la cuota. Se reintenta una vez, se pasa al segundo motor, y **si los
+    dos caen se devuelve el fallo**: aquí no hay texto de reserva, ni lo habrá.
+    """
+    import time
+
+    fallos = []
+    for nombre, fn in (("speech-to-text", lambda: escuchar(audio, idioma=idioma,
+                                                           codificacion=codificacion)),
+                       ("gemini", lambda: escuchar_con_gemini(audio, codificacion=codificacion))):
+        for intento in (1, 2):
+            try:
+                texto = fn()
+                if texto:
+                    return nombre, texto, fallos
+                break                                    # respondió, pero no entendió nada
+            except Exception as e:                       # noqa: BLE001
+                transitorio = any(c in str(e) for c in ("429", "503", "500"))
+                if transitorio and intento == 1:
+                    time.sleep(2)                        # la cuota es por minuto: esperar paga
+                    continue
+                fallos.append(f"{nombre}: {str(e)[:120]}")
+                break
+    return "ninguno", "", fallos
+
+
 def hablar(texto: str, voz: str = None) -> bytes:
     """Texto -> audio. Para quien no puede leer la respuesta en pantalla."""
     r = requests.post("https://texttospeech.googleapis.com/v1/text:synthesize",

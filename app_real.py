@@ -128,7 +128,7 @@ def api_transcribir():
     transcripción falla, se dice que falló.
     """
     try:
-        from src.voz import escuchar, escuchar_con_gemini
+        from src.voz import transcribir
     except Exception as e:                                       # noqa: BLE001
         return jsonify({"error": "transcripcion_no_disponible", "detalle": str(e)}), 503
 
@@ -152,20 +152,12 @@ def api_transcribir():
     idioma = request.form.get("idioma", "es-CO")
 
     datos = audio.read()
-    motor, texto, fallos = "speech-to-text", "", []
 
-    # Dos motores, y el segundo no es adorno: Speech-to-Text se quedó sin cuota en mitad de
-    # las pruebas de hoy, y eso mismo pasando durante una grabación no tiene segunda toma.
-    for nombre, fn in (("speech-to-text", lambda: escuchar(datos, idioma=idioma,
-                                                           codificacion=codificacion)),
-                       ("gemini", lambda: escuchar_con_gemini(datos, codificacion=codificacion))):
-        try:
-            texto = fn()
-            if texto:
-                motor = nombre
-                break
-        except Exception as e:                                   # noqa: BLE001
-            fallos.append(f"{nombre}: {str(e)[:120]}")
+    # Dos motores con reintento, y el segundo no es adorno: Speech-to-Text se quedó sin cuota en
+    # mitad de las pruebas de hoy, y eso mismo pasando durante una grabación no tiene segunda
+    # toma. La cadena vive en `src.voz` para que la prueba de ruptura recorra ESTE mismo camino
+    # y no uno más frágil.
+    motor, texto, fallos = transcribir(datos, idioma=idioma, codificacion=codificacion)
 
     if not texto:
         return jsonify({"error": "no_se_entendio",

@@ -44,7 +44,12 @@ def main():
     fallos = 0
     for frase, exige_persona, desc in CASOS:
         wav = voz.hablar(frase)
-        texto = voz.escuchar(wav)
+        # La MISMA cadena de dos motores que usa el portal, no un motor suelto. Con un motor
+        # solo, esta prueba se ponía en rojo por un 429 de cuota mientras el producto seguía
+        # transcribiendo con el respaldo: medía la suerte, no el candado.
+        motor, texto, intentos_fallidos = voz.transcribir(wav, codificacion="LINEAR16")
+        if intentos_fallidos:
+            print(f"      motor usado: {motor} · intentos fallidos: {'; '.join(intentos_fallidos)}")
 
         # ¿La transcripción conserva el sentido? Si no, el resto no significa nada.
         palabras_clave = {p.lower().strip(".,") for p in frase.split() if len(p) > 5}

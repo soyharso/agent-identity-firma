@@ -49,7 +49,10 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 
 ## Google Technologies Used
 
-- **Models**: `Gemini 3.6 Flash` (Vertex AI Adjudication), `gemini-embedding-001` (Vertex AI Semantic Fence), Cloud Speech-to-Text / Text-to-Speech (Transducers).
+- **Models**: `Gemini 3.6 Flash` (Vertex AI — adjudication inside the graph, `agente/grafo.py`),
+  `Gemini 3.7 Flash` (Vertex AI — the agent, and the fallback transcriber: `agente/agent.py`,
+  `src/voz.py`), `gemini-embedding-001` (Vertex AI — semantic fence, `src/cerco_semantico.py`),
+  Cloud Speech-to-Text and Cloud Text-to-Speech (`src/voz.py`).
 - **Framework**: Google Agent Development Kit (ADK) 2.8 (`google-adk`).
 - **Infrastructure**: Google Cloud Run, Google Cloud KMS (Asymmetric EC P-256), Google Cloud Firestore, Google Cloud Scheduler.
 
@@ -57,22 +60,52 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 
 ## Bonus Contributions
 
-**Additional AI models — four Google models, and exactly one of them decides.**
+### 1 · Additional Google AI models — we claim **three**, the maximum (0.6)
 
-| Model | What it does | Can it grant authority? |
-|---|---|---|
-| `Gemini 3.7 Flash` (Vertex AI) | Adjudicates the request against the evidence | **It proposes. It cannot sign a human judgement.** |
-| `gemini-embedding-001` (Vertex AI) | Multilingual semantic fence | **No — it can only ask for MORE caution, never less** |
-| Cloud Speech-to-Text | Turns a customer voice note into text | **No — a transcript is data, not an instruction** |
-| Cloud Text-to-Speech | Speaks the answer back to customers who cannot read | **No — it sits downstream of every decision** |
+Beyond Gemini, which is the model that adjudicates, **three further Google models are integrated
+and running in production** — not imported, not configured, *running*, each with the file that
+calls it and how you can see it work:
 
-This is the point, not the model count: **three of the four sit outside the decision path
-entirely**, and the fourth proposes without being able to sign. If any of them is wrong,
-hallucinates, or is poisoned, none of them opens a door — the worst case is that a person gets
-asked one time too many.
+| # | Additional model | What it does | Where it lives | How you can verify it |
+|---|---|---|---|---|
+| 1 | **`gemini-embedding-001`** (Vertex AI) | Multilingual semantic fence: catches a judgement phrased so it dodges the keyword ceiling | `src/cerco_semantico.py` | break test `semantic-fence` — 9/9 caught, 2 false positives **declared** |
+| 2 | **Cloud Speech-to-Text** | Turns a customer's voice note into text | `src/voz.py` → `escuchar()` | speak into `/ui/portal`; the reply names the engine that transcribed |
+| 3 | **Cloud Text-to-Speech** | Speaks the answer back to customers who cannot read | `src/voz.py` → `hablar()` | break test `voice` — it *synthesises* the spoken judgement it then tries to sneak past the lock |
 
-**Content contribution**: a technical write-up of what broke while building this, including three
-findings from red-teaming ourselves before shipping — and one we failed.
+**And the count is not the point.** Every one of the three sits **outside the decision path**:
+
+| Model | Can it grant authority? |
+|---|---|
+| Gemini (the adjudicator) | **It proposes. It cannot sign a human judgement** — no key. |
+| `gemini-embedding-001` | **No** — it can only ask for MORE caution, never less. |
+| Cloud Speech-to-Text | **No** — a transcript is data, not an instruction. |
+| Cloud Text-to-Speech | **No** — it sits downstream of every decision. |
+
+If any of them is wrong, hallucinates, or is poisoned, **none of them opens a door**. The worst
+case is that a person gets asked one time too many. That is what "additional models" bought here:
+more surface, and not one extra gram of authority.
+
+> **A note on honesty, since this is the section that pays.** We are not counting Cloud Run, KMS,
+> Firestore or Scheduler as models — they are infrastructure, and claiming them would be padding.
+> We are also not counting `Gemini 3.6 Flash` and `Gemini 3.7 Flash` as two: it is one model
+> family doing one job. **Three additional models, three code paths, three ways for you to check.**
+
+### 2 · Content contribution (0.2)
+
+A technical write-up of what broke while building this, including three findings from red-teaming
+ourselves before shipping — **and one we failed**. Published publicly (not unlisted), and it
+states that it was written for this hackathon.
+
+**→ URL: _pending — paste the public link here before submitting._**
+
+### 3 · Social media post (0.2)
+
+Posted publicly with **`#AllThingsAgenticHackathon`**.
+
+**→ URL: _pending — paste the public link here before submitting._**
+
+> Both of the above are worth 0.2 each and neither needs a line of code. Leaving the URL blank
+> forfeits the points: the rules require the content to be **public**, and unlisted does not count.
 
 ---
 
