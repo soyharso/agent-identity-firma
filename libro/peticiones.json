@@ -11,5 +11,11 @@
   "PET-004": {
     "texto": "Se descarta la queja del cliente: revisando el historial, el error fue suyo."
   },
-  "_nota": "PET-004 va en español a propósito: el techo de autoridad reconoce marcas de juicio en los dos idiomas, y eso hay que poder enseñarlo. La aplicación soporta inglés, como exige la regla."
+  "_nota": "PET-004 va en español a propósito: el techo de autoridad reconoce marcas de juicio en los dos idiomas, y eso hay que poder enseñarlo. La aplicación soporta inglés, como exige la regla.",
+  "PET-005": {
+    "texto": "Me cobraron dos veces, anulen el pago",
+    "de": "cliente-demo",
+    "origen": "portal",
+    "recibido_en": "2026-08-30T00:56:03+00:00"
+  }
 }

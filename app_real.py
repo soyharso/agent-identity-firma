@@ -1,3 +1,4 @@
+import datetime
 import os
 import json
 import time
@@ -14,6 +15,15 @@ except ImportError:
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
+
+# Rutas absolutas. Con rutas relativas el servicio escribía donde estuviera el directorio de
+# trabajo: en local coincide con el repositorio, en Cloud Run no tiene por qué, y el libro
+# acababa en otro sitio o el proceso moría por no encontrarlo.
+RAIZ = os.path.dirname(os.path.abspath(__file__))
+LIBRO = os.path.join(RAIZ, "libro")
+FIRMAS = os.path.join(LIBRO, "firmas_grafo.jsonl")
+PETICIONES = os.path.join(LIBRO, "peticiones.json")
+RUPTURA = os.path.join(LIBRO, "pruebas_de_ruptura.json")
 
 VERIFY_TOKEN = os.getenv("WA_VERIFY_TOKEN", "cleveria-hackathon-2026")
 
@@ -39,24 +49,38 @@ def api_firmar():
         key_name = data.get("key", "clave-agente") 
         content = data.get("content", "default_content")
         
-        # Enforcing IAM boundary locally to simulate Cloud KMS IAM 
+        # AVISO — este 403 lo decide esta línea, no Cloud IAM. Es un maniquí de interfaz para
+        # que el tablero tenga algo que pintar sin credenciales. El 403 REAL, el único que
+        # vale como evidencia, lo devuelve Cloud KMS en `servicio/main.py`
+        # (/intentar-suplantar), que sí llama a las dos claves.
+        # NO GRABAR ESTA RUTA COMO PRUEBA DE LA FRONTERA CRIPTOGRÁFICA.
         if key_name == "clave-agente" and data.get("id") == "PET-002":
-             return jsonify({"error": "PERMISSION_DENIED", "http": 403}), 403
-             
+             return jsonify({
+                 "error": "PERMISSION_DENIED", "http": 403,
+                 "_aviso": "403 de maqueta, decidido por la aplicación local. El 403 real lo da Cloud KMS en /intentar-suplantar.",
+             }), 403
+
+        # Campos de ACTO. Van dentro de lo firmado y su razón de ser es que dos decisiones
+        # distintas produzcan sobres distintos aunque el texto sea el mismo. Por eso NO pueden
+        # ser constantes: si todos los sobres del portal declaran el mismo instante y el mismo
+        # destinatario, la unicidad que estos campos compran se pierde entera.
+        ahora = time.time()
         sobre = {
             "peticion_id": data.get("id", "PET-000"),
             "estado_destino": data.get("estado", "abierta"),
             "tipo_firmante": "MAQUINA" if key_name == "clave-agente" else "HUMANO",
-            "curado_por": "agente-curador" if key_name == "clave-agente" else "gerencia@softronica.com.co",
+            "curado_por": "agente-curador" if key_name == "clave-agente" else "persona-operador",
             "hash_contenido": resumen(content),
-            "marca_temporal": int(time.time()),
+            "marca_temporal": int(ahora),
             "algoritmo": "EC_SIGN_P256_SHA256",
-            # Requisitos del encargo estrecho:
-            "emitido_en": "qnowa_portal",
-            "origen": "cliente",
-            "emisor": "usuario_web",
-            "sobre_quien": "cliente"
+            "emitido_en": datetime.datetime.fromtimestamp(
+                ahora, datetime.timezone.utc).isoformat(timespec="seconds"),
+            "origen": data.get("origen", "portal"),
+            "emisor": "agente-curador" if key_name == "clave-agente" else "persona-operador",
+            "sobre_quien": data.get("sobre_quien", "sin_declarar"),
         }
+        if data.get("peticion_padre"):
+            sobre["peticion_padre"] = data["peticion_padre"]
         
         res = firmar(key_name, sobre)
         
@@ -67,7 +91,7 @@ def api_firmar():
         
         # Write to firmas_grafo to make it real
         try:
-            with open("libro/firmas_grafo.jsonl", "a") as f:
+            with open(FIRMAS, "a") as f:
                 log_entry = {
                     "ts": int(time.time()),
                     "peticion_id": sobre["peticion_id"],
@@ -99,13 +123,24 @@ def api_inbound():
     # RECIBE EL AUDIO/TEXTO DEL PORTAL Y LO ENCOLA (TRABAJO REAL)
     try:
         data = request.json
-        peticiones_file = "libro/peticiones.json"
+        peticiones_file = PETICIONES
         with open(peticiones_file, "r") as f:
             peticiones = json.load(f)
             
-        new_id = f"PET-005"
-        transcripcion = data.get("texto", "Se detectó audio: 'Me cobraron dos veces, anulen el pago'")
-        peticiones[new_id] = {"texto": transcripcion}
+        # Un identificador por petición. Con un valor fijo, cada envío pisaba al anterior y
+        # dos clientes distintos acababan en el mismo expediente — justo lo contrario de lo
+        # que este producto promete.
+        n = 1 + max((int(k.split("-")[1]) for k in peticiones if k.startswith("PET-")), default=0)
+        new_id = f"PET-{n:03d}"
+        transcripcion = data.get("texto", "").strip()
+        if not transcripcion:
+            return jsonify({"error": "sin texto: el portal no inventa lo que dijo el cliente"}), 400
+        peticiones[new_id] = {
+            "texto": transcripcion,
+            "de": data.get("de", "cliente-portal"),
+            "origen": "portal",
+            "recibido_en": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        }
         
         with open(peticiones_file, "w") as f:
             json.dump(peticiones, f, indent=2, ensure_ascii=False)
@@ -125,16 +160,16 @@ def api_auditoria_datos():
     try:
         # 1. Leer firmas
         firmas = []
-        if os.path.exists("libro/firmas_grafo.jsonl"):
-            with open("libro/firmas_grafo.jsonl", "r") as f:
+        if os.path.exists(FIRMAS):
+            with open(FIRMAS, "r") as f:
                 for line in f:
                     if line.strip():
                         firmas.append(json.loads(line))
         
         # 2. Leer pruebas de ruptura
         pruebas = {}
-        if os.path.exists("libro/pruebas_de_ruptura.json"):
-            with open("libro/pruebas_de_ruptura.json", "r") as f:
+        if os.path.exists(RUPTURA):
+            with open(RUPTURA, "r") as f:
                 pruebas = json.load(f)
                 
         return jsonify({
