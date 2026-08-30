@@ -89,19 +89,19 @@ def api_firmar():
              
         res["sobre"] = sobre
         
-        # Write to firmas_grafo to make it real
+        # Al libro duradero, no al disco del contenedor: el panel de auditoría lee de ahí y
+        # el sistema de ficheros de Cloud Run desaparece con la instancia.
         try:
-            with open(FIRMAS, "a") as f:
-                log_entry = {
-                    "ts": int(time.time()),
-                    "peticion_id": sobre["peticion_id"],
-                    "dictamen": sobre["estado_destino"],
-                    "veredicto": "OK",
-                    "sobre": sobre,
-                    "firma": res.get("firma")
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
+            from src import libro_demo
+            libro_demo.anotar_firma({
+                "ts": int(time.time()),
+                "peticion_id": sobre["peticion_id"],
+                "dictamen": sobre["estado_destino"],
+                "veredicto": "OK",
+                "sobre": sobre,
+                "firma": res.get("firma"),
+            })
+        except Exception:                                        # noqa: BLE001
             pass
             
         return jsonify(res), 200
@@ -179,70 +179,53 @@ def api_transcribir():
 
 @app.route("/api/inbound", methods=["POST"])
 def api_inbound():
-    # RECIBE EL AUDIO/TEXTO DEL PORTAL Y LO ENCOLA (TRABAJO REAL)
+    """La petición del cliente entra en la cola. Es el turno que el agente atenderá."""
     try:
-        data = request.json
-        peticiones_file = PETICIONES
-        with open(peticiones_file, "r") as f:
-            peticiones = json.load(f)
-            
-        # Un identificador por petición. Con un valor fijo, cada envío pisaba al anterior y
-        # dos clientes distintos acababan en el mismo expediente — justo lo contrario de lo
-        # que este producto promete.
-        n = 1 + max((int(k.split("-")[1]) for k in peticiones if k.startswith("PET-")), default=0)
-        new_id = f"PET-{n:03d}"
-        transcripcion = data.get("texto", "").strip()
+        data = request.json or {}
+        transcripcion = (data.get("texto") or "").strip()
         if not transcripcion:
             return jsonify({"error": "sin texto: el portal no inventa lo que dijo el cliente"}), 400
-        peticiones[new_id] = {
-            "texto": transcripcion,
-            "de": data.get("de", "cliente-portal"),
-            "origen": "portal",
-            "recibido_en": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-        }
-        
-        with open(peticiones_file, "w") as f:
-            json.dump(peticiones, f, indent=2, ensure_ascii=False)
-            
+
+        from src import libro_demo
+        pid, fila = libro_demo.nueva_peticion(
+            transcripcion,
+            de=data.get("de", "cliente-portal"),
+            origen=data.get("origen", "portal"),
+            padre=data.get("peticion_padre"))
+
         return jsonify({
-            "status": "success", 
-            "id": new_id, 
+            "status": "success",
+            "id": pid,
             "transcription": transcripcion,
-            "estado": "esperando decision humana"
+            "estado": "esperando decision humana",
+            "duradero": libro_demo.disponible(),
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/auditoria_datos", methods=["GET"])
 def api_auditoria_datos():
-    # LEE LOS DATOS REALES (NO MOCKS) PARA EL TABLERO
+    """Todo lo que el panel pinta sale de aquí, y todo es real.
+
+    Devuelve el libro entero de operaciones, la cola de peticiones y el resultado de la última
+    corrida de pruebas. El panel agrupa; este endpoint no decide qué se ve.
+    """
     try:
-        # 1. Leer firmas (TODAS, el frontend agrupa)
-        firmas = []
-        import os, json
-        if os.path.exists("libro/firmas_grafo.jsonl"):
-            with open("libro/firmas_grafo.jsonl", "r") as f:
-                for line in f:
-                    if line.strip():
-                        firmas.append(json.loads(line))
-        
-        # 2. Leer pruebas de ruptura
+        from src import libro_demo
         pruebas = {}
-        if os.path.exists("libro/pruebas_de_ruptura.json"):
-            with open("libro/pruebas_de_ruptura.json", "r") as f:
+        try:
+            with open(RUPTURA, "r", encoding="utf-8") as f:
                 pruebas = json.load(f)
-                
-        # 3. Leer peticiones para contexto
-        peticiones = {}
-        if os.path.exists("libro/peticiones.json"):
-            with open("libro/peticiones.json", "r") as f:
-                peticiones = json.load(f)
-                
+        except Exception:                                        # noqa: BLE001
+            pass
+
         return jsonify({
-            "firmas": firmas,
-            "pruebas_fecha": pruebas.get("fecha", "N/A"),
+            "firmas": libro_demo.firmas(),
+            "peticiones": libro_demo.peticiones(),
+            "pruebas_fecha": pruebas.get("fecha", "sin corrida registrada"),
             "pruebas_tests": pruebas.get("pruebas", []),
-            "peticiones": peticiones
+            "pruebas_segundos": pruebas.get("segundos"),
+            "duradero": libro_demo.disponible(),
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
