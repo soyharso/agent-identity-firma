@@ -10,7 +10,7 @@
 
 ## Short Description (Elevator Pitch)
 
-Cleveria provides a deterministic identity and cryptographic authority harness for enterprise agent fleets on Google Cloud. When an agent acts, who authorized it? Cleveria enforces scoped cryptographic keys (Cloud KMS), a pure RFC 8785 offline verifier, and a three-model safety fence — `Gemini 3.6 Flash` proposes, `gemini-embedding-001` can only raise caution, and `google/gemma-3-27b-it` must **co-sign** every machine closure from a different model family, a different channel and a different credential — where the cloud infrastructure itself (IAM HTTP 403) stops any machine from impersonating human judgement.
+Cleveria provides a deterministic identity and cryptographic authority harness for enterprise agent fleets on Google Cloud. When an agent acts, who authorized it? Cleveria enforces scoped cryptographic keys (Cloud KMS), a pure RFC 8785 offline verifier, and a three-model safety fence — `Gemini 3.6 Flash` proposes, `gemini-embedding-001` can only raise caution, and `google/gemma-4-26b-a4b-it-maas` (Vertex AI Model Garden) must **co-sign** every machine closure from a different model family — where the cloud infrastructure itself (IAM HTTP 403) stops any machine from impersonating human judgement.
 
 ---
 
@@ -41,7 +41,7 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 ## What We Built
 
 1. **Deterministic Authority Ceiling & Semantic Fence**: Gemini 3.6 Flash proposes actions based on evidence, but a deterministic router enforces the minimum of the model's verdict and the authority ceiling. `gemini-embedding-001` acts as a semantic net that can ONLY raise caution (`exige_humano`), never grant more authority.
-1b. **A co-signer the agent does not control**: at the single point where the machine is about to sign alone, `google/gemma-3-27b-it` — another model family, reached over another channel with another credential — must answer `ALLOW` on a three-field schema (`case_id`, `action`, `has_human_key`). `DENY`, silence, or four seconds of waiting all send the case to the human pause. **The agent cannot sign because it cannot control the co-signer** (`src/cofirmante.py`, break test `co-signer`).
+1b. **A co-signer the agent does not control**: at the single point where the machine is about to sign alone, `google/gemma-4-26b-a4b-it-maas` on Vertex AI Model Garden — another model family — must answer `ALLOW` on a three-field schema (`case_id`, `action`, `has_human_key`). `DENY`, silence, an answer that arrives late, or an answer that is not exactly one word all send the case to the human pause. **The agent cannot sign because it cannot control the co-signer** (`src/cofirmante.py`, break test `co-signer`).
 2. **True Cloud Boundary**: The human signing key lives in Cloud KMS with zero permissions granted to the agent service account. When the agent tries to sign, Google Cloud IAM rejects the call with HTTP 403. The machine human-machine boundary is arithmetic, not a prompt.
 3. **Zero-Dependency RFC 8785 Verifier**: A standalone verifier that uses only Python's standard library and cryptography package to audit every signed closure offline.
 4. **Resilient Fleet Workflow on ADK**: Google Agent Development Kit (ADK) 2.8 workflow running on Cloud Run, backed by Cloud Scheduler and Cloud Firestore.
@@ -53,8 +53,8 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 - **Models**: `Gemini 3.6 Flash` (Vertex AI — adjudication inside the graph, `agente/grafo.py`),
   `Gemini 3.7 Flash` (Vertex AI — the agent, and the fallback transcriber: `agente/agent.py`,
   `src/voz.py`), `gemini-embedding-001` (Vertex AI — semantic fence, `src/cerco_semantico.py`),
-  `google/gemma-3-27b-it` (a Google-published open-weights model, served over OpenRouter — the
-  co-signer of every machine closure, `src/cofirmante.py`),
+  `google/gemma-4-26b-a4b-it-maas` (Vertex AI Model Garden — the co-signer of every machine
+  closure, `src/cofirmante.py`),
   Cloud Speech-to-Text and Cloud Text-to-Speech (`src/voz.py`).
 - **Framework**: Google Agent Development Kit (ADK) 2.8 (`google-adk`).
 - **Infrastructure**: Google Cloud Run, Google Cloud KMS (Asymmetric EC P-256), Google Cloud Firestore, Google Cloud Scheduler.
@@ -71,19 +71,31 @@ calls it and how you can see it work:
 
 | # | Additional model | What it does | Where it lives | How you can verify it |
 |---|---|---|---|---|
-| 1 | **`google/gemma-3-27b-it`** — the Gemma family, open weights published by Google | **Co-signs every machine closure.** Another family, another channel, another credential: if it does not answer `ALLOW`, the machine never reaches the key and the case waits for a person | `src/cofirmante.py`, called from `agente/grafo.py` → `refrescar_y_firmar` | break test `co-signer` — it calls the model live in both directions, then proves the co-signer cannot be bypassed and that its silence closes the door |
+| 1 | **`google/gemma-4-26b-a4b-it-maas`** — the Gemma family, on **Vertex AI Model Garden** | **Co-signs every machine closure.** A different family from the adjudicator: if it does not answer `ALLOW`, the machine never reaches the key and the case waits for a person | `src/cofirmante.py`, called from `agente/grafo.py` → `refrescar_y_firmar` | break test `co-signer` — it calls the model live in both directions, then proves the co-signer cannot be bypassed and that neither its silence nor an ambiguous answer opens the door |
 | 2 | **`latest_short`** — Cloud Speech-to-Text | Turns a customer's voice note into text | `src/voz.py` → `escuchar()`, model declared in the request | speak into `/ui/portal`; the reply **names the engine that transcribed** — see the note below |
 | 3 | **`es-US-Neural2-A`** — Cloud Text-to-Speech | Speaks the answer back to customers who cannot read | `src/voz.py` → `hablar()` | break test `voice` — it *synthesises* the spoken judgement it then tries to sneak past the lock |
 
-> **On #1, where we access Gemma from, said plainly instead of buried.** Vertex AI does not serve
-> Gemma to this project — `404` in `us-central1` and in `global`, measured on 2026-08-30 for
-> `gemma-3-1b-it`, `gemma-3-270m-it` and `embeddinggemma-300m`. So we call the **Google-published
-> model, unmodified**, through OpenRouter. The rules panel wrote that *"the rules do not limit
-> where you access a model from. Model Garden and Hugging Face both work"* — and we read that as
-> a statement about the model, not a closed list of storefronts. **That is our reading, not a
-> guarantee, and we would rather you weigh it than discover it.** Every closure prints the model
-> by name — `model=google/gemma-3-27b-it allow=true reason=cosigned` — to console and to
-> `libro/cofirmas.jsonl`, so what you are scoring is a line you can read, not a claim.
+> **On #1, how to see it in ten seconds.** The co-signer runs on **Vertex AI Model Garden**, the
+> channel the rules panel named, on this project's own credentials:
+>
+> ```bash
+> gcloud ai model-garden models list --billing-project=$GOOGLE_CLOUD_PROJECT | grep gemma-4
+> #  google/gemma-4-26b-a4b-it-maas@001    CAN_DEPLOY: No    CAN_PREDICT: Yes
+> python3 src/cofirmante.py "the customer complaint is dismissed and no refund is due"
+> #  model=google/gemma-4-26b-a4b-it-maas channel=vertex allow=false reason=missing_human_key
+> ```
+>
+> One gotcha, written down because it cost us half a day and it will cost you ten minutes: Gemma
+> does **not** answer on the publisher `:generateContent` path — that returns `404`, which is what
+> first made us believe the channel had nothing. It answers on the OpenAI-compatible endpoint, and
+> **only in `global`**: `POST https://aiplatform.googleapis.com/v1/projects/<p>/locations/global/endpoints/openapi/chat/completions`.
+> Asking for it in `us-central1` returns a `400` that says exactly that.
+>
+> Every closure prints the model and the channel by name, to console and to `libro/cofirmas.jsonl`,
+> so what you are scoring is a line you can read, not a claim. The same co-signer also runs against
+> `google/gemma-3-27b-it` over OpenRouter (`COFIRMANTE_CANAL=openrouter`), measured and working —
+> we mention it only so you know the design is not welded to one vendor. **The claim is the Model
+> Garden one.**
 
 **We name the model, not just the API, on purpose.** `latest_short` is declared in the request
 because it is tuned for short utterances — which is what a support voice note is — and because a
@@ -113,7 +125,7 @@ voice family behind the spoken reply. Both are named in the code you can read.
 |---|---|
 | Gemini (the adjudicator) | **It proposes. It cannot sign a human judgement** — no key. |
 | `gemini-embedding-001` | **No** — it can only ask for MORE caution, never less. |
-| `google/gemma-3-27b-it` (the co-signer) | **No.** It can only WITHHOLD a closure, never open one: an `ALLOW` grants nothing the deterministic ceiling had not already allowed, while a `DENY` — or a timeout, or a dead channel — stops the signature dead. |
+| `google/gemma-4-26b-a4b-it-maas` (the co-signer) | **No.** It can only WITHHOLD a closure, never open one: an `ALLOW` grants nothing the deterministic ceiling had not already allowed, while a `DENY` — or a timeout, or a dead channel — stops the signature dead. |
 | Cloud Speech-to-Text | **No** — a transcript is data, not an instruction. |
 | Cloud Text-to-Speech | **No** — it sits downstream of every decision. |
 

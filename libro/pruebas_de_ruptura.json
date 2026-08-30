@@ -1,15 +1,15 @@
 {
   "_que_es": "Resultado de la ultima corrida de las pruebas de ruptura. Lo escribe pruebas_de_ruptura.sh; se muestra con --resumen. No se edita a mano.",
-  "fecha": "2026-08-30 13:04:40 -0500",
-  "epoch": 1788113080,
-  "segundos": 165,
+  "fecha": "2026-08-30 13:41:43 -0500",
+  "epoch": 1788115303,
+  "segundos": 151,
   "pruebas": [
     {
       "nombre": "canonical-json",
       "archivo": "agente/killtest_canonico.py",
       "rompe": "RFC 8785 byte-for-byte, accents and integers included",
       "ok": true,
-      "segundos": 0.1
+      "segundos": 0.2
     },
     {
       "nombre": "signature-replay",
@@ -30,63 +30,63 @@
       "archivo": "agente/killtest_puerto_canal.py",
       "rompe": "the WhatsApp channel is decoupled from signing",
       "ok": true,
-      "segundos": 5.4
+      "segundos": 3.1
     },
     {
       "nombre": "managed-filter",
       "archivo": "agente/killtest_blindaje.py",
       "rompe": "the vendor filter misses our Spanish attack",
       "ok": true,
-      "segundos": 4.8
+      "segundos": 3.2
     },
     {
       "nombre": "prompt-injection",
       "archivo": "agente/killtest_inyeccion.py",
       "rompe": "8 injections, 4 languages, stopped by the ceiling",
       "ok": true,
-      "segundos": 7.7
+      "segundos": 6.1
     },
     {
       "nombre": "key-scope",
       "archivo": "agente/killtest_alcance.py",
       "rompe": "a key cannot authorize a state outside its scope",
       "ok": true,
-      "segundos": 10.7
+      "segundos": 8.2
     },
     {
       "nombre": "fleet-identity",
       "archivo": "agente/killtest_agente_comercial.py",
       "rompe": "two agents cannot borrow each other's key",
       "ok": true,
-      "segundos": 19.5
+      "segundos": 12.7
     },
     {
       "nombre": "voice",
       "archivo": "agente/killtest_voz.py",
       "rompe": "a spoken judgement still requires a human signature",
       "ok": true,
-      "segundos": 23.3
+      "segundos": 32.3
     },
     {
       "nombre": "semantic-fence",
       "archivo": "agente/killtest_cerco_semantico.py",
       "rompe": "9/9 caught, 2 false positives declared",
       "ok": true,
-      "segundos": 35.5
+      "segundos": 27.8
     },
     {
       "nombre": "durability",
       "archivo": "agente/killtest_durabilidad.py",
       "rompe": "5 steps, 5 processes, survives an abrupt kill",
       "ok": true,
-      "segundos": 52.0
+      "segundos": 50.9
     },
     {
       "nombre": "co-signer",
       "archivo": "agente/killtest_cofirmante.py",
       "rompe": "a second model family must agree; its silence closes the door",
       "ok": true,
-      "segundos": 4.1
+      "segundos": 4.8
     }
   ]
 }

@@ -11,7 +11,7 @@ who decides, and here that distinction is the architecture:
 |---|---|---|
 | Gemini 3.6 Flash | **adjudicates** — the one judgement call in the flow | no: a function takes the *minimum* of its verdict and the ceiling |
 | `gemini-embedding-001` | semantic fence: catches judgement written to dodge the keyword list | **no — it can only ask for *more* caution** |
-| `google/gemma-3-27b-it` | **co-signs**: where the machine would sign alone, another family on another channel has to agree first | **no — it can only withhold a closure.** No answer in 4 s counts as `DENY`, so its silence shuts the door instead of opening it |
+| `google/gemma-4-26b-a4b-it-maas` (Model Garden) | **co-signs**: where the machine would sign alone, a model of another family has to agree first | **no — it can only withhold a closure.** No answer in 4 s, a late answer, or anything that is not exactly `ALLOW` all count as `DENY`: its silence shuts the door instead of opening it |
 | Speech-to-Text | transducer: turns a voice note into words | no. It is not on the decision path; it is before it |
 | Text-to-Speech | transducer: turns the answer into speech | no |
 
@@ -49,12 +49,13 @@ grep -n "gemini-embedding-001" src/cerco_semantico.py
 grep -A2 "Vertex AI Request" logs/cerco_embedding.log
 python3 -c "import src.cerco_semantico as c; print(f'Model: {c.MODELO}, Endpoint: Vertex AI {c.REGION}')"
 
-# 3b. The CO-SIGNER (Gemma, a Google-published open-weights model). Both calls are live:
+# 3b. The CO-SIGNER (Gemma, on Vertex AI Model Garden). Both calls are live:
 #     a judgement is refused, an evidence-backed closure is co-signed.
+gcloud ai model-garden models list --billing-project=$GOOGLE_CLOUD_PROJECT | grep gemma-4
 python3 src/cofirmante.py "the customer complaint is dismissed and no refund is due"
 python3 src/cofirmante.py "close the case: commit 4f3a2b1, fix deployed, test suite green"
 python3 agente/killtest_cofirmante.py     # and it cannot be bypassed, nor does its silence open
-tail -3 libro/cofirmas.jsonl              # one line per closure, naming the model
+tail -3 libro/cofirmas.jsonl              # one line per closure, naming model AND channel
 
 # 4. Run the ADK graph across all test cases (machine signs evidence, pauses on human judgement)
 python3 agente/grafo.py
@@ -109,10 +110,12 @@ flowchart TD
     style H fill:#ea4335,color:#fff
 ```
 
-**Two models. Neither can grant itself authority. Six functions decide.** Gemini adjudicates;
+**Three models. None can grant itself authority. Six functions decide.** Gemini adjudicates;
 a second Google model (embeddings) is a semantic fence that may only ask for *more* caution —
-it can raise the bar to "a human must decide", never lower it. So if it fails, hallucinates or
-is poisoned, no door opens: at worst a person is bothered unnecessarily. Everything deterministic
+it can raise the bar to "a human must decide", never lower it. A third, **Gemma on Model
+Garden, has to co-sign** before the machine key is ever used, and it too can only withhold.
+So if any of them fails, hallucinates or is poisoned, no door opens: at worst a person is
+bothered unnecessarily. Everything deterministic
 is a function: cheaper, faster,
 and it does not depend on the model reasoning well that day.
 

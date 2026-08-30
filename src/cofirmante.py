@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""EL COFIRMANTE — un modelo de OTRA familia, en OTRO canal, que tiene que estar de acuerdo.
+"""EL COFIRMANTE — un modelo de OTRA familia que tiene que estar de acuerdo para que se firme.
 
 QUÉ RESUELVE, y no es un adorno para contar modelos.
 
-Hasta hoy todo lo que decidía este candado corría sobre infraestructura de Google y sobre la
-familia Gemini: el que dictamina, el cerco semántico, el que transcribe. Si un día esa familia
-—o esa cuenta, o esa región— se equivoca de la misma manera en los dos sitios, los dos fallan
-igual. Un segundo par de ojos del MISMO linaje no es un segundo par de ojos.
+Hasta hoy todo lo que decidía este candado corría sobre la familia Gemini: el que dictamina, el
+cerco semántico, el que transcribe. Si un día esa familia se equivoca de la misma manera en los
+dos sitios, los dos fallan igual. Un segundo par de ojos del MISMO linaje no es un segundo par
+de ojos.
 
-`google/gemma-3-27b-it` es un modelo publicado por Google, de pesos abiertos, servido por un
-tercero (OpenRouter) con una credencial que no es la de la nube del proyecto. Distinta familia,
-distinto canal, distinta credencial. **Para que la máquina firme un cierre, los dos tienen que
-coincidir.**
+`google/gemma-4-26b-a4b-it-maas` es un modelo de la familia **Gemma**, publicado por Google y
+servido desde **Vertex AI Model Garden**. Otra familia, otros pesos, otro servicio. **Para que la
+máquina firme un cierre, los dos tienen que coincidir.**
 
 LA REGLA QUE NO SE ROMPE, y es la misma que el resto de la casa:
 
@@ -20,7 +19,9 @@ LA REGLA QUE NO SE ROMPE, y es la misma que el resto de la casa:
     siguen delante. Un `DENY`, en cambio, para el cierre en seco.
   · **Falla cerrado.** Si no responde, si tarda más de 4 segundos, si la credencial no está o si
     devuelve basura, el resultado es `DENY`. Un cofirmante que se cae en abierto no cofirma nada:
-    sería un adorno, y el agente aprendería a esperar a que se caiga.
+    sería un adorno, y el agente aprendería a esperar a que se caiga. **No hay reintento y no hay
+    canal de repuesto silencioso**: un fallo se resuelve pidiéndole el cierre a una persona, no
+    buscando un segundo modelo que diga que sí.
   · **El agente no controla al cofirmante.** No puede pedirle otra respuesta, no puede saltárselo
     y no puede firmar sin él. Esa es la tesis del producto, dicha en código.
 
@@ -34,22 +35,20 @@ implica juicio sobre alguien —descartar su queja, absolverlo, perdonarle una d
 tiene que ser `DENY` mientras `has_human_key` sea falso. Si es un cierre rutinario con evidencia
 comprobable, `ALLOW`.
 
-CANAL — POR QUÉ OPENROUTER Y NO VERTEX NI HUGGING FACE. Medido el 2026-08-30 desde este mismo
-repositorio, y está escrito entero en
-`cleveria-dominios/docs/strategy/metodo/gemma-cofirmante/2026-08-30_DECISION_canal_del_cofirmante.md`:
+EL CANAL, Y POR QUÉ ESTE. Medido el 2026-08-30 desde este mismo repositorio; el detalle entero
+está en `cleveria-dominios/docs/strategy/metodo/gemma-cofirmante/`:
 
-  · **Vertex AI no sirve Gemma a este proyecto**: `404` en `us-central1` y en `global`, con
-    `gemma-3-1b-it`, `gemma-3-270m-it` y `embeddinggemma-300m`. No es una preferencia, es un
-    hecho reproducible con `curl`.
-  · **Hugging Face exige un acto humano** —cuenta, aceptación de la licencia de Gemma y un token
-    que hoy no existe en el vault— y descargar pesos y `torch` en la máquina. Cabe, pero no en
-    las horas que quedan, y no lo puede hacer un agente.
-  · **OpenRouter sirve el modelo publicado por Google, sin modificar**, con la credencial que ya
-    existe. La regla del concurso, dicha por su responsable, es *«las reglas no limitan desde
-    dónde se accede a un modelo»*; nombró Model Garden y Hugging Face como ejemplos, no como
-    lista cerrada. **Eso es una lectura, no una garantía, y así está dicho en el reclamo.**
-
-El canal se cambia sin tocar este archivo: `COFIRMANTE_CANAL` y `MODELO_COFIRMANTE`.
+  · **Vertex AI Model Garden sirve Gemma a este proyecto, y es el canal que el organizador del
+    concurso nombró por su nombre.** `gcloud ai model-garden models list` lo lista con
+    `CAN_PREDICT=Yes`, y responde `http 200` en 0,9-1,4 s. No hay que desplegar nada.
+  · **La ruta importa, y es la trampa que costó medio frente.** Gemma NO responde en
+    `:generateContent` sobre la ruta de publisher —ahí devuelve `404`, y ese `404` hizo creer que
+    el canal no servía—. Responde en el endpoint compatible con OpenAI, y **solo en `global`**:
+    `https://aiplatform.googleapis.com/v1/projects/<p>/locations/global/endpoints/openapi/chat/completions`.
+    Pedirlo en `us-central1` devuelve `400` diciendo justo eso.
+  · **OpenRouter queda como canal alternativo, no como respaldo automático.** Sirve
+    `google/gemma-3-27b-it` y está medido, pero el organizador no lo nombró, así que para el
+    reclamo del concurso es más débil. Se cambia con `COFIRMANTE_CANAL=openrouter`.
 """
 import json
 import os
@@ -58,13 +57,25 @@ import time
 
 import requests
 
-MODELO = os.environ.get("MODELO_COFIRMANTE", "google/gemma-3-27b-it")
-CANAL = os.environ.get("COFIRMANTE_CANAL", "openrouter")
-ENDPOINT = os.environ.get("COFIRMANTE_ENDPOINT",
-                          "https://openrouter.ai/api/v1/chat/completions")
-# Cuatro segundos. No es un número redondo por gusto: el cierre de la máquina ya paga el cerco
-# semántico (3-4 s) y una demostración grabada en vivo no aguanta más. Si el cofirmante no cabe
-# en ese hueco, el caso espera a una persona, que es el resultado seguro.
+CANAL = os.environ.get("COFIRMANTE_CANAL", "vertex")
+PROYECTO = os.environ.get("GOOGLE_CLOUD_PROJECT", "ai-transf-lab-0827")
+
+# El modelo por defecto depende del canal, porque no es el mismo en los dos: Vertex sirve la
+# generación 4 como servicio gestionado, y OpenRouter sirve la 3. Los dos son Gemma.
+_POR_CANAL = {
+    "vertex": ("google/gemma-4-26b-a4b-it-maas",
+               f"https://aiplatform.googleapis.com/v1/projects/{PROYECTO}"
+               f"/locations/global/endpoints/openapi/chat/completions"),
+    "openrouter": ("google/gemma-3-27b-it",
+                   "https://openrouter.ai/api/v1/chat/completions"),
+}
+_modelo_def, _endpoint_def = _POR_CANAL.get(CANAL, _POR_CANAL["vertex"])
+MODELO = os.environ.get("MODELO_COFIRMANTE", _modelo_def)
+ENDPOINT = os.environ.get("COFIRMANTE_ENDPOINT", _endpoint_def)
+
+# Cuatro segundos, y se aplican al total, no por fase. `requests` cuenta por separado el tiempo
+# de conexión y el de lectura, así que un servidor que responda a goteo puede pasar del doble sin
+# que salte: por eso además se mide el reloj y se descarta la respuesta que llegue tarde.
 TIEMPO_LIMITE = float(os.environ.get("COFIRMANTE_TIMEOUT", "4"))
 
 LIBRO = pathlib.Path(__file__).resolve().parent.parent / "libro"
@@ -87,26 +98,37 @@ INSTRUCCION = (
     "Answer with ONE word and nothing else: ALLOW or DENY."
 )
 
+_cache_cred = None
 
-def _clave() -> str:
-    """La credencial, del entorno o del archivo del operador. NUNCA se imprime."""
-    k = os.environ.get("OPENROUTER_API_KEY", "").strip()
-    if k:
-        return k
-    ruta = pathlib.Path.home() / ".config" / "openrouter" / "key"
-    return ruta.read_text().strip() if ruta.exists() else ""
+
+def _cabecera() -> dict:
+    """La credencial del canal. NUNCA se imprime, ni entera ni en trozos."""
+    if CANAL == "vertex":
+        global _cache_cred
+        import google.auth
+        import google.auth.transport.requests
+        if _cache_cred is None:
+            _cache_cred, _ = google.auth.default(
+                scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        if not _cache_cred.valid:
+            _cache_cred.refresh(google.auth.transport.requests.Request())
+        return {"Authorization": f"Bearer {_cache_cred.token}"}
+    clave = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    if not clave:
+        ruta = pathlib.Path.home() / ".config" / "openrouter" / "key"
+        clave = ruta.read_text().strip() if ruta.exists() else ""
+    if not clave:
+        raise RuntimeError("sin credencial de OpenRouter")
+    return {"Authorization": f"Bearer {clave}"}
 
 
 def _preguntar(sobre: dict) -> str:
     """Una llamada, sin herramientas, sin historial. Devuelve el texto crudo del modelo."""
-    clave = _clave()
-    if not clave:
-        raise RuntimeError("sin credencial de OpenRouter")
     r = requests.post(
         ENDPOINT, timeout=TIEMPO_LIMITE,
-        headers={"Authorization": f"Bearer {clave}", "Content-Type": "application/json"},
+        headers={**_cabecera(), "Content-Type": "application/json"},
         json={"model": MODELO,
-              "max_tokens": 8,               # cabe "DENY". Más tokens es más tiempo, no más juicio.
+              "max_tokens": 8,          # cabe "DENY". Más tokens es más tiempo, no más juicio.
               "temperature": 0,
               "messages": [{"role": "system", "content": INSTRUCCION},
                            {"role": "user", "content": json.dumps(sobre, ensure_ascii=False)}]})
@@ -118,9 +140,9 @@ def _preguntar(sobre: dict) -> str:
 def cofirmar(case_id: str, action: str, has_human_key: bool) -> tuple[bool, dict]:
     """¿Coincide el cofirmante en que esto lo puede firmar una máquina?
 
-    Devuelve `(permitido, detalle)`. `permitido` es `True` SOLO si el modelo contestó `ALLOW`.
-    Todo lo demás —`DENY`, una respuesta ilegible, un tiempo agotado, un error de red, una
-    credencial ausente— devuelve `False`. Ese es el fallo cerrado, y es deliberado.
+    Devuelve `(permitido, detalle)`. `permitido` es `True` SOLO si el modelo contestó `ALLOW`
+    dentro del plazo. Todo lo demás —`DENY`, una respuesta ilegible, un tiempo agotado, un error
+    de red, una credencial ausente— devuelve `False`. Ese es el fallo cerrado, y es deliberado.
     """
     sobre = {"case_id": case_id, "action": action, "has_human_key": bool(has_human_key)}
     t0 = time.time()
@@ -133,25 +155,41 @@ def cofirmar(case_id: str, action: str, has_human_key: bool) -> tuple[bool, dict
         _anotar(sobre, detalle)
         return False, detalle
 
-    u = crudo.upper()
-    # `DENY` se busca primero: si el modelo se enrolla y dice las dos palabras, manda la prudente.
-    if "DENY" in u:
+    transcurrido = time.time() - t0
+    if transcurrido > TIEMPO_LIMITE:
+        # Llegó, pero tarde. Se descarta igual: el plazo es del acto de firmar, no del socket, y
+        # `requests` cuenta conexión y lectura por separado, así que sin esto una respuesta a
+        # goteo puede pasar del doble del límite y colarse como permiso.
+        detalle = {"modelo": MODELO, "canal": CANAL, "allow": False, "reason": "too_slow",
+                   "respuesta": crudo[:60], "segundos": round(transcurrido, 2)}
+        _anotar(sobre, detalle)
+        return False, detalle
+
+    # EL VEREDICTO SE LEE POR IGUALDAD, NUNCA POR SUBCADENA, y esto lo puso una fase cero que
+    # rompió la versión anterior con una sola frase: «No lo permito. No ALLOWED.» NIEGA, no
+    # contiene `DENY`, y contiene `ALLOW` dentro de `ALLOWED`. La lógica de buscar subcadenas la
+    # leía como permiso. Aquí el contrato pide UNA palabra, así que se exige UNA palabra: se
+    # quita todo lo que no sea letra y se compara entera. Cualquier otra cosa es ilegible, y lo
+    # ilegible nunca abre.
+    limpio = "".join(c for c in crudo.upper() if c.isalpha() or c.isspace()).split()
+    palabra = limpio[0] if len(limpio) == 1 else ""
+    if palabra == "DENY":
         allow, reason = False, ("missing_human_key" if not has_human_key else "denied_by_cosigner")
-    elif "ALLOW" in u:
+    elif palabra == "ALLOW":
         allow, reason = True, "cosigned"
     else:
         allow, reason = False, "unreadable"
     detalle = {"modelo": MODELO, "canal": CANAL, "allow": allow, "reason": reason,
-               "respuesta": crudo[:60], "segundos": round(time.time() - t0, 2)}
+               "respuesta": crudo[:60], "segundos": round(transcurrido, 2)}
     _anotar(sobre, detalle)
     return allow, detalle
 
 
 def linea_de_registro(detalle: dict) -> str:
-    """La línea que el responsable del concurso pidió ver: el modelo, por su nombre, en cada
-    cierre. Sin esta línea la integración habría que creerla en vez de verla."""
-    return (f"model={detalle.get('modelo')} allow={str(detalle.get('allow')).lower()} "
-            f"reason={detalle.get('reason')}")
+    """La línea que el organizador del concurso pidió ver: el modelo, por su nombre, y el canal,
+    en cada cierre. Sin esta línea la integración habría que creerla en vez de verla."""
+    return (f"model={detalle.get('modelo')} channel={detalle.get('canal')} "
+            f"allow={str(detalle.get('allow')).lower()} reason={detalle.get('reason')}")
 
 
 def _anotar(sobre: dict, detalle: dict) -> None:

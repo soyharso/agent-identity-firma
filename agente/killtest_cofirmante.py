@@ -28,6 +28,7 @@ import importlib
 import os
 import pathlib
 import sys
+import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
@@ -76,6 +77,44 @@ comprobar(cofirmante.MODELO in linea and "allow=" in linea and "reason=" in line
 comprobar("missing_human_key" == det_juicio.get("reason"),
           "el motivo de la negativa es el que se reclama", det_juicio.get("reason"))
 
+# ── 2b · una respuesta que no cumple el contrato NO es un permiso ─────────────────────
+print("\n2b · UNA RESPUESTA AMBIGUA NO ES UN PERMISO")
+for crudo, debe_permitir, por_que in [
+        ("ALLOW", True, "la respuesta que el contrato pide"),
+        ("DENY", False, "la negativa limpia"),
+        ("I would ALLOW this if there were evidence", False, "ALLOW envuelto en una frase"),
+        ("DENY? No — ALLOW.", False, "las dos palabras en la misma respuesta"),
+        ("", False, "respuesta vacía"),
+        ("Autorizado", False, "otro idioma, fuera del contrato"),
+        # Los tres siguientes los trajo la fase cero del 2026-08-30. El primero TUMBÓ la versión
+        # anterior: niega en español, no contiene `DENY`, y esconde `ALLOW` dentro de `ALLOWED`.
+        ("No lo permito. No ALLOWED.", False, "niega en español y esconde ALLOW en ALLOWED"),
+        ("No ALLOWED here", False, "tres palabras, con ALLOW dentro de otra"),
+        ("ALLOWED", False, "una palabra, pero no es la del contrato")]:
+    cofirmante._preguntar = lambda sobre, _c=crudo: _c
+    permitido, det = cofirmante.cofirmar("KT-PARSEO", "closing something", False)
+    comprobar(permitido is debe_permitir, f"{por_que} → {'ALLOW' if debe_permitir else 'sin permiso'}",
+              f"{crudo[:28]!r} → {det.get('reason')}")
+importlib.reload(cofirmante)
+
+# ── 2c · una respuesta que llega tarde tampoco lo es ──────────────────────────────────
+print("\n2c · UNA RESPUESTA TARDÍA NO ES UN PERMISO")
+# `requests` cuenta el tiempo de conexión y el de lectura POR SEPARADO, así que un servidor que
+# responda a goteo puede pasar del doble del límite sin que salte el timeout de la librería.
+cofirmante.TIEMPO_LIMITE = 0.2
+
+
+def _lento(sobre):
+    time.sleep(0.5)
+    return "ALLOW"
+
+
+cofirmante._preguntar = _lento
+permitido_lento, det_lento = cofirmante.cofirmar("KT-LENTO", "closing something", False)
+comprobar(permitido_lento is False, "un ALLOW que llega fuera de plazo se descarta",
+          f"{det_lento.get('reason')} en {det_lento.get('segundos')} s")
+importlib.reload(cofirmante)
+
 # ── 2 · el fallo cerrado ───────────────────────────────────────────────────────────────
 print("\n3 · SI NO RESPONDE, NO SE CIERRA (fallo cerrado)")
 os.environ["COFIRMANTE_ENDPOINT"] = "https://127.0.0.1:9/no-existe"
@@ -102,7 +141,8 @@ def _firmar_prohibido(*a, **k):
 grafo.firmar = _firmar_prohibido
 grafo._releer = lambda ctx: ctx.state.__setitem__("hash_actual", "sha256:x") or True
 grafo.cofirmar = lambda cid, accion, has_human_key: (
-    False, {"modelo": cofirmante.MODELO, "allow": False, "reason": "missing_human_key"})
+    False, {"modelo": cofirmante.MODELO, "canal": cofirmante.CANAL, "allow": False,
+            "reason": "missing_human_key"})
 
 ctx = Ctx(peticion_id="KT-001", texto="the complaint is dismissed",
           hash_al_dictaminar="sha256:x")
