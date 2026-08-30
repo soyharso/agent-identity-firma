@@ -8,7 +8,7 @@ Sin esto no se puntúa nada, así que va primero:
 
 | Requisito | Estado | Prueba |
 |---|---|---|
-| Un modelo Gemini 3.5 o superior | **cumplido** | `gemini-3.6-flash` por Vertex. Se eligió sobre la 3.7 porque la última está congestionada y devuelve error de recurso agotado — medido. |
+| Un modelo Gemini 3.5 o superior | **cumplido** | `gemini-3.6-flash` por Vertex para adjudicar. Se eligió sobre la 3.7 porque la última se congestiona **al volumen del adjudicador** y devuelve error de recurso agotado — medido. Eso no la descarta para todo: como **respaldo puntual de transcripción** sí aguanta, y ahí se sigue usando (`src/voz.py`), con 4 de 4 el 2026-08-30. Dos usos, dos volúmenes: por eso no es una contradicción. |
 | Al menos un marco de agentes de Google | **cumplido** | el kit de agentes, versión 2.8, con grafo, nodos de función y pausa nativa. |
 | Al menos un servicio de infraestructura | **cumplido, cuatro** | Cloud Run, Cloud KMS, Firestore y Cloud Scheduler. |
 | Proyecto creado dentro del periodo | **cumplido** | repositorio creado el 2026-08-27. |

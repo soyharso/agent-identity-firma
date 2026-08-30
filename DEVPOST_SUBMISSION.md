@@ -69,8 +69,20 @@ calls it and how you can see it work:
 | # | Additional model | What it does | Where it lives | How you can verify it |
 |---|---|---|---|---|
 | 1 | **`gemini-embedding-001`** (Vertex AI) | Multilingual semantic fence: catches a judgement phrased so it dodges the keyword ceiling | `src/cerco_semantico.py` | break test `semantic-fence` — 9/9 caught, 2 false positives **declared** |
-| 2 | **Cloud Speech-to-Text** | Turns a customer's voice note into text | `src/voz.py` → `escuchar()` | speak into `/ui/portal`; the reply names the engine that transcribed |
+| 2 | **Cloud Speech-to-Text** | Turns a customer's voice note into text | `src/voz.py` → `escuchar()` | speak into `/ui/portal`; the reply **names the engine that transcribed** — see the note below |
 | 3 | **Cloud Text-to-Speech** | Speaks the answer back to customers who cannot read | `src/voz.py` → `hablar()` | break test `voice` — it *synthesises* the spoken judgement it then tries to sneak past the lock |
+
+> **If you try #2 and the reply says `gemini`, nothing is broken — and please read this.**
+> Speech-to-Text is the primary transcriber and it works: a run at 11:39 on 2026-08-30 returned
+> `"motor":"speech-to-text","respaldo_usado":false`. But it has a **per-minute quota**, and under
+> a burst it answers `429`. When that happens the request **fails over to Gemini and the response
+> says so** — `"motor":"gemini","respaldo_usado":true`, with the failed attempt listed in
+> `intentos_fallidos`.
+>
+> We are pointing at this instead of hiding it because it is the same principle as the rest of the
+> submission: **the system reports what actually happened, including when the first choice
+> failed.** A demo that silently swapped engines and reported success would be the cheap version
+> of this, and it is exactly the thing we built the break tests to catch.
 
 **And the count is not the point.** Every one of the three sits **outside the decision path**:
 
