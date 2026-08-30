@@ -63,24 +63,39 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 
 ## Bonus Contributions
 
-### 1 · Additional Google AI models — we claim **three**, the maximum (0.6)
+### 1 · Additional Google AI models — we claim **two**, and the cap is three
 
-Beyond Gemini, which is the model that adjudicates, **three further Google models are integrated
-and running** — not imported, not configured, *running*, each with the file that
-calls it and how you can see it work. **Running in preproduction, on real cloud infrastructure and real keys, deliberately not yet in front of customers** — the same distinction we make everywhere else in this submission:
+**We are claiming 0.4, not 0.6, because we had a third candidate and withdrew it ourselves.** It
+is named below with the reason. Beyond Gemini — the mandatory adjudicator, which does not count —
+these two are integrated and running: not imported, not configured, *running*, each with the file
+that calls it and a command you can run. **In preproduction, on real cloud infrastructure and real keys, deliberately not yet in front of customers** — the same distinction we make everywhere else in this submission:
 
 | # | Additional model | What it does | Where it lives | How you can verify it |
 |---|---|---|---|---|
 | 1 | **`google/gemma-4-26b-a4b-it-maas`** — the Gemma family, on **Vertex AI Model Garden** | **Co-signs every machine closure.** A different family from the adjudicator: if it does not answer `ALLOW`, the machine never reaches the key and the case waits for a person | `src/cofirmante.py`, called from `agente/grafo.py` → `refrescar_y_firmar` | break test `co-signer` — it calls the model live in both directions, then proves the co-signer cannot be bypassed and that neither its silence nor an ambiguous answer opens the door |
 | 2 | **`latest_short`** — Cloud Speech-to-Text | Turns a customer's voice note into text | `src/voz.py` → `escuchar()`, model declared in the request | speak into `/ui/portal`; the reply **names the engine that transcribed** — see the note below |
-| 3 | **`es-US-Neural2-A`** — Cloud Text-to-Speech | Speaks the answer back to customers who cannot read | `src/voz.py` → `hablar()` | break test `voice` — it *synthesises* the spoken judgement it then tries to sneak past the lock |
+
+> **The third one we removed: Cloud Text-to-Speech (`es-US-Neural2-A`).**
+>
+> It is integrated, it runs, and the `voice` break test uses it — it *synthesises* the spoken
+> judgement that the test then tries to sneak past the lock. We are simply **not claiming it**.
+>
+> The rules panel confirmed that a Gemma model counts, and that MedASR — a speech **recognition**
+> model — counts "as long as you integrate the Google-published model". That is what backs #1 and
+> #2. **There is no equivalent statement anywhere about speech synthesis**, so claiming it would
+> mean asking you to accept a reading of the rules rather than a fact. In a submission whose whole
+> argument is that nothing here is overstated, spending your trust on a third of a point is a bad
+> trade. **We would rather hand you two you can check than three you have to adjudicate.**
 
 > **On #1, how to see it in ten seconds.** The co-signer runs on **Vertex AI Model Garden**, the
 > channel the rules panel named, on this project's own credentials:
 >
 > ```bash
-> gcloud ai model-garden models list --billing-project=$GOOGLE_CLOUD_PROJECT | grep gemma-4
+> # Any billable project of your own works — the model is a public Model Garden publisher model.
+> # The flag is NOT optional: without a billing project the command prints nothing at all.
+> gcloud ai model-garden models list --billing-project="$(gcloud config get-value project)" | grep gemma-4
 > #  google/gemma-4-26b-a4b-it-maas@001    CAN_DEPLOY: No    CAN_PREDICT: Yes
+>
 > python3 src/cofirmante.py "the customer complaint is dismissed and no refund is due"
 > #  model=google/gemma-4-26b-a4b-it-maas channel=vertex allow=false reason=missing_human_key
 > ```
@@ -99,8 +114,8 @@ calls it and how you can see it work. **Running in preproduction, on real cloud 
 
 **We name the model, not just the API, on purpose.** `latest_short` is declared in the request
 because it is tuned for short utterances — which is what a support voice note is — and because a
-submission that cannot say *which* model it used has not really integrated one. `Neural2` is the
-voice family behind the spoken reply. Both are named in the code you can read.
+submission that cannot say *which* model it used has not really integrated one. It is named in
+the code you can read, at `src/voz.py`.
 
 > **If you try #2 and the reply says `gemini`, nothing is broken — and please read this.**
 >
@@ -135,20 +150,21 @@ more surface, and not one extra gram of authority.
 
 ### What we are NOT claiming, and why
 
-The cap is 0.6 and we claim exactly three. Here is everything else this project runs on, listed so
-you can see the line we drew — **a submission whose entire thesis is that nothing is overstated
-cannot overstate this section**:
+The cap is 0.6 and **we claim two**. Here is everything else this project runs on, listed so you
+can see the line we drew — **a submission whose entire thesis is that nothing is overstated cannot
+overstate this section**:
 
 | Also used, **not claimed** | Why not |
 |---|---|
+| `es-US-Neural2-A` (Cloud Text-to-Speech) | It runs and the `voice` break test uses it. **Withdrawn on purpose**: the rules panel confirmed Gemma, and confirmed a speech *recognition* model, but said nothing about speech *synthesis*. Claiming it would ask you to accept a reading instead of a fact |
 | `gemini-embedding-001` (Vertex AI) | It runs, it is load-bearing, and the break test `semantic-fence` proves it — 9/9 caught, 2 false positives declared. **We stopped claiming it anyway**: it carries the brand of the model the rules already make mandatory, and a judge could reasonably read it as not "additional". We would rather drop a claim we can argue than defend one you can dispute. It is the reason we went looking for a model with no such objection, and the rules panel confirmed in writing that the Gemma family has none |
 | `Gemini 3.6 Flash`, `Gemini 3.7 Flash` | Gemini 3.5+ is **mandatory**, so it is not "additional" — and two versions of one family doing one job is still one |
 | Google ADK 2.8 | a framework, not a model — and also mandatory |
 | Cloud Run, Cloud KMS, Firestore, Cloud Scheduler | infrastructure, not models. Claiming these would be padding |
 
-**If you disagree with any one of our three, subtract it.** We would rather you score us 0.4 on a
-claim you can audit than 0.6 on one you cannot. Every row above and below names the model, the
-file that calls it, and a command that shows it running.
+**Both of our two are backed by the rules panel in writing, not by our reading of it.** Every row
+above and below names the model, the file that calls it, and a command that shows it running. We
+left 0.2 on the table on purpose, and this section is the receipt.
 
 ### 2 · Content contribution (0.2)
 

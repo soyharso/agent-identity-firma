@@ -92,12 +92,23 @@ viajan en el repositorio. Y se enseña el dato incómodo:
   funciones: más barato, más rápido y comprobable.
 - **Una sola compuerta de política**: el alcance por clave, en un archivo y no en el código.
 - **El verificador no depende de nada**: ni red, ni credenciales, ni cuenta.
-- **Nueve pruebas de ruptura que se ejecutan**, más un verificador que corre sin red ni
-  credenciales. Una de las nueve mide al proveedor en su contra, y otra guarda los nueve textos
-  con que un atacante externo rompió el cerco semántico antes de que se entregara.
-- **Lo ausente se declara ausente, y son tres**: la pasarela, el **catálogo de agentes** y la
-  memoria de largo plazo. Ninguna se finge, y el catálogo se quitó de los materiales el
-  2026-08-27 al comprobar que no existía nada que lo respaldara.
+- **Doce pruebas de ruptura que se ejecutan**, más un verificador que corre sin red ni
+  credenciales. Una de ellas mide al proveedor en su contra, otra guarda los nueve textos con que
+  un atacante externo rompió el cerco semántico antes de que se entregara, y la duodécima llama al
+  cofirmante de verdad: si el modelo no responde, sale roja.
+- **Lo ausente se declara ausente, y son dos**: la pasarela y la memoria de largo plazo. Ninguna
+  se finge.
+
+  > **Corregido el 2026-08-30.** Aquí se leía que eran **tres** ausencias, y que el catálogo de
+  > agentes «se quitó de los materiales el 2026-08-27 al comprobar que no existía nada que lo
+  > respaldara». **Eso ya no es cierto y contradecía a la propia entrega**, que reclama el
+  > catálogo como *Agent Registry*. Existe: `agent_cards/` tiene `catalog.json` con tres agentes,
+  > más su ficha en dos formatos cada uno, están en el historial de git desde el 28 de agosto, y
+  > `generar_agent_cards.py` los regenera desde `claves/directorio.json`.
+  >
+  > Decir «ausente» y «cubierto» del mismo componente, en dos documentos que el jurado lee
+  > seguidos, es peor que cualquiera de las dos afirmaciones por separado: obliga a decidir cuál
+  > de los dos miente. Lo destapó una fase cero con herramientas sobre el repositorio real.
 
 ### Demostración y madurez — 30%
 
