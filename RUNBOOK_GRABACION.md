@@ -1,17 +1,25 @@
 # RUNBOOK DE GRABACIÓN — CLEVERIA · v3
 
-**Fecha:** 2026-08-30 · **Versión:** 3.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+**Fecha:** 2026-08-30 · **Versión:** 4.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+*(v4: la regla de edición corregida contra la rúbrica, OBS montado, la toma 3 paso a paso)*
 
 > **La v2 decía que había tres planes de grabación incompatibles. Ya no**, y por una razón mejor
 > que la que teníamos.
 >
-> **Leído el 2026-08-30 en la página oficial de novedades: no existe ninguna regla sobre toma
-> única, cortes ni edición.** Las únicas exigencias del vídeo son cuatro minutos como máximo,
-> público en YouTube o Vimeo, en inglés, y que se vea el backend corriendo en Google Cloud.
-> **La toma única era una restricción que nos pusimos solos.**
+> **Corregido el 2026-08-30, leyendo la rúbrica y no solo el reglamento.** La v3 decía que «no
+> existe ninguna regla sobre cortes ni edición». Es falso, y era un error caro: el 30 % de la
+> nota lo decide *Demo & Production Readiness*, cuyo primer criterio pregunta literalmente
+> «*Does the video show an **unedited, live execution** of the agent?*».
 >
-> Se mantiene igualmente para la demostración, pero ya no como obligación: como **argumento**. Y
-> el resto del vídeo usa escenas, fundidos, títulos e imágenes sin ninguna culpa.
+> Las exigencias formales siguen siendo cuatro: **4 minutos como máximo**, **público** en YouTube
+> o Vimeo (*unlisted* no vale), **en inglés o con subtítulos en inglés**, y que **se vea el
+> backend corriendo en Google Cloud**. Pero encima de ellas está la rúbrica, y ahí «sin editar»
+> puntúa.
+>
+> **La toma única deja de ser una manía nuestra y pasa a ser la respuesta al criterio que más
+> pesa.** El envoltorio —apertura, títulos, arquitectura, cierre— sí usa escenas y fundidos sin
+> ninguna culpa: la exigencia recae sobre **la demostración**, no sobre el vídeo entero. Qué se
+> puede hacer con las esperas está en la **§5.1**, con la respuesta literal del organizador.
 >
 > ### Y un aviso de los organizadores que cambia las prioridades
 >
@@ -191,9 +199,46 @@ bash demo.sh 3
 
 - **Los primeros 10 segundos deciden si te siguen viendo.** Van directos a la cola trabajando.
   Sin logotipo antes, sin título antes.
-- **Corta toda espera.** Donde el sondeo tarde, corte de salto y sigue.
+- **NO cortes las esperas de la demostración.** Acelera el bloque entero, uniformemente, y
+  rotúlalo. El porqué está en la §5.1, y es lo que separa una entrega puntuada de una descartada.
 - **Subtítulos en inglés siempre**, aunque se narre en inglés: muchos jurados ven sin sonido.
 - **Ningún panel de identidad de la nube con nombres propios.**
+
+### 5.1 Qué se puede hacer con las esperas, y qué no
+
+> **Corregido el 2026-08-30. Hasta hoy este runbook decía «corta toda espera, corte de salto y
+> sigue». Eso está prohibido**, y el error habría costado el 30 % de la nota.
+
+Las bases puntúan «*Does the video show an **unedited, live execution** of the agent performing
+its task?*». Preguntado en el foro si se puede acelerar la grabación para no pasar de cuatro
+minutos, el organizador contestó — respuesta de *Shawni Dev*, manager, aportada por el operador:
+
+> «Una aceleración uniforme de una ejecución real (**sin cortes, empalmes, ni añadidos ni
+> eliminados**) generalmente se interpreta como “sin editar”, pero **editar, recortar o unir
+> clips en exceso no lo haría**. Para mayor seguridad, mantén la ejecución continua y **añade una
+> nota en pantalla si la has acelerado**.»
+
+| Con las esperas | ¿Permitido? | Qué hacer |
+|---|---|---|
+| Dejarlas a 1× | **Sí**, es lo más seguro | rótulo `rotulo_toma_unica.png` |
+| **Acelerar el bloque entero, uniforme** | **Sí**, con aviso en pantalla | rótulo `rotulo_toma_unica_acelerado.png` |
+| Corte de salto para saltarse el sondeo | **NO** | es un corte: rompe «unedited» |
+| Unir dos intentos de la misma toma | **NO** | es un empalme |
+| Acelerar solo la parte aburrida | **NO** | no es uniforme |
+
+**Cómo acelerar sin equivocarse** — un solo comando sobre el bloque entero, nunca sobre un trozo:
+
+```bash
+ffmpeg -i toma3.mkv -filter:v "setpts=PTS/2" -filter:a "atempo=2.0" toma3_2x.mkv
+```
+
+Y el rótulo tiene que decirlo. **Usar el rótulo de 1× sobre metraje acelerado sería afirmar algo
+falso justo encima de la única parte del vídeo cuyo valor entero es que se puede creer.** Los dos
+rótulos se regeneran con `python3 assets/slides/generar_rotulos.py <velocidad>`.
+
+**Repite también el aviso en la descripción del vídeo**, que es lo que el organizador pidió «para
+mayor seguridad»: *“The demo block is a single continuous run, played back at a uniform 2×. No
+cuts, no splices, nothing added or removed.”*
 
 ---
 
@@ -243,5 +288,8 @@ mientras se enseña — no la lista de servicios.
 - [ ] Está en inglés o lleva subtítulos en inglés
 - [ ] Se ve el backend corriendo en Google Cloud
 - [ ] No aparece ningún correo, ruta personal ni nombre de cliente
-- [ ] El rótulo `unedited — single take` está sobre la demostración
-- [ ] Público en YouTube o Vimeo
+- [ ] El rótulo está sobre la demostración, **y es el que corresponde a la velocidad usada**
+- [ ] **Dentro de la demostración no hay ni un corte ni un empalme** (§5.1)
+- [ ] Si se aceleró: el aviso está en pantalla **y** en la descripción del vídeo
+- [ ] **Público** en YouTube o Vimeo — *unlisted* no cuenta y descarta la bonificación
+- [ ] La descripción explica la fricción y nombra la arquitectura
