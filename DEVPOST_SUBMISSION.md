@@ -55,9 +55,55 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 
 ---
 
+## Bonus Contributions
+
+**Additional AI models — four Google models, and exactly one of them decides.**
+
+| Model | What it does | Can it grant authority? |
+|---|---|---|
+| `Gemini 3.7 Flash` (Vertex AI) | Adjudicates the request against the evidence | **It proposes. It cannot sign a human judgement.** |
+| `gemini-embedding-001` (Vertex AI) | Multilingual semantic fence | **No — it can only ask for MORE caution, never less** |
+| Cloud Speech-to-Text | Turns a customer voice note into text | **No — a transcript is data, not an instruction** |
+| Cloud Text-to-Speech | Speaks the answer back to customers who cannot read | **No — it sits downstream of every decision** |
+
+This is the point, not the model count: **three of the four sit outside the decision path
+entirely**, and the fourth proposes without being able to sign. If any of them is wrong,
+hallucinates, or is poisoned, none of them opens a door — the worst case is that a person gets
+asked one time too many.
+
+**Content contribution**: a technical write-up of what broke while building this, including three
+findings from red-teaming ourselves before shipping — and one we failed.
+
+---
+
+## For judges: read the code, not just the README
+
+The interesting part of this repository is not what it does — it is that **the code says why each
+decision was made, including where it must NOT be trusted**. Three places worth thirty seconds:
+
+- `app_real.py` — a mock 403 that **labels itself as a mock**, with a comment reading *"do not
+  record this route as proof of the cryptographic boundary"*. The real 403 comes from Cloud KMS in
+  `servicio/main.py`, and the code tells you which is which.
+- `src/verificar_sobre.py` — every rejection verdict carries the reason it exists, including one
+  that is **redundant when the text differs and essential when it does not**: template answers in
+  customer support share a hash, and only the case binding separates them.
+- `agente/killtest_reutilizacion.py` — a break test that starts by proving **its own control is
+  redundant in the easy case**, before showing the case where it is the only thing that saves you.
+
+We would rather you find our limits in our own comments than in your reading of them.
+
+---
+
 ## Verification & Quick Links
 
-- **Repository**: [Private / Public GitHub link with access to `testing@devpost.com` and `cloudhackathons@google.com`]
-- **Live Demo Video (≤4:00)**: [YouTube / Vimeo Link with Cloud Run proof]
-- **Hosted App**: `https://candado-firma-141981963817.us-central1.run.app` / `https://cleveria.co`
+- **Repository**: [Private GitHub, access granted to `testing@devpost.com` and `cloudhackathons@google.com`]
+- **Live Demo Video (≤4:00)**: [YouTube / Vimeo link with Cloud Run proof]
+- **Customer portal (Act I)**: `https://cleveria-demo-141981963817.us-central1.run.app/ui/portal`
+- **Authority ledger (Acts II & III)**: `https://cleveria-demo-141981963817.us-central1.run.app/ui/unified`
+- **Agent service**: `https://candado-firma-141981963817.us-central1.run.app` — returns **HTTP 403
+  to anonymous callers, by design**: it only accepts callers Cloud Run can authenticate. That
+  refusal is the product, not an outage.
 - **Technical Deep-Dive Article**: [dev.to link]
+
+**Run the break tests yourself**: `./pruebas_de_ruptura.sh` — eleven tests, and most need no
+credentials and no network at all.
