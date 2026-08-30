@@ -7,5 +7,7 @@ COPY agente/ ./agente/
 COPY claves/ ./claves/
 COPY libro/peticiones.json ./libro/peticiones.json
 COPY servicio/main.py ./main.py
-ENV PORT=8080 PYTHONUNBUFFERED=1
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 4 --timeout 300 main:app
+COPY servicio/identidad.py ./identidad.py
+COPY servicio/mediador.py ./mediador.py
+ENV PORT=8080 PYTHONUNBUFFERED=1 APP_MODULO=main
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 4 --timeout 300 ${APP_MODULO}:app

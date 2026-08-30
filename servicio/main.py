@@ -5,13 +5,12 @@ ruta**: quien pueda llamar a una entrada puede llamar a la otra. Así que la sep
 «el temporizador despierta» y «la persona decide» **la hace este programa**, leyendo la identidad
 del token que la plataforma ya validó. Se dice así, y no como una garantía de la nube.
 """
-import base64
-import json
 import os
 import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "TRUE")
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "ai-transf-lab-0827")
@@ -21,6 +20,7 @@ import asyncio                                                    # noqa: E402
 
 from flask import Flask, jsonify, request                         # noqa: E402
 
+from identidad import quien_llama                                 # noqa: E402
 from src import estado                                            # noqa: E402
 
 app = Flask(__name__)
@@ -29,37 +29,6 @@ app = Flask(__name__)
 IDENTIDAD_HUMANA = os.environ.get("IDENTIDAD_HUMANA", "")
 IDENTIDAD_TEMPORIZADOR = os.environ.get("IDENTIDAD_TEMPORIZADOR", "")
 TOPE_POR_DESPERTAR = int(os.environ.get("TOPE_POR_DESPERTAR", "5"))
-
-
-def quien_llama() -> str:
-    """El correo del que llama, sacado del token que la plataforma YA validó.
-
-    No se verifica la firma aquí a propósito: si la petición llegó, la plataforma comprobó el
-    token. Lo que este programa añade es la autorización por identidad, que la plataforma no
-    sabe hacer por ruta.
-    """
-    cab = request.headers.get("Authorization", "")
-    # Cloud Run entrega el esquema en MINÚSCULA («bearer», no «Bearer»). Comparar distinguiendo
-    # mayúsculas dejaba la identidad vacía y, con ella, la autorización abierta de par en par:
-    # el programa creía que nadie se identificaba y todas las entradas contestaban lo mismo.
-    if cab[:7].lower() != "bearer ":
-        return ""
-    try:
-        carga = cab.split(" ", 1)[1].split(".")[1]
-        carga += "=" * (-len(carga) % 4)
-        return json.loads(base64.urlsafe_b64decode(carga)).get("email", "")
-    except Exception:                                             # noqa: BLE001
-        return ""
-
-
-def _comprobar_firma_humana(sobre, firma_b64):
-    """Comprueba, no confía. Y con la MISMA compuerta que el resto: el alcance de la clave.
-
-    Antes esta función tenía su propia lógica y su propia serialización. Tener dos formas de
-    comprobar lo mismo es tener dos formas de equivocarse: aquí se llama al verificador único.
-    """
-    from src.verificar_sobre import verificar
-    return verificar(sobre, firma_b64)
 
 
 def _negar(esperada, quien):
@@ -97,6 +66,13 @@ def decidir():
 
     # El servicio NO firma como persona: no puede, y esa es la promesa. La firma viene hecha
     # desde la máquina de quien decide, y aquí solo se COMPRUEBA contra la clave pública.
+    #
+    # LA COMPROBACIÓN YA NO SE HACE AQUÍ, y no es un descuido: se hace en la puerta, que es lo
+    # único que puede escribir. Antes esta entrada verificaba por su cuenta y luego escribía —y
+    # verificaba SIN `peticion_esperada`, así que una aprobación auténtica del caso de al lado
+    # entraba entera: firma buena, firmante conocido, hash coherente consigo mismo y estado en
+    # alcance. `estado.aplicar_cierre` verifica CONTRA ESTA petición. El agujero era real y se
+    # reproduce en `agente/killtest_puerta.py`.
     sobre, firma = cuerpo.get("sobre"), cuerpo.get("firma")
     if decision != "no":
         if not sobre or not firma:
@@ -104,12 +80,11 @@ def decidir():
                 "error": "the human-signed envelope is missing",
                 "note": "this service cannot sign as a human, and must not",
                 "note_es": "este servicio no puede firmar como humano, y no debe"}), 400
-        veredicto, detalle = _comprobar_firma_humana(sobre, firma)
-        if veredicto != "OK":
-            return jsonify({"error": "the signature does not validate as human",
-                            "verdict": veredicto, "detail": detalle}), 400
-        estado.guardar(pid, sobre=sobre, firma=firma, veredicto="OK",
-                       hash_contenido=sobre.get("hash_contenido"))
+        aplicado, detalle = estado.aplicar_cierre(pid, sobre, firma)
+        if not aplicado:
+            return jsonify({"error": "the envelope was not accepted for this request",
+                            "error_es": "el sobre no fue aceptado para esta petición",
+                            "record_unchanged": True, "gate": detalle}), 400
 
     estado.anotar_decision_humana(pid, decision)
     # `by` sale en pantalla durante la demostración, y el vídeo es público. Lo que importa aquí
@@ -151,6 +126,57 @@ def intentar_suplantar():
     })
 
 
+@app.post("/intentar-escribir-directo")
+def intentar_escribir_directo():
+    """La demostración de la PUERTA: el agente intenta escribir el registro sin pasar por nadie.
+
+    Hermana de `/intentar-suplantar`, y por el mismo motivo: no es una simulación ni un mensaje
+    preparado. Este servicio corre con la identidad del agente, y aquí se llama a la interfaz de
+    Firestore A PELO —sin `src.estado`, sin mediador, sin verificador— y se devuelve lo que la
+    nube conteste. Si algún día contestara 200, querría decir que la puerta es decorativa, y esta
+    ruta lo enseñaría igual.
+
+    Escribe sobre el documento que se le pase, y por defecto sobre uno de usar y tirar: si la
+    nube dijera que sí, que el destrozo sea el mínimo.
+    """
+    quien = quien_llama()
+    if IDENTIDAD_HUMANA and quien not in (IDENTIDAD_HUMANA, IDENTIDAD_TEMPORIZADOR):
+        return _negar(IDENTIDAD_HUMANA, quien)
+
+    import google.auth
+    import google.auth.transport.requests
+    import requests
+
+    cuerpo = request.get_json(silent=True) or {}
+    pid = str(cuerpo.get("peticion_id") or "PET-INTENTO-DIRECTO")
+
+    cred, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    cred.refresh(google.auth.transport.requests.Request())
+    url = (f"https://firestore.googleapis.com/v1/projects/{estado.PROYECTO}"
+           f"/databases/(default)/documents/{estado.COLECCION}/{pid}"
+           "?updateMask.fieldPaths=veredicto&updateMask.fieldPaths=firma")
+    r = requests.patch(url, headers={"Authorization": f"Bearer {cred.token}"}, timeout=30,
+                       json={"fields": {"veredicto": {"stringValue": "OK"},
+                                        "firma": {"stringValue": "written-without-an-envelope"}}})
+    detalle = {}
+    try:
+        detalle = r.json().get("error", {})
+    except Exception:                                             # noqa: BLE001
+        pass
+
+    return jsonify({
+        "this_service_runs_as": "sa-agente-curador — the AGENT's identity",
+        "attempted": "a direct Firestore write, bypassing the mediator and the verifier",
+        "target": pid,
+        "http": r.status_code,
+        "status": detalle.get("status"),
+        "message": (detalle.get("message") or "")[:220],
+        "written": r.ok,
+        "note": ("the gate is not this code: the agent has no write permission on the record. "
+                 "Only the mediator does, and the mediator asks for a verified envelope first"),
+    })
+
+
 @app.get("/estado")
 def ver_estado():
     return jsonify({"awaiting_a_human": estado.pendientes_de_persona()})
@@ -167,7 +193,7 @@ def quien():
 @app.get("/")
 def salud():
     return jsonify({"endpoints": ["/despertar", "/decidir", "/estado",
-                                 "/intentar-suplantar"],
+                                 "/intentar-suplantar", "/intentar-escribir-directo"],
                     "note": "no endpoint signs; signing lives inside the graph"})
 
 

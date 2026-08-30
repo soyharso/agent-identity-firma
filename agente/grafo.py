@@ -261,12 +261,10 @@ def pausa_humana(ctx):
 
     respuesta = (ctx.resume_inputs or {}).get("firma_humana")
     if respuesta is None:
-        estado.guardar(ctx.state["peticion_id"], espera_humana=True,
-                       texto=ctx.state["texto"],
-                       hash_al_dictaminar=ctx.state["hash_al_dictaminar"])
-        # El trabajo queda SUSPENDIDO, no hecho: se suelta la reserva o el propio candado
-        # impediría que un despertar posterior lo retomara.
-        estado.soltar_reserva(ctx.state["peticion_id"])
+        # El trabajo queda SUSPENDIDO, no hecho: apartar suelta la reserva en la misma escritura,
+        # porque dejarla puesta impediría que un despertar posterior lo retomara.
+        estado.apartar_para_persona(ctx.state["peticion_id"], ctx.state["texto"],
+                                    ctx.state["hash_al_dictaminar"])
         return RequestInput(
             interrupt_id="firma_humana",
             message=(f"La petición {ctx.state['peticion_id']} exige criterio humano. "
@@ -338,17 +336,43 @@ def verificar(ctx):
 
 
 def registrar(ctx):
+    """El libro se escribe siempre; el REGISTRO, solo por la puerta.
+
+    Antes este nodo escribía el estado él mismo, firma incluida, con la credencial del agente. Se
+    presentaba el sobre y se guardaba en el mismo gesto: nadie comprobaba nada en el camino de
+    escritura, así que el sobre era un recibo. Ahora hay dos caminos y ninguno se los salta:
+
+      · hay sobre y firma  →  `aplicar_cierre`, que VERIFICA contra esta petición y, si no
+                              cuadra, deja el registro exactamente como estaba;
+      · no hay firma       →  `anotar_resultado`, que anota el desenlace y tiene prohibido
+                              escribir `sobre`, `firma` o `hash_contenido`.
+
+    El libro en disco sigue registrando TODAS las pasadas, también las que no firmaron nada y
+    las que la puerta rechazó: es el rastro de lo que se intentó, y por eso se escribe antes.
+    """
+    sobre = ctx.state.get("sobre")
+    firma = (ctx.state.get("resultado_firma") or {}).get("firma")
+
     fila = {"ts": int(time.time()), "peticion_id": ctx.state["peticion_id"],
             "dictamen": ctx.state.get("dictamen"), "veredicto": ctx.state["veredicto"],
-            "sobre": ctx.state.get("sobre"),
-            "firma": (ctx.state.get("resultado_firma") or {}).get("firma")}
+            "sobre": sobre, "firma": firma}
     FIRMAS.parent.mkdir(parents=True, exist_ok=True)
     with FIRMAS.open("a") as fh:
         fh.write(json.dumps(fila, ensure_ascii=False) + "\n")
-    estado.guardar(ctx.state["peticion_id"], veredicto=ctx.state["veredicto"],
-                   dictamen=ctx.state.get("dictamen"), espera_humana=False,
-                   hash_contenido=(ctx.state.get("sobre") or {}).get("hash_contenido"),
-                   firma=(ctx.state.get("resultado_firma") or {}).get("firma"))
+
+    if sobre and firma and ctx.state["veredicto"] == "OK":
+        aplicado, detalle = estado.aplicar_cierre(ctx.state["peticion_id"], sobre, firma,
+                                                  dictamen=ctx.state.get("dictamen"))
+        ctx.state["puerta"] = detalle
+        if not aplicado:
+            # La puerta dijo que no. Eso NO se maquilla: el veredicto que queda es el suyo.
+            ctx.state["veredicto"] = f"PUERTA_{detalle.get('rechazo', 'RECHAZO')}"
+            estado.anotar_resultado(ctx.state["peticion_id"], ctx.state["veredicto"],
+                                    ctx.state.get("dictamen"))
+    else:
+        estado.anotar_resultado(ctx.state["peticion_id"], ctx.state["veredicto"],
+                                ctx.state.get("dictamen"))
+
     return f"{ctx.state['peticion_id']} → {ctx.state['veredicto']}"
 
 

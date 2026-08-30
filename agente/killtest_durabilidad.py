@@ -53,12 +53,18 @@ def paso2():
     bien y la prueba simulaba media persona. Ahora simula la persona entera, igual que
     `src/decidir_como_persona.py`: firma con la clave humana desde la máquina de quien decide,
     y solo se guarda si el verificador puro la valida.
+
+    ADAPTADO 2026-08-30 (puerta mediadora). Antes escribía el registro él mismo con
+    `estado.guardar`, que es exactamente el camino que este frente cerró: el paso simulaba a la
+    persona pero se saltaba la comprobación que ahora hace la entrada `/decidir`. Ya no hay dos
+    formas de escribir un cierre — hay una, `estado.aplicar_cierre`, y esta prueba pasa por
+    ella. La verificación no desaparece: se hace DENTRO de la puerta, con `peticion_esperada`,
+    que es más de lo que este paso comprobaba antes.
     """
     import time
 
     from src import estado
     from src.firma_kms import CLAVE_HUMANO, firmar, resumen
-    from src.verificar_sobre import verificar as verificar_sobre
 
     texto = _peticion_texto()
     sobre = {"peticion_id": PETICION, "estado_destino": "descartada",
@@ -70,15 +76,11 @@ def paso2():
         print(f"  la persona no pudo firmar: {r}")
         return False, "la persona no pudo firmar con su propia clave"
 
-    # La misma compuerta que aplica la entrada `/decidir` del servicio: nada se guarda sin
-    # que el verificador puro lo valide antes.
-    veredicto, detalle = verificar_sobre(sobre, r["firma"], texto)
-    if veredicto != "OK":
-        print(f"  el verificador rechazó la firma de la persona: {veredicto} {detalle}")
-        return False, "la firma de la persona no pasó el verificador"
+    aplicado, detalle = estado.aplicar_cierre(PETICION, sobre, r["firma"])
+    if not aplicado:
+        print(f"  la puerta rechazó la firma de la persona: {detalle}")
+        return False, "la firma de la persona no pasó la puerta"
 
-    estado.guardar(PETICION, sobre=sobre, firma=r["firma"],
-                   hash_contenido=sobre["hash_contenido"])
     estado.anotar_decision_humana(PETICION, "descartada")
     e = estado.leer(PETICION)
     ok = (e.get("decision_humana") == "descartada" and e.get("espera_humana") is False

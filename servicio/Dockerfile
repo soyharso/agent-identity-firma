@@ -12,5 +12,10 @@ COPY libro/peticiones.json ./libro/peticiones.json
 # servicio no las alcanza, que es el producto entero.
 COPY claves/ ./claves/
 COPY servicio/main.py ./main.py
-ENV PORT=8080 PYTHONUNBUFFERED=1
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 4 --timeout 300 main:app
+COPY servicio/identidad.py ./identidad.py
+COPY servicio/mediador.py ./mediador.py
+ENV PORT=8080 PYTHONUNBUFFERED=1 APP_MODULO=main
+# UNA imagen, DOS servicios. `main` es el agente; `mediador` es el único que puede escribir el
+# registro. Lo que los separa no es el código: es la identidad con la que Cloud Run los corre y
+# el permiso que esa identidad tiene sobre Firestore.
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 4 --timeout 300 ${APP_MODULO}:app
