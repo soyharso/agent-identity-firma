@@ -3,6 +3,15 @@ __pycache__/
 libro/firmas.jsonl
 agente/.adk/
 
+# Los satélites de la cadena del libro (`src/libro_cadena.py`): el candado, la cache de la
+# cabeza y las filas que no consiguieron el candado. Son estado local de la máquina que
+# escribe, NO contenido del libro — el archivo `.jsonl` sigue siendo la fuente de verdad, y la
+# cache se recalcula sola si miente. Versionarlos serviría para que dos máquinas se pisaran
+# una cabeza que solo vale en la suya.
+*.jsonl.lock
+*.jsonl.ultimo.json
+*.jsonl.parcial.*.jsonl
+
 # Los worktrees de cada frente viven DENTRO del repositorio, en `.claude/worktrees/<slug>/`,
 # que es la convención de la casa (`~/.claude/reference/worktree-ops.md`). Sin esta línea, al
 # mover un worktree aquí dentro el repositorio lo vería como contenido sin rastrear y el

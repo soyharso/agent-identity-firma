@@ -31,6 +31,7 @@ from google.adk.workflow import DEFAULT_ROUTE, START, FunctionNode, Workflow  # 
 from google.genai import types                                         # noqa: E402
 
 from src import estado                                                  # noqa: E402
+from src import libro_cadena                                            # noqa: E402
 from src.cerco_semantico import techo_semantico                        # noqa: E402
 from src.cofirmante import cofirmar, linea_de_registro                # noqa: E402
 from src.verificar_sobre import verificar as verificar_sobre           # noqa: E402
@@ -338,13 +339,21 @@ def verificar(ctx):
 
 
 def registrar(ctx):
+    """Anota la operación en el libro, ENCADENADA a la anterior.
+
+    ESTE ERA EL SEGUNDO ESCRITOR, y encontrarlo cambió el frente. `src/libro_demo.py` no es el
+    único que escribe `libro/firmas_grafo.jsonl`: esta función lo hacía directo con
+    `FIRMAS.open("a")`, y por eso un `grep -rn 'anotar_firma\\|F_FIRMAS'` no la veía. Migrar
+    solo uno de los dos es peor que no migrar ninguno: el que encadena y el que solo anexa
+    conviven, y la cadena se corta sin que nadie haya hecho nada malo. Se comprobó ejecutando:
+    la prueba de durabilidad del banco anexa una fila real al libro por esta vía en cada
+    corrida de `./pruebas_de_ruptura.sh`.
+    """
     fila = {"ts": int(time.time()), "peticion_id": ctx.state["peticion_id"],
             "dictamen": ctx.state.get("dictamen"), "veredicto": ctx.state["veredicto"],
             "sobre": ctx.state.get("sobre"),
             "firma": (ctx.state.get("resultado_firma") or {}).get("firma")}
-    FIRMAS.parent.mkdir(parents=True, exist_ok=True)
-    with FIRMAS.open("a") as fh:
-        fh.write(json.dumps(fila, ensure_ascii=False) + "\n")
+    libro_cadena.anexar(FIRMAS, fila)
     estado.guardar(ctx.state["peticion_id"], veredicto=ctx.state["veredicto"],
                    dictamen=ctx.state.get("dictamen"), espera_humana=False,
                    hash_contenido=(ctx.state.get("sobre") or {}).get("hash_contenido"),
