@@ -207,21 +207,26 @@ que el trabajo se reanuda solo.
 ```bash
 date +%M                                        # entre 01 y 11, o espera
 gcloud auth print-identity-token | head -c 20   # tiene que devolver algo
-export COFIRMANTE_TIMEOUT=12                    # ver el aviso de abajo
 python3 sembrar_demo.py --borrar && python3 sembrar_demo.py
 bash demo.sh 3                                  # ENSAYO EN FRÍO, entero
 ```
 
-> ### ⚠ El cofirmante puede tumbar la toma, y se evita con una variable
+> ### ⚠ Si alguien te dijo que exportaras `COFIRMANTE_TIMEOUT`, **abre una terminal nueva**
 >
-> Medido hoy: `python3 agente/grafo.py` dio `allow=false reason=too_slow` — **5,2 s contra un
-> plazo de 4 s**, y el flujo se detuvo. La máquina **no firmó** el caso que el README promete que
-> firma. El mismo modelo, invocado solo, responde en 1,6 s: lo que se pasa de plazo es la llamada
-> dentro del grafo.
+> Durante unas horas este runbook mandó `export COFIRMANTE_TIMEOUT=12` antes de grabar, porque el
+> cofirmante daba `allow=false reason=too_slow` a 5,2 s contra un plazo de 4 y **detenía el
+> flujo**: la máquina no firmaba el caso que el README promete que firma.
 >
-> `export COFIRMANTE_TIMEOUT=12` antes de grabar. Es una variable de entorno, no un cambio de
-> código, y no altera lo que la prueba demuestra: el cofirmante sigue fallando cerrado, solo se le
-> da el tiempo que de verdad tarda.
+> **Esa mitigación se retiró, y hay que retirarla también de tu terminal.** El defecto no era la
+> lentitud del modelo: **el cronómetro arrancaba antes de conseguir la credencial**, así que le
+> cobraba a la respuesta del cofirmante el descubrimiento de credencial, el saludo del token y el
+> de la conexión cifrada. Arreglado en el mismo flujo: **5,20 s → 0,78 s**, y comprobado otra vez
+> aquí a **0,97 s**. El plazo de 4 segundos se queda y sobra margen.
+>
+> **Por qué importa grabar sin la variable**: el reclamo y el README dicen cuatro segundos. Grabar
+> con doce y publicar cuatro es justo la clase de desajuste que este vídeo existe para no tener. Y
+> era el peor fallo posible en un control que falla cerrado — **el que se dispara por una razón
+> que no es la suya**: no abría ninguna puerta, pero enseñaba a subir el plazo.
 
 > **Si el token está vacío, no grabes.** Sin sesión de nube, el guion imprime una respuesta de
 > ejemplo con el rótulo `CANNED SAMPLE — DO NOT RECORD`. Grabarlo sería enseñar como prueba algo
@@ -401,7 +406,7 @@ mientras se enseña — no la lista de servicios.
 
 ## 8. Comprobación final antes de subir
 
-- [ ] **Antes de grabar**: reloj entre :01 y :11, `COFIRMANTE_TIMEOUT=12`, y la red **puesta**
+- [ ] **Antes de grabar**: reloj entre :01 y :11, la red **puesta**, y **sin** `COFIRMANTE_TIMEOUT` exportado
 - [ ] **Se ve la cofirma en pantalla** — la línea `model=google/gemma-4-26b-a4b-it-maas
       channel=vertex allow=… reason=…`. El organizador pidió ver la integración, no creerla
 - [ ] Dura 4:00 o menos
