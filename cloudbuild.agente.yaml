@@ -1,0 +1,8 @@
+# El servicio del AGENTE (candado-firma) se construye con servicio/Dockerfile, no con el
+# Dockerfile de la raiz — ese es el de la demostracion (app_real.py). `--source .` usa siempre
+# el de la raiz, asi que desplegar asi pondria la demo donde debe ir el agente.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-f', 'servicio/Dockerfile', '-t',
+           'gcr.io/$PROJECT_ID/candado-firma:$SHORT_SHA', '.']
+images: ['gcr.io/$PROJECT_ID/candado-firma:$SHORT_SHA']

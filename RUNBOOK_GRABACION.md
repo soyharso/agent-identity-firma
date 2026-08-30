@@ -2,13 +2,32 @@
 
 **Fecha:** 2026-08-30 · **Versión:** 3.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
 
-> **La v2 decía que había tres planes de grabación incompatibles. Ya no.** El operador revisó las
-> bases el 2026-08-30 y la lectura resuelve el conflicto: **la toma única vale para la
-> DEMOSTRACIÓN del funcionamiento** —ahí no puede haber edición que cambie lo que pasó— **y el
-> resto del vídeo admite escenas, fundidos, títulos e imágenes**. Los cortes de tiempo están
-> permitidos en todas partes.
+> **La v2 decía que había tres planes de grabación incompatibles. Ya no**, y por una razón mejor
+> que la que teníamos.
 >
-> Los planes no competían: uno es el envoltorio y el otro es el corazón. Se usan los dos.
+> **Leído el 2026-08-30 en la página oficial de novedades: no existe ninguna regla sobre toma
+> única, cortes ni edición.** Las únicas exigencias del vídeo son cuatro minutos como máximo,
+> público en YouTube o Vimeo, en inglés, y que se vea el backend corriendo en Google Cloud.
+> **La toma única era una restricción que nos pusimos solos.**
+>
+> Se mantiene igualmente para la demostración, pero ya no como obligación: como **argumento**. Y
+> el resto del vídeo usa escenas, fundidos, títulos e imágenes sin ninguna culpa.
+>
+> ### Y un aviso de los organizadores que cambia las prioridades
+>
+> > *«Judges aren't required to download or run your project. They may score entirely from your
+> > video, your text description, and your repo.»*
+>
+> **Los jueces pueden puntuar sin ejecutar nada.** Tres consecuencias:
+>
+> 1. **El rótulo de toma única vale más de lo que parece.** Si no van a correr el proyecto, lo
+>    único que separa una demostración real de una recreación es lo que se ve y lo que se afirma.
+> 2. **La descripción escrita pesa tanto como el vídeo.** No es un trámite.
+> 3. **«Corre las pruebas tú mismo» es un adorno**, no una prueba. Sigue estando bien decirlo —
+>    pero no cuentes con que alguien lo haga: **lo que no se vea en el vídeo, no existe**.
+>
+> Súbelo con horas de margen: los organizadores avisan de que YouTube y Vimeo tardan «desde unos
+> minutos hasta varias horas» en procesar.
 
 ---
 
@@ -46,9 +65,14 @@ Con la sesión de Google Cloud abierta, las cinco tomas corren:
 
 Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 
-> ### ⚠ Antes de grabar la toma 3
-> En esa misma salida aparece **el correo del operador** (`"by": "gerencia@softronica.com.co"`).
-> Sale de `decidir_como_persona.py`. **Quítalo o recorta el encuadre**: el vídeo es público.
+> ### ✅ El correo del operador ya no sale en cámara
+> Hasta el 2026-08-30, `/decidir` devolvía el correo completo en el campo `by`, y esa respuesta
+> se ve en la toma 3 de un vídeo público. Ahora devuelve solo el dominio: lo que importa ahí no
+> es *quién* es la persona, sino que **fue una persona y el servicio pudo comprobarlo**. La
+> identidad completa sigue dentro del sobre firmado, que es donde debe estar para auditar.
+>
+> **Compruébalo igualmente antes de grabar** — corre la toma 3 y mira la salida. Este dato ha
+> reaparecido tres veces en sitios distintos.
 
 ---
 
