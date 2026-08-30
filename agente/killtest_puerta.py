@@ -45,6 +45,9 @@ CASO_VECINO = "PET-KILL-PUERTA-VECINO"
 AGENTE = "sa-agente-curador@ai-transf-lab-0827.iam.gserviceaccount.com"
 SERVICIO = os.environ.get("SERVICIO_URL",
                           "https://candado-firma-141981963817.us-central1.run.app")
+# Dónde escribe el SERVICIO desplegado, que no es donde escribe esta corrida si se aisló con
+# COLECCION_PETICIONES. Se mide el registro que el ataque puede tocar, no otro.
+COLECCION_DEL_SERVICIO = os.environ.get("COLECCION_DEL_SERVICIO", "peticiones")
 
 TEXTO = "Cierre de prueba del kill-test de la puerta. No es una petición real."
 
@@ -92,7 +95,16 @@ def _por_el_servicio():
                          capture_output=True, text=True)
     if tok.returncode != 0:
         return None, "no hay credencial de Google en esta máquina"
-    antes = _foto(CASO)
+
+    # El servicio escribe en SU colección, que no tiene por qué ser la de esta corrida: los
+    # kill-tests se pueden aislar con COLECCION_PETICIONES y el servicio no se entera. Se mira
+    # donde el servicio escribe, no donde miramos nosotros — si no, «intacto» sería trivial.
+    def foto_alla():
+        d = estado._c().collection(COLECCION_DEL_SERVICIO).document(CASO).get()
+        return json.dumps(d.to_dict() or {} if d.exists else {}, sort_keys=True,
+                          ensure_ascii=False, default=str)
+
+    antes = foto_alla()
     try:
         r = requests.post(f"{SERVICIO}/intentar-escribir-directo", timeout=90,
                           headers={"Authorization": f"Bearer {tok.stdout.strip()}"},
@@ -104,7 +116,7 @@ def _por_el_servicio():
     if not r.ok:
         return None, f"el servicio contestó http {r.status_code}: {r.text[:90]}"
     d = r.json()
-    intacto = antes == _foto(CASO)
+    intacto = antes == foto_alla()
     negado = not d.get("written")
     print(f"  {'✓' if (negado and intacto) else '✗'} "
           f"{'el AGENTE DESPLEGADO escribe Firestore directo':<44} "
