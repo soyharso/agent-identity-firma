@@ -32,7 +32,7 @@ count it in.
 **An agent that closes tasks and cannot sign as a human — not because it shouldn't, but because
 it can't.**
 
-The key that authorises human judgement lives in Cloud KMS and the agent's service account has
+The key that authorises human judgement lives in Google Cloud KMS and the agent's service account has
 no permission on it. When the service tries, it does not get a polite refusal from our code. It
 gets this, from Google:
 
