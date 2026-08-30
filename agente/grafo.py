@@ -32,6 +32,7 @@ from google.genai import types                                         # noqa: E
 
 from src import estado                                                  # noqa: E402
 from src.cerco_semantico import techo_semantico                        # noqa: E402
+from src.cofirmante import cofirmar, linea_de_registro                # noqa: E402
 from src.verificar_sobre import verificar as verificar_sobre           # noqa: E402
 from src.firma_kms import CLAVE_AGENTE, CLAVE_HUMANO, firmar, resumen  # noqa: E402
 
@@ -185,11 +186,35 @@ def _releer(ctx):
 
 
 def refrescar_y_firmar(ctx):
-    """La máquina firma con SU clave. Antes, relee."""
+    """La máquina firma con SU clave. Antes relee, y antes de eso le pide permiso a alguien a
+    quien no controla.
+
+    EL COFIRMANTE ENTRA AQUÍ, en el único punto donde la máquina va a firmar sola. Ni antes ni en
+    ningún otro sitio, por el mismo motivo que el cerco semántico: sobre una petición que se
+    devuelve abierta no se firma nada, y en la ruta humana ya hay una persona con su llave.
+
+    Es de OTRA familia (`gemma`, no `gemini`), por OTRO canal (OpenRouter, no Vertex) y con OTRA
+    credencial. Si no coincide, no hay cierre: el caso se va a la pausa humana. Si no responde en
+    4 segundos, tampoco — el fallo es cerrado, y el agente no puede convertir un silencio en un
+    permiso. **Por eso el agente no puede firmar: no controla al cofirmante.**
+    """
     if not _releer(ctx):
         ctx.state["motivo"] = "el texto cambió después del dictamen"
         ctx.route = "rehacer"
         return "TEXTO_CAMBIADO"
+
+    # `has_human_key=False` no es un supuesto: si hubiera llave humana, esta no sería la ruta de
+    # la máquina. Se manda explícito para que el cofirmante juzgue el acto completo.
+    permitido, detalle = cofirmar(ctx.state["peticion_id"], ctx.state.get("texto", ""),
+                                  has_human_key=False)
+    ctx.state["cofirma"] = detalle
+    # La línea que el jurado tiene que poder ver: el modelo, por su nombre, en CADA cierre.
+    print(f"  · cofirma {linea_de_registro(detalle)}")
+    if not permitido:
+        ctx.state["motivo"] = f"el cofirmante no coincidió ({detalle.get('reason')})"
+        ctx.route = "cofirma_denegada"
+        return f"SIN COFIRMA — {linea_de_registro(detalle)}"
+
     sobre = _sobre(ctx, "modelo", "cerrada")
     r = firmar(CLAVE_AGENTE, sobre)
     ctx.state["sobre"] = sobre
@@ -370,7 +395,11 @@ grafo = Workflow(
                      "abierta": n_devolver,
                      DEFAULT_ROUTE: n_imprevisto}),
         # ciclo: si el texto cambió entre el dictamen y la firma, se vuelve a dictaminar.
-        (n_firmar_maquina, {"rehacer": dictaminar, DEFAULT_ROUTE: n_verificar}),
+        # `cofirma_denegada` es la salida del fallo cerrado: el cofirmante no coincidió o no
+        # respondió, así que el caso NO se cierra — se va a esperar a una persona.
+        (n_firmar_maquina, {"rehacer": dictaminar,
+                            "cofirma_denegada": n_pausa,
+                            DEFAULT_ROUTE: n_verificar}),
         (n_imprevisto, n_pausa),
         (n_pausa, n_firmar_persona, n_verificar),
         (n_devolver, n_verificar),

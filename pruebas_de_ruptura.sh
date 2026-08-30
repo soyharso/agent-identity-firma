@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# CLEVERIA — THE TEN BREAK TESTS, IN ONE BLOCK
+# CLEVERIA — THE BREAK TESTS, IN ONE BLOCK
 # ==============================================================================
 # The video promises "break tests, green, in a block". Running them live costs
 # well over two minutes, which does not fit the shot. So this script does two
 # things and keeps them apart:
 #
-#   ./pruebas_de_ruptura.sh          run all ten, record the result
+#   ./pruebas_de_ruptura.sh          run them all, record the result
 #   ./pruebas_de_ruptura.sh --resumen  print the recorded result (the shot)
 #
 # The summary always prints WHEN the run happened and refuses to pretend it is
@@ -31,6 +31,7 @@ PRUEBAS=(
   "voice:agente/killtest_voz.py:a spoken judgement still requires a human signature"
   "semantic-fence:agente/killtest_cerco_semantico.py:9/9 caught, 2 false positives declared"
   "durability:agente/killtest_durabilidad.py:5 steps, 5 processes, survives an abrupt kill"
+  "co-signer:agente/killtest_cofirmante.py:a second model family must agree; its silence closes the door"
 )
 
 resumen() {
@@ -61,7 +62,7 @@ PY
 
 [[ "${1:-}" == "--resumen" ]] && { resumen; exit 0; }
 
-echo -e "${BOLD}Running the nine break tests. This takes about two minutes.${RESET}"
+echo -e "${BOLD}Running the break tests. This takes about two minutes.${RESET}"
 echo -e "${DIM}Do not record this — record the summary afterwards.${RESET}\n"
 
 INICIO=$(date +%s)
