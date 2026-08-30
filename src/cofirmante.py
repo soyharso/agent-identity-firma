@@ -99,6 +99,8 @@ INSTRUCCION = (
 )
 
 _cache_cred = None
+# Una sola conexión reutilizada: así el saludo cifrado se paga una vez y no en cada cofirma.
+_sesion = requests.Session()
 
 
 def _cabecera() -> dict:
@@ -122,9 +124,35 @@ def _cabecera() -> dict:
     return {"Authorization": f"Bearer {clave}"}
 
 
+def precalentar() -> None:
+    """Deja la credencial y la conexión listas ANTES de que arranque el reloj.
+
+    POR QUÉ EXISTE, y es un defecto medido de este archivo, no una optimización.
+
+    El plazo de 4 segundos es una promesa sobre EL COFIRMANTE: si no contesta a tiempo, el caso
+    espera a una persona. Pero la primera versión arrancaba el cronómetro antes de conseguir la
+    credencial, así que le cobraba al modelo el descubrimiento de credencial (0,27 s), el
+    handshake del token (0,60 s) y el saludo de la conexión cifrada. Dentro del flujo completo
+    eso llevó una cofirma legítima a 5,2 s contra un plazo de 4, y el caso NO se cerró — mientras
+    el mismo modelo, llamado solo, contestaba en 1,6 s.
+
+    Es el peor tipo de fallo que puede tener un control que falla cerrado: **el que se dispara
+    por una razón que no es la suya**. No abre ninguna puerta, así que no es un agujero de
+    seguridad; pero enseña a subir el plazo, y subir el plazo sí debilita la promesa. El arreglo
+    correcto es medir lo que se quiso medir.
+
+    Se llama sola desde `cofirmar`. También se puede llamar al arrancar el servicio, para que la
+    primera cofirma del proceso no pague ni siquiera esto.
+    """
+    try:
+        _cabecera()                  # deja `_cache_cred` viva; la siguiente llamada es gratis
+    except Exception:                                            # noqa: BLE001
+        pass          # si falla, falla otra vez dentro del reloj y ahí sí cuenta como no_response
+
+
 def _preguntar(sobre: dict) -> str:
     """Una llamada, sin herramientas, sin historial. Devuelve el texto crudo del modelo."""
-    r = requests.post(
+    r = _sesion.post(
         ENDPOINT, timeout=TIEMPO_LIMITE,
         headers={**_cabecera(), "Content-Type": "application/json"},
         json={"model": MODELO,
@@ -145,6 +173,9 @@ def cofirmar(case_id: str, action: str, has_human_key: bool) -> tuple[bool, dict
     de red, una credencial ausente— devuelve `False`. Ese es el fallo cerrado, y es deliberado.
     """
     sobre = {"case_id": case_id, "action": action, "has_human_key": bool(has_human_key)}
+    # FUERA DEL RELOJ a propósito: la credencial y la conexión no son la respuesta del cofirmante,
+    # y cobrárselas hacía que un cierre legítimo fallara por lentitud ajena. Ver `precalentar`.
+    precalentar()
     t0 = time.time()
     try:
         crudo = _preguntar(sobre)
