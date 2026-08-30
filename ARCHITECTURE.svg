@@ -72,7 +72,8 @@
     <rect x="25" y="65" width="180" height="20" rx="4" fill="#d97706"/>
     <text x="30" y="79" font-size="9" font-weight="bold" fill="#ffffff">INJECTION DEFENSE / GATEWAY</text>
     <text x="25" y="105" font-size="13" font-weight="bold" fill="#fbbf24">Deterministic Authority Ceiling</text>
-    <text x="25" y="125" font-size="11" fill="#cbd5e1">+ Semantic Fence (<tspan fill="#38bdf8" font-weight="bold">gemini-embedding-001</tspan>)</text>
+    <text x="25" y="122" font-size="11" fill="#cbd5e1">+ Dual Semantic Fence — either one can demand a human:</text>
+    <text x="25" y="137" font-size="10" font-weight="bold" fill="#38bdf8">gemini-embedding-001 &#183; text-multilingual-embedding-002</text>
     <text x="25" y="152" font-size="10" font-weight="bold" fill="#f87171">Rule: Can ONLY demand caution (exige_humano), never widen authority.</text>
 
     <!-- Gemini Adjudication -->
@@ -133,12 +134,16 @@
     <text x="205" y="208" font-size="11" font-weight="bold" fill="#ef4444">HTTP 403 DENIED</text>
 
     <!-- Durable State (Firestore) -->
-    <rect x="15" y="255" width="370" height="110" rx="8" fill="#0b1120" stroke="#7c3aed" stroke-width="1.5"/>
+    <rect x="15" y="255" width="370" height="120" rx="8" fill="#0b1120" stroke="#7c3aed" stroke-width="1.5"/>
     <rect x="25" y="265" width="155" height="20" rx="4" fill="#7c3aed"/>
     <text x="30" y="279" font-size="9" font-weight="bold" fill="#ffffff">FLEET: DURABLE STATE</text>
     <text x="25" y="305" font-size="13" font-weight="bold" fill="#c084fc">Cloud Firestore State Store</text>
     <text x="25" y="325" font-size="11" fill="#cbd5e1">• Persists workflow facts: requests, verdicts, signatures</text>
-    <text x="25" y="348" font-size="10" font-weight="bold" fill="#a855f7">Durable recovery across process restarts (Kill-and-Resume)</text>
+    <text x="25" y="345" font-size="10" font-weight="bold" fill="#a855f7">Durable recovery across process restarts (Kill-and-Resume)</text>
+    <!-- Write gate. Anadido el 2026-08-30: hasta hoy el diagrama daba a entender que el agente
+         escribia aqui, y desde la puerta ya NO puede. sa-agente-curador se quedo en
+         datastore.viewer y sa-mediador es el unico con datastore.user. -->
+    <text x="25" y="365" font-size="10" font-weight="bold" fill="#4ade80">WRITE GATE: only <tspan fill="#ffffff">sa-mediador</tspan> writes. The agent reads (datastore.viewer).</text>
 
     <!-- Offline Verifier -->
     <rect x="15" y="380" width="370" height="120" rx="8" fill="#0b1120" stroke="#38bdf8" stroke-width="1.5"/>
