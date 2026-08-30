@@ -4,13 +4,14 @@
 can't. The key that authorises human judgement is out of its reach, and when it tries, the cloud
 says no.
 
-**Four Google models take part. Exactly one of them decides.** Counting models is not counting
+**Five Google models take part. Exactly one of them decides.** Counting models is not counting
 who decides, and here that distinction is the architecture:
 
 | Model | What it does | Can it widen the machine's authority? |
 |---|---|---|
 | Gemini 3.6 Flash | **adjudicates** — the one judgement call in the flow | no: a function takes the *minimum* of its verdict and the ceiling |
 | `gemini-embedding-001` | semantic fence: catches judgement written to dodge the keyword list | **no — it can only ask for *more* caution** |
+| `google/gemma-3-27b-it` | **co-signs**: where the machine would sign alone, another family on another channel has to agree first | **no — it can only withhold a closure.** No answer in 4 s counts as `DENY`, so its silence shuts the door instead of opening it |
 | Speech-to-Text | transducer: turns a voice note into words | no. It is not on the decision path; it is before it |
 | Text-to-Speech | transducer: turns the answer into speech | no |
 
@@ -47,6 +48,13 @@ python3 tests/test_verifier_tampered.py
 grep -n "gemini-embedding-001" src/cerco_semantico.py
 grep -A2 "Vertex AI Request" logs/cerco_embedding.log
 python3 -c "import src.cerco_semantico as c; print(f'Model: {c.MODELO}, Endpoint: Vertex AI {c.REGION}')"
+
+# 3b. The CO-SIGNER (Gemma, a Google-published open-weights model). Both calls are live:
+#     a judgement is refused, an evidence-backed closure is co-signed.
+python3 src/cofirmante.py "the customer complaint is dismissed and no refund is due"
+python3 src/cofirmante.py "close the case: commit 4f3a2b1, fix deployed, test suite green"
+python3 agente/killtest_cofirmante.py     # and it cannot be bypassed, nor does its silence open
+tail -3 libro/cofirmas.jsonl              # one line per closure, naming the model
 
 # 4. Run the ADK graph across all test cases (machine signs evidence, pauses on human judgement)
 python3 agente/grafo.py
