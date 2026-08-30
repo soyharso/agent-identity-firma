@@ -21,6 +21,12 @@ set -euo pipefail
 #     printf '%s' '<clave de aplicación>' | gcloud secrets versions add smtp-clave-cleveria-web \
 #       --project=cleveria-495203 --data-file=-
 
+# El guion SE SITÚA SOLO, y no es una cortesía. `--source .` toma el directorio actual, así que
+# lanzarlo desde la raíz del repositorio construía el Dockerfile de la raíz —el del candado— y
+# dejaba `cleveria-web` sirviendo el servicio equivocado. Pasó, y es el mismo error que ya había
+# costado un despliegue por la mañana: un guion que depende de dónde lo llamen no es un guion.
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
 PROYECTO="cleveria-495203"
 REGION="us-central1"
 SERVICIO="cleveria-web"

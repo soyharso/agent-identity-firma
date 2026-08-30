@@ -63,9 +63,14 @@ def _avisar(datos: dict, ident: str) -> bool:
     ruta_secreto = os.environ.get("SMTP_CLAVE_ARCHIVO", "/secretos/smtp-clave")
     clave = None
     try:
-        clave = Path(ruta_secreto).read_text().strip() or None
+        clave = Path(ruta_secreto).read_text()
     except OSError:
         clave = os.environ.get("SMTP_CLAVE")
+    # Se quitan TODOS los espacios, no solo los de los extremos: Google enseña las claves de
+    # aplicación en cuatro grupos de cuatro —`abcd efgh ijkl mnop`— y quien la copia se los trae.
+    # El servidor las rechaza con espacios, y el error que devuelve es «credenciales rechazadas»,
+    # que manda a buscar el problema en la cuenta y no en el copiado.
+    clave = "".join(clave.split()) if clave else None
     if not (usuario and clave):
         return False
     try:
@@ -152,12 +157,18 @@ def salud():
     usuario = os.environ.get("SMTP_USUARIO") or ""
     dominio = usuario.rsplit("@", 1)[-1].lower() if "@" in usuario else None
     ruta = os.environ.get("SMTP_CLAVE_ARCHIVO", "/secretos/smtp-clave")
-    hay_secreto = Path(ruta).exists() and bool(Path(ruta).read_text().strip())
+    cruda = Path(ruta).read_text() if Path(ruta).exists() else (os.environ.get("SMTP_CLAVE") or "")
+    limpia = "".join(cruda.split())
+    hay_secreto = Path(ruta).exists() and bool(limpia)
     return jsonify({
         "ok": True,
-        "correo_configurado": bool(usuario) and (hay_secreto or bool(os.environ.get("SMTP_CLAVE"))),
+        "correo_configurado": bool(usuario) and bool(limpia),
         "clave_desde": "secret-manager" if hay_secreto else (
             "variable-de-entorno" if os.environ.get("SMTP_CLAVE") else None),
+        # El LARGO, nunca el valor. Una clave de aplicación de Google tiene 16 caracteres: si
+        # aquí sale otro número, se copió a medias, y eso ahorra buscar el fallo en la cuenta.
+        "clave_caracteres": len(limpia) or None,
+        "clave_largo_esperado": 16,
         "buzon_dominio": dominio,
         "servidor_deducido": os.environ.get("SMTP_HOST") or (
             {"yahoo.com": "smtp.mail.yahoo.com", "yahoo.com.mx": "smtp.mail.yahoo.com",
