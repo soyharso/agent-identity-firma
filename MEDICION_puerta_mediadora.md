@@ -221,6 +221,15 @@ con el temporizador activo: 13/13. O sea que el banco pasa igual — pero si un 
 
 ## Palancas del método, con su rastro
 
+Salida literal de la herramienta sobre este documento, para que la cifra no dependa de cómo la
+cuente esta prosa:
+
+```
+$ python3 tools/comunicacion/lint_claridad.py MEDICION_puerta_mediadora.md
+INFLESZ=76.0 (umbral 55.0) · 13.7 pal/frase · largas>40: 0 · siglas sin glosa: 0
+PASA
+```
+
 - **Lint de claridad** sobre este mismo documento
   (`tools/comunicacion/lint_claridad.py`): **PASA**. INFLESZ (el índice que mide lo fácil de leer
   que es un texto en español; más alto, más fácil) da 76,0 sobre un umbral de 55,0, con 13,7 palabras por frase. Ninguna frase pasa de 40
