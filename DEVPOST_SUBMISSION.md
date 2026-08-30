@@ -66,8 +66,8 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 ### 1 · Additional Google AI models — we claim **three**, the maximum (0.6)
 
 Beyond Gemini, which is the model that adjudicates, **three further Google models are integrated
-and running in production** — not imported, not configured, *running*, each with the file that
-calls it and how you can see it work:
+and running** — not imported, not configured, *running*, each with the file that
+calls it and how you can see it work. **Running in preproduction, on real cloud infrastructure and real keys, deliberately not yet in front of customers** — the same distinction we make everywhere else in this submission:
 
 | # | Additional model | What it does | Where it lives | How you can verify it |
 |---|---|---|---|---|
