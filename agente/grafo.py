@@ -262,12 +262,10 @@ def pausa_humana(ctx):
 
     respuesta = (ctx.resume_inputs or {}).get("firma_humana")
     if respuesta is None:
-        estado.guardar(ctx.state["peticion_id"], espera_humana=True,
-                       texto=ctx.state["texto"],
-                       hash_al_dictaminar=ctx.state["hash_al_dictaminar"])
-        # El trabajo queda SUSPENDIDO, no hecho: se suelta la reserva o el propio candado
-        # impediría que un despertar posterior lo retomara.
-        estado.soltar_reserva(ctx.state["peticion_id"])
+        # El trabajo queda SUSPENDIDO, no hecho: apartar suelta la reserva en la misma escritura,
+        # porque dejarla puesta impediría que un despertar posterior lo retomara.
+        estado.apartar_para_persona(ctx.state["peticion_id"], ctx.state["texto"],
+                                    ctx.state["hash_al_dictaminar"])
         return RequestInput(
             interrupt_id="firma_humana",
             message=(f"La petición {ctx.state['peticion_id']} exige criterio humano. "
@@ -339,25 +337,52 @@ def verificar(ctx):
 
 
 def registrar(ctx):
-    """Anota la operación en el libro, ENCADENADA a la anterior.
+    """El libro se escribe siempre y ENCADENADO; el REGISTRO, solo por la puerta.
 
-    ESTE ERA EL SEGUNDO ESCRITOR, y encontrarlo cambió el frente. `src/libro_demo.py` no es el
-    único que escribe `libro/firmas_grafo.jsonl`: esta función lo hacía directo con
-    `FIRMAS.open("a")`, y por eso un `grep -rn 'anotar_firma\\|F_FIRMAS'` no la veía. Migrar
-    solo uno de los dos es peor que no migrar ninguno: el que encadena y el que solo anexa
-    conviven, y la cadena se corta sin que nadie haya hecho nada malo. Se comprobó ejecutando:
-    la prueba de durabilidad del banco anexa una fila real al libro por esta vía en cada
-    corrida de `./pruebas_de_ruptura.sh`.
+    Dos frentes se cruzaron en esta función el 2026-08-30, y la regla de fusión la acordaron
+    los dos por escrito:
+
+      · `hack-libro-encadenado` encontró que ESTE era el segundo escritor del libro en disco.
+        `src/libro_demo.py` no era el único: aquí se escribía directo con `FIRMAS.open("a")`, y
+        por eso un `grep -rn 'anotar_firma|F_FIRMAS'` no lo veía. Migrar solo uno es peor que no
+        migrar ninguno: el que encadena y el que solo anexa conviven, y la cadena se corta sin
+        que nadie haya hecho nada malo. Por eso ahora va `libro_cadena.anexar`, que hace el
+        `mkdir` por su cuenta y pone `n`, `prev` y `hash` bajo su propio candado.
+      · `hack-puerta-mediador` quitó de aquí la escritura del registro. Antes este nodo lo
+        escribía él mismo, firma incluida, con la credencial del agente: se presentaba el sobre
+        y se guardaba en el mismo gesto, sin que nadie comprobara nada en el camino de
+        escritura. El sobre era un recibo. Ahora hay dos caminos y ninguno se los salta:
+
+          · hay sobre y firma  →  `aplicar_cierre`, que VERIFICA contra esta petición y, si no
+                                  cuadra, deja el registro exactamente como estaba;
+          · no hay firma       →  `anotar_resultado`, que anota el desenlace y tiene prohibido
+                                  escribir `sobre`, `firma` o `hash_contenido`.
+
+    EL ORDEN IMPORTA y es parte de la regla: el libro se escribe ANTES de la bifurcación. Así
+    queda rastro también de las pasadas que no firmaron nada y de las que la puerta rechazó,
+    que es justo lo que hay que poder auditar.
     """
+    sobre = ctx.state.get("sobre")
+    firma = (ctx.state.get("resultado_firma") or {}).get("firma")
+
     fila = {"ts": int(time.time()), "peticion_id": ctx.state["peticion_id"],
             "dictamen": ctx.state.get("dictamen"), "veredicto": ctx.state["veredicto"],
-            "sobre": ctx.state.get("sobre"),
-            "firma": (ctx.state.get("resultado_firma") or {}).get("firma")}
+            "sobre": sobre, "firma": firma}
     libro_cadena.anexar(FIRMAS, fila)
-    estado.guardar(ctx.state["peticion_id"], veredicto=ctx.state["veredicto"],
-                   dictamen=ctx.state.get("dictamen"), espera_humana=False,
-                   hash_contenido=(ctx.state.get("sobre") or {}).get("hash_contenido"),
-                   firma=(ctx.state.get("resultado_firma") or {}).get("firma"))
+
+    if sobre and firma and ctx.state["veredicto"] == "OK":
+        aplicado, detalle = estado.aplicar_cierre(ctx.state["peticion_id"], sobre, firma,
+                                                  dictamen=ctx.state.get("dictamen"))
+        ctx.state["puerta"] = detalle
+        if not aplicado:
+            # La puerta dijo que no. Eso NO se maquilla: el veredicto que queda es el suyo.
+            ctx.state["veredicto"] = f"PUERTA_{detalle.get('rechazo', 'RECHAZO')}"
+            estado.anotar_resultado(ctx.state["peticion_id"], ctx.state["veredicto"],
+                                    ctx.state.get("dictamen"))
+    else:
+        estado.anotar_resultado(ctx.state["peticion_id"], ctx.state["veredicto"],
+                                ctx.state.get("dictamen"))
+
     return f"{ctx.state['peticion_id']} → {ctx.state['veredicto']}"
 
 

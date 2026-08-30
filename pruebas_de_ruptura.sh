@@ -35,6 +35,7 @@ PRUEBAS=(
   "ledger-chain:agente/killtest_libro_encadenado.py:deleting a row from the ledger is no longer undetectable"
   "ledger-order:agente/killtest_libro_reordenado.py:reordering two rows, touching no signature, is caught too"
   "double-fence:agente/killtest_cerco_doble.py:two embedding models, either one can demand a human; false positives still 2"
+  "write-gate:agente/killtest_puerta.py:7 forged closures rejected; the record does not change"
 )
 
 resumen() {

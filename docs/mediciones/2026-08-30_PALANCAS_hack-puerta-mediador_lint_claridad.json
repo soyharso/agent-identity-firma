@@ -1,0 +1,61 @@
+{
+  "_que_es": "Registro crudo del lint de claridad sobre 2026-08-30_CIERRE_hack-puerta-mediador.md, el entregable de este frente, y sobre el texto de cierre al operador. Lo produce tools/comunicacion/lint_claridad.py del repositorio cleveria-dominios. Se guarda aqui porque la palanca solo cuenta si deja rastro material: la cifra en la prosa dejo de contar el 2026-08-25. C1: no habia ningun archivo previo con esta salida — se busco por nombre (*medic*, *clari*, *lint*, *lector*) y por contenido (INFLESZ, 'lector ingenuo', 'lint de claridad') y solo aparecio el propio informe, que la cita en prosa.",
+  "frente": "hack-puerta-mediador",
+  "fecha": "2026-08-30",
+  "comando": "python3 tools/comunicacion/lint_claridad.py --json <archivo>",
+  "corridas": [
+    {
+      "archivo_medido": "docs/mediciones/2026-08-30_CIERRE_hack-puerta-mediador.md",
+      "cuando": "2026-08-30T22:20Z",
+      "nota": "medicion final, despues de fusionar origin/main y de reescribir el informe con las cifras de 16/16",
+      "resultado": {
+        "inflesz": 76.9,
+        "palabras_por_frase_promedio": 13.7,
+        "frases_de_mas_de_40_palabras": 0,
+        "siglas_sin_glosa": [],
+        "pasa": true,
+        "fallas": []
+      }
+    },
+    {
+      "archivo_medido": "el texto de cierre al operador (escrito a un archivo temporal para poder medirlo)",
+      "cuando": "2026-08-30T22:05Z",
+      "resultado": {
+        "inflesz": 75.6,
+        "palabras_por_frase_promedio": 12.5,
+        "frases_de_mas_de_40_palabras": 0,
+        "siglas_sin_glosa": [],
+        "pasa": true,
+        "fallas": []
+      }
+    },
+    {
+      "archivo_medido": "el texto de cierre REALMENTE impreso al operador (escrito a un archivo temporal para poder medirlo)",
+      "cuando": "2026-08-30T22:30Z",
+      "nota": "lo pidio el gancho anti-ocioso: la medicion anterior era de un borrador, y el texto impreso cambio despues (16/16 y la seccion de la fusion). Se remidio el texto final. Paso sin correcciones.",
+      "resultado": {
+        "inflesz": 72.8,
+        "palabras_por_frase_promedio": 12.2,
+        "frases_de_mas_de_40_palabras": 0,
+        "siglas_sin_glosa": [],
+        "pasa": true,
+        "fallas": []
+      }
+    }
+  ],
+  "umbral_inflesz": 55.0,
+  "que_cambio_por_el_lint": [
+    "HTTP no estaba glosada en su primera aparicion: se anadio 'HTTP (el codigo con que la nube contesta a cada llamada)'.",
+    "RFC 8785 no estaba glosada en la forma que el detector reconoce: se reescribio como 'la norma que fija como se convierte un dato en bytes para poder firmarlo (RFC 8785)'.",
+    "IAM no estaba glosada: se anadio 'el sistema de permisos de Google Cloud'.",
+    "INFLESZ misma quedo sin glosa al escribir la seccion de palancas: se anadio 'el indice que mide lo facil de leer que es un texto en espanol'.",
+    "En el texto de cierre, README y DEVPOST salian como siglas sin glosa: se reescribieron como 'los tres textos de la entrega (README.md, ENTREGA.md y DEVPOST_SUBMISSION.md)'.",
+    "Cuatro frases pasaban de 40 palabras en algun momento (la definicion de 'sobre', la regla de conflicto con hack-libro-encadenado, el aviso de la toma 2 y el parrafo de la fusion): se partieron todas."
+  ],
+  "waiver_intentado_y_rechazado": {
+    "motivo_pedido": "sigla-canonica",
+    "nota_pedida": "HTTP y RFC son siglas canonicas del dominio tecnico",
+    "respuesta_de_la_herramienta": "WAIVER RECHAZADO: la puerta de claridad esta ACTIVA desde 2026-08-17 y se revisa el 2026-09-17. Motivo: tasa de exenciones 30% sobre umbral 20% en las ultimas 20 entregas con rol=recap. Mientras este activa, el hallazgo se corrige — no se declara.",
+    "lectura": "el hallazgo se corrigio. Queda anotado que se intento declararlo primero, porque ocultar el intento seria justo lo que la clausula existe para impedir."
+  }
+}
