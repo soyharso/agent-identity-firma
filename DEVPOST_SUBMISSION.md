@@ -98,8 +98,8 @@ We would rather you find our limits in our own comments than in your reading of 
 
 - **Repository**: [Private GitHub, access granted to `testing@devpost.com` and `cloudhackathons@google.com`]
 - **Live Demo Video (≤4:00)**: [YouTube / Vimeo link with Cloud Run proof]
-- **Customer portal (Act I)**: `https://cleveria-demo-141981963817.us-central1.run.app/ui/portal`
-- **Authority ledger (Acts II & III)**: `https://cleveria-demo-141981963817.us-central1.run.app/ui/unified`
+- **Customer portal (Act I)**: `https://demo.cleveria.co/ui/portal`
+- **Authority ledger (Acts II & III)**: `https://demo.cleveria.co/ui/unified`
 - **Agent service**: `https://candado-firma-141981963817.us-central1.run.app` — returns **HTTP 403
   to anonymous callers, by design**: it only accepts callers Cloud Run can authenticate. That
   refusal is the product, not an outage.
