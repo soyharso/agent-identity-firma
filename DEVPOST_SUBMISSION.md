@@ -69,8 +69,13 @@ calls it and how you can see it work:
 | # | Additional model | What it does | Where it lives | How you can verify it |
 |---|---|---|---|---|
 | 1 | **`gemini-embedding-001`** (Vertex AI) | Multilingual semantic fence: catches a judgement phrased so it dodges the keyword ceiling | `src/cerco_semantico.py` | break test `semantic-fence` — 9/9 caught, 2 false positives **declared** |
-| 2 | **Cloud Speech-to-Text** | Turns a customer's voice note into text | `src/voz.py` → `escuchar()` | speak into `/ui/portal`; the reply **names the engine that transcribed** — see the note below |
-| 3 | **Cloud Text-to-Speech** | Speaks the answer back to customers who cannot read | `src/voz.py` → `hablar()` | break test `voice` — it *synthesises* the spoken judgement it then tries to sneak past the lock |
+| 2 | **`latest_short`** — Cloud Speech-to-Text | Turns a customer's voice note into text | `src/voz.py` → `escuchar()`, model declared in the request | speak into `/ui/portal`; the reply **names the engine that transcribed** — see the note below |
+| 3 | **`es-US-Neural2-A`** — Cloud Text-to-Speech | Speaks the answer back to customers who cannot read | `src/voz.py` → `hablar()` | break test `voice` — it *synthesises* the spoken judgement it then tries to sneak past the lock |
+
+**We name the model, not just the API, on purpose.** `latest_short` is declared in the request
+because it is tuned for short utterances — which is what a support voice note is — and because a
+submission that cannot say *which* model it used has not really integrated one. `Neural2` is the
+voice family behind the spoken reply. Both are named in the code you can read.
 
 > **If you try #2 and the reply says `gemini`, nothing is broken — and please read this.**
 > Speech-to-Text is the primary transcriber and it works: a run at 11:39 on 2026-08-30 returned
