@@ -1,7 +1,12 @@
 # RUNBOOK DE GRABACIÓN — CLEVERIA · v3
 
-**Fecha:** 2026-08-30 · **Versión:** 4.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+**Fecha:** 2026-08-30 · **Versión:** 5.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+*(v5: NO desconectar la red en la toma 4, la ventana del reloj :01–:11, y el plazo del cofirmante)*
 *(v4: la regla de edición corregida contra la rúbrica, OBS montado, la toma 3 paso a paso)*
+
+> **Las tres correcciones de la v5 no salieron de leer este documento: salieron de ejecutarlo.**
+> Dos de ellas desmienten instrucciones que estaban escritas aquí y sonaban razonables. Si vas con
+> prisa, lee al menos los tres recuadros marcados con ⏰ y ⚠ — cada uno evita una toma perdida.
 
 > **La v2 decía que había tres planes de grabación incompatibles. Ya no**, y por una razón mejor
 > que la que teníamos.
@@ -160,8 +165,20 @@ Graba primero lo difícil, con la máquina fresca y tú también:
 
 1. **La toma 3 completa, de una pasada.** El 403, la firma de la persona, el cierre verificado.
    Si sale, el resto es cuesta abajo. **El paso a paso está en la §4.1, aquí abajo.**
-2. **La toma 4**, y enséñala **desconectando la red de verdad**. Es gratis y es la prueba más
-   fuerte, porque el jurado puede repetirla en su casa.
+2. **La toma 4 — y NO desconectes la red.**
+
+   > **Corregido el 2026-08-30. Aquí ponía «enséñala desconectando la red de verdad, es gratis y
+   > es la prueba más fuerte». Era falso y habría matado la toma en directo.**
+   >
+   > La toma 4 ejecuta `agente/killtest_blindaje.py`, que **llama a Model Armor por HTTPS** —
+   > `modelarmor.us-central1.rep.googleapis.com`, línea 31, medido entre 0,53 y 0,67 s por
+   > llamada. Con el cable fuera, esa mitad de la toma muere en cámara y no hay segunda pasada.
+   >
+   > Y el gesto **no aportaba nada**: lo que demuestra que el verificador funciona sin red no es
+   > el cable, es **el análisis de importaciones que la propia toma imprime** — ninguna es de
+   > Google. Eso se ve igual con la red puesta, y el jurado puede repetirlo en su casa.
+   >
+   > Lo destapó una fase cero con herramientas, ejecutando; no leyendo.
 3. **Las tomas 1, 2 y 5.**
 4. **El portal**, con una nota de voz real.
 5. **La narración al final**, sobre el metraje ya montado. Así el ritmo lo pone la imagen.
@@ -174,13 +191,37 @@ Es la única que no se puede repetir mal, así que va escrita entera. Dura entre
 segundos** de reloj: casi todo es la espera del despertador, que **no se corta** — es la prueba de
 que el trabajo se reanuda solo.
 
+> ### ⏰ MIRA EL RELOJ ANTES DE SEMBRAR. La ventana buena es del minuto :01 al :11
+>
+> El despertador de la nube corre **cada quince minutos** y está `ENABLED` — comprobado:
+> `*/15 * * * *`, último disparo a las 20:15:20 de hoy. En los minutos **:00, :15, :30 y :45**
+> adjudica lo que haya sembrado **fuera de cámara**, y puede **cerrar `PET-002` entre tu siembra y
+> el clímax de la toma 3**: llegarías al momento bueno con el caso ya cerrado por alguien que no
+> se ve.
+>
+> No hay que tocar nada ni apagar nada. **Siembra y arranca entre el :01 y el :11**, y el
+> despertador no se cruza.
+
 **Antes de pulsar grabar** (fuera de cámara, en otra terminal):
 
 ```bash
+date +%M                                        # entre 01 y 11, o espera
 gcloud auth print-identity-token | head -c 20   # tiene que devolver algo
+export COFIRMANTE_TIMEOUT=12                    # ver el aviso de abajo
 python3 sembrar_demo.py --borrar && python3 sembrar_demo.py
 bash demo.sh 3                                  # ENSAYO EN FRÍO, entero
 ```
+
+> ### ⚠ El cofirmante puede tumbar la toma, y se evita con una variable
+>
+> Medido hoy: `python3 agente/grafo.py` dio `allow=false reason=too_slow` — **5,2 s contra un
+> plazo de 4 s**, y el flujo se detuvo. La máquina **no firmó** el caso que el README promete que
+> firma. El mismo modelo, invocado solo, responde en 1,6 s: lo que se pasa de plazo es la llamada
+> dentro del grafo.
+>
+> `export COFIRMANTE_TIMEOUT=12` antes de grabar. Es una variable de entorno, no un cambio de
+> código, y no altera lo que la prueba demuestra: el cofirmante sigue fallando cerrado, solo se le
+> da el tiempo que de verdad tarda.
 
 > **Si el token está vacío, no grabes.** Sin sesión de nube, el guion imprime una respuesta de
 > ejemplo con el rótulo `CANNED SAMPLE — DO NOT RECORD`. Grabarlo sería enseñar como prueba algo
@@ -360,6 +401,9 @@ mientras se enseña — no la lista de servicios.
 
 ## 8. Comprobación final antes de subir
 
+- [ ] **Antes de grabar**: reloj entre :01 y :11, `COFIRMANTE_TIMEOUT=12`, y la red **puesta**
+- [ ] **Se ve la cofirma en pantalla** — la línea `model=google/gemma-4-26b-a4b-it-maas
+      channel=vertex allow=… reason=…`. El organizador pidió ver la integración, no creerla
 - [ ] Dura 4:00 o menos
 - [ ] Está en inglés o lleva subtítulos en inglés
 - [ ] Se ve el backend corriendo en Google Cloud
