@@ -162,8 +162,16 @@ def main():
     if fallos:
         print(f"  {ROJO}VEREDICTO: FALLA — {fallos} comprobación(es) en rojo{FIN}\n")
         sys.exit(1)
-    print(f"  {VERDE}VEREDICTO: PASA{FIN} — borrar una fila del libro ya no es "
-          f"indetectable, y el verificador lo dice con su número de línea.\n")
+    # El veredicto dice EXACTAMENTE lo que la prueba demuestra. Decía «borrar una fila del libro
+    # ya no es indetectable», sin más, y eso solo vale para las filas de dentro de la cadena:
+    # cortar el final deja una cadena más corta pero válida, y ninguna cadena hacia atrás puede
+    # ver eso. La línea de abajo es lo que un jurado lee al correr la prueba, así que es
+    # justamente donde no puede sobrar una palabra.
+    print(f"  {VERDE}VEREDICTO: PASA{FIN} — alterar o borrar una fila DENTRO de la cadena ya no "
+          f"es indetectable, y el verificador lo dice con su número de línea.\n"
+          f"  {VERDE}LÍMITE DECLARADO{FIN} — cortar el FINAL del libro no lo detecta esta cadena, "
+          f"y ninguna cadena hacia atrás puede: haría falta un contador firmado o un ancla "
+          f"externa. No la tenemos, y por eso se dice aquí.\n")
 
 
 if __name__ == "__main__":
