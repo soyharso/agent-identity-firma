@@ -112,8 +112,13 @@ def decidir():
                        hash_contenido=sobre.get("hash_contenido"))
 
     estado.anotar_decision_humana(pid, decision)
+    # `by` sale en pantalla durante la demostración, y el vídeo es público. Lo que importa aquí
+    # no es QUIÉN es la persona, sino que fue UNA PERSONA y que el servicio pudo comprobarlo.
+    # Se devuelve el dominio: dice lo mismo sin poner un correo personal en cámara. La identidad
+    # completa sigue dentro del sobre firmado, que es donde tiene que estar para auditar.
+    dominio = str(quien).split("@")[-1] if "@" in str(quien) else quien
     return jsonify({"recorded": True, "request_id": pid, "decision": decision,
-                    "by": quien, "signature_verified": decision != "no"})
+                    "by": f"a person at {dominio}", "signature_verified": decision != "no"})
 
 
 @app.post("/intentar-suplantar")
