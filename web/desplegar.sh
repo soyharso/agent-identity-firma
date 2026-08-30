@@ -43,12 +43,21 @@ if ! gcloud secrets versions list "$SECRETO" --project="$PROYECTO" --limit=1 --f
 fi
 
 echo "▸ Desplegando $SERVICIO…"
+# La CUENTA con la que corre el servicio, y por qué no es la de por defecto. La cuenta de
+# cómputo por defecto de un proyecto trae `roles/editor`: puede crear y BORRAR secretos, tocar
+# Firestore entero, desplegar servicios. Este proceso solo necesita dos cosas — escribir en una
+# colección y leer una clave —, y encima está abierto a internet. Un servicio público con
+# `editor` en un proyecto que además guarda las llaves de `git-crypt` es una puerta que no hace
+# falta dejar abierta. Esta cuenta tiene `datastore.user` y acceso a UN secreto. Nada más.
+CUENTA="sa-cleveria-web@${PROYECTO}.iam.gserviceaccount.com"
+
 gcloud run deploy "$SERVICIO" \
   --source . \
   --region "$REGION" \
   --project "$PROYECTO" \
   --allow-unauthenticated \
   --quiet \
+  --service-account="$CUENTA" \
   --set-env-vars="SMTP_USUARIO=${BUZON},CORREO_DESTINO=${DESTINO}" \
   --set-secrets="/secretos/smtp-clave=${SECRETO}:latest"
 

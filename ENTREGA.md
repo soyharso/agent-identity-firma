@@ -92,10 +92,12 @@ viajan en el repositorio. Y se enseña el dato incómodo:
   funciones: más barato, más rápido y comprobable.
 - **Una sola compuerta de política**: el alcance por clave, en un archivo y no en el código.
 - **El verificador no depende de nada**: ni red, ni credenciales, ni cuenta.
-- **Doce pruebas de ruptura que se ejecutan**, más un verificador que corre sin red ni
-  credenciales. Una de ellas mide al proveedor en su contra, otra guarda los nueve textos con que
-  un atacante externo rompió el cerco semántico antes de que se entregara, y la duodécima llama al
-  cofirmante de verdad: si el modelo no responde, sale roja.
+- **Dieciséis pruebas de ruptura que se ejecutan** — 16/16 en verde, 204 s, corrida del
+  2026-08-30 a las 17:28 —, más un verificador que corre sin red ni credenciales. Una de ellas
+  mide al proveedor en su contra, otra guarda los nueve textos con que un atacante externo rompió
+  el cerco semántico antes de que se entregara, y **tres llaman a la nube de verdad**
+  (`co-signer`, `double-fence`, `write-gate`): si el modelo o el almacén no responden, salen
+  rojas. No hay ninguna que finja.
 - **Lo ausente se declara ausente, y son dos**: la pasarela y la memoria de largo plazo. Ninguna
   se finge.
 
