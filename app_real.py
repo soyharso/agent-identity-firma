@@ -128,7 +128,7 @@ def api_transcribir():
     transcripción falla, se dice que falló.
     """
     try:
-        from src.voz import escuchar
+        from src.voz import escuchar, escuchar_con_gemini
     except Exception as e:                                       # noqa: BLE001
         return jsonify({"error": "transcripcion_no_disponible", "detalle": str(e)}), 503
 
@@ -151,15 +151,30 @@ def api_transcribir():
         codificacion = "WEBM_OPUS"         # el caso normal del navegador
     idioma = request.form.get("idioma", "es-CO")
 
-    try:
-        texto = escuchar(audio.read(), idioma=idioma, codificacion=codificacion)
-    except Exception as e:                                       # noqa: BLE001
-        return jsonify({"error": "transcripcion_fallida", "detalle": str(e)[:200]}), 502
+    datos = audio.read()
+    motor, texto, fallos = "speech-to-text", "", []
+
+    # Dos motores, y el segundo no es adorno: Speech-to-Text se quedó sin cuota en mitad de
+    # las pruebas de hoy, y eso mismo pasando durante una grabación no tiene segunda toma.
+    for nombre, fn in (("speech-to-text", lambda: escuchar(datos, idioma=idioma,
+                                                           codificacion=codificacion)),
+                       ("gemini", lambda: escuchar_con_gemini(datos, codificacion=codificacion))):
+        try:
+            texto = fn()
+            if texto:
+                motor = nombre
+                break
+        except Exception as e:                                   # noqa: BLE001
+            fallos.append(f"{nombre}: {str(e)[:120]}")
 
     if not texto:
         return jsonify({"error": "no_se_entendio",
-                        "mensaje": "No se entendió el audio. Vuelve a intentarlo."}), 422
-    return jsonify({"texto": texto, "idioma": idioma, "codificacion": codificacion}), 200
+                        "mensaje": "No se entendió el audio. Vuelve a intentarlo.",
+                        "intentos": fallos}), 422 if not fallos else 502
+    return jsonify({"texto": texto, "idioma": idioma,
+                    "codificacion": codificacion, "motor": motor,
+                    "respaldo_usado": motor != "speech-to-text",
+                    "intentos_fallidos": fallos}), 200
 
 
 @app.route("/api/inbound", methods=["POST"])

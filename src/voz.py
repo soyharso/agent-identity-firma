@@ -72,6 +72,46 @@ def escuchar(audio_wav: bytes, idioma: str = None, codificacion: str = "LINEAR16
     return res[0]["alternatives"][0]["transcript"].strip() if res else ""
 
 
+# Formatos que el navegador y WhatsApp producen, y su nombre para cada motor.
+_MIME = {"WEBM_OPUS": "audio/webm", "OGG_OPUS": "audio/ogg",
+         "LINEAR16": "audio/wav", "MP3": "audio/mp4"}
+
+
+def escuchar_con_gemini(audio: bytes, codificacion: str = "WEBM_OPUS") -> str:
+    """Segundo motor de transcripción, por Vertex AI.
+
+    POR QUÉ HAY DOS. Speech-to-Text se queda sin cuota, y cuando eso pasa a mitad de una
+    grabación no hay segunda toma. Un solo motor es un punto único de fallo el día que más
+    caro sale. Gemini acepta audio y tiene cuota aparte, así que uno cubre al otro.
+
+    NO CAMBIA NADA DEL CANDADO. Lo que devuelve sigue siendo DATO, exactamente igual que el
+    texto escrito: si la nota de voz contiene instrucciones dirigidas al agente, siguen siendo
+    dato y siguen exigiendo una persona. Un modelo de transcripción —el que sea— está ANTES de
+    la ruta de la decisión, nunca dentro. Que ahora sean dos no le da autoridad a ninguno.
+    """
+    # `global`, y sin prefijo de región en el host: es donde vive el modelo que el resto del
+    # proyecto ya usa (`agente/agent.py` fija GOOGLE_CLOUD_LOCATION=global). Apuntar a
+    # `us-central1-aiplatform…` devuelve 404 sin decir por qué, y se pierde un rato buscándolo.
+    region = os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
+    modelo = os.environ.get("MODELO_VOZ", "gemini-3.7-flash")
+    host = "aiplatform.googleapis.com" if region == "global" else f"{region}-aiplatform.googleapis.com"
+    url = (f"https://{host}/v1/projects/{PROYECTO}"
+           f"/locations/{region}/publishers/google/models/{modelo}:generateContent")
+    r = requests.post(url, headers=_cabeceras(), timeout=90, json={
+        "contents": [{"role": "user", "parts": [
+            {"text": "Transcribe literally what is said in this audio. "
+                     "Reply with the transcription only, no commentary, no quotes."},
+            {"inlineData": {"mimeType": _MIME.get(codificacion, "audio/webm"),
+                            "data": base64.b64encode(audio).decode()}}]}],
+        "generationConfig": {"temperature": 0, "maxOutputTokens": 256}})
+    r.raise_for_status()
+    for c in r.json().get("candidates") or []:
+        for p in (c.get("content") or {}).get("parts") or []:
+            if p.get("text"):
+                return p["text"].strip()
+    return ""
+
+
 def hablar(texto: str, voz: str = None) -> bytes:
     """Texto -> audio. Para quien no puede leer la respuesta en pantalla."""
     r = requests.post("https://texttospeech.googleapis.com/v1/text:synthesize",
