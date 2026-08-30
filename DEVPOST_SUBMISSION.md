@@ -78,16 +78,21 @@ submission that cannot say *which* model it used has not really integrated one. 
 voice family behind the spoken reply. Both are named in the code you can read.
 
 > **If you try #2 and the reply says `gemini`, nothing is broken — and please read this.**
-> Speech-to-Text is the primary transcriber and it works: a run at 11:39 on 2026-08-30 returned
-> `"motor":"speech-to-text","respaldo_usado":false`. But it has a **per-minute quota**, and under
-> a burst it answers `429`. When that happens the request **fails over to Gemini and the response
-> says so** — `"motor":"gemini","respaldo_usado":true`, with the failed attempt listed in
-> `intentos_fallidos`.
+>
+> Speech-to-Text is the primary transcriber. Measured on 2026-08-30 across 28 production calls, it
+> answers `503 Service Unavailable` on roughly **80 % of individual attempts** from our service
+> account, while the identical request from a user credential returns `200` every time. It is not
+> our quota — the project is billed and allows 900 requests/minute — it is **provider flakiness**,
+> so we retry it three times before giving up. **After that change: 9 of 10 calls transcribe with
+> `"motor":"speech-to-text","respaldo_usado":false`.**
+>
+> On the tenth, the request **fails over to Gemini and the response says so** —
+> `"motor":"gemini","respaldo_usado":true`, with the failed attempts listed in `intentos_fallidos`.
 >
 > We are pointing at this instead of hiding it because it is the same principle as the rest of the
-> submission: **the system reports what actually happened, including when the first choice
-> failed.** A demo that silently swapped engines and reported success would be the cheap version
-> of this, and it is exactly the thing we built the break tests to catch.
+> submission: **the system reports what actually happened, including when its first choice
+> failed.** A demo that silently swapped engines and reported success would be the cheap version of
+> this, and it is exactly the thing we built the break tests to catch.
 
 **And the count is not the point.** Every one of the three sits **outside the decision path**:
 
