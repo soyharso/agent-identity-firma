@@ -32,7 +32,7 @@ PRUEBAS=(
   "semantic-fence:agente/killtest_cerco_semantico.py:9/9 caught, 2 false positives declared"
   "durability:agente/killtest_durabilidad.py:5 steps, 5 processes, survives an abrupt kill"
   "co-signer:agente/killtest_cofirmante.py:a second model family must agree; its silence closes the door"
-  "ledger-chain:agente/killtest_libro_encadenado.py:deleting a row from the ledger is no longer undetectable"
+  "ledger-chain:agente/killtest_libro_encadenado.py:altering or removing a row INSIDE the chain is caught; truncating the tail is not"
   "ledger-order:agente/killtest_libro_reordenado.py:reordering two rows, touching no signature, is caught too"
   "double-fence:agente/killtest_cerco_doble.py:two embedding models, either one can demand a human; false positives still 2"
   "write-gate:agente/killtest_puerta.py:7 forged closures rejected; the record does not change"

@@ -32,6 +32,20 @@ autenticidad de la cadena. Quien pueda escribir el archivo puede recalcularla en
 prueba la autenticidad de cada decisión sigue siendo la firma ECDSA del sobre, que es otra
 cosa y se comprueba en los otros kill-tests.
 
+Y HAY UN SEGUNDO LÍMITE, medido el 2026-08-30 y escrito aquí porque la frase que describía esta
+prueba lo pasaba por alto. Decía «deleting a row from the ledger is no longer undetectable», y eso
+es **falso en dos de los tres casos**. Medido sobre una copia del libro real —59 filas: 50 de
+prefijo anteriores a la cadena y 9 encadenadas—:
+
+    fila del MEDIO de la cadena  → ok=False, clase=alterada    ← se caza
+    ÚLTIMA fila de la cadena     → ok=True,  «cadena íntegra»  ← NO se caza
+    fila del PREFIJO             → ok=True,  «cadena íntegra»  ← NO se caza
+
+**Una cadena de hashes hacia atrás no puede detectar su propio truncamiento**: al quitar el final,
+lo que queda sigue siendo una cadena válida, solo que más corta. Cazar eso pide otra cosa —un
+contador firmado, o un ancla publicada fuera del archivo— y no la tenemos. Se dice, no se
+disimula: la descripción de la prueba ya acota lo que promete.
+
 Uso: python3 agente/killtest_libro_encadenado.py
 Sin red y sin credenciales.
 """
