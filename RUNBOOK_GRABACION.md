@@ -204,6 +204,9 @@ bash demo.sh 3
 
 - **El paso 6 agota los 90 segundos.** El despertador corre cada quince minutos; si acaba de
   pasar, la reanudación tarda. Repite la toma, no la edites.
+- **El `403` no sale.** Compruébalo a demanda **antes** de apostar el vídeo a una sola toma:
+  `curl -s -X POST -H "Authorization: Bearer $(gcloud auth print-identity-token)" "$URL/intentar-suplantar"`.
+  Si no es reproducible ahora, no lo será en cámara.
 - **Sale un correo o una ruta del disco.** Corta y repite: `/decidir` ya devuelve solo el dominio,
   pero este dato ha reaparecido tres veces en sitios distintos.
 - **`PET-002` ya estaba cerrada** (por el ensayo). Vuelve a sembrar.
@@ -236,11 +239,25 @@ minutos, el organizador contestó — respuesta de *Shawni Dev*, manager, aporta
 
 | Con las esperas | ¿Permitido? | Qué hacer |
 |---|---|---|
-| Dejarlas a 1× | **Sí**, es lo más seguro | rótulo `rotulo_toma_unica.png` |
-| **Acelerar el bloque entero, uniforme** | **Sí**, con aviso en pantalla | rótulo `rotulo_toma_unica_acelerado.png` |
+| Dejarlas a 1× | **Sí**, y es lo que hay que intentar primero | rótulo `rotulo_toma_unica.png` |
+| **Acelerar el bloque entero, uniforme** | Sí, **pero como último recurso** | rótulo `rotulo_toma_unica_acelerado.png` |
 | Corte de salto para saltarse el sondeo | **NO** | es un corte: rompe «unedited» |
 | Unir dos intentos de la misma toma | **NO** | es un empalme |
 | Acelerar solo la parte aburrida | **NO** | no es uniforme |
+
+**El orden para no pasarse de cuatro minutos, y no es el que parece.** Un disidente de otro
+linaje tumbó el plan anterior con un argumento que se acoge entero: *acelerar la espera destruye
+justamente la prueba que esa espera aporta*. La espera existe para enseñar que el trabajo se
+reanuda solo; comprimida, un jurado escéptico ya no distingue una espera real de un empalme. Y
+la respuesta del organizador dice «**generalmente** se interpreta» — es una tolerancia, no una
+garantía. Así que:
+
+1. **Recorta el envoltorio.** Títulos, diagrama, cierre. Ahí sobra tiempo y editar está permitido.
+2. **Recorta contenido de la demostración** —un paso menos, un objetivo más pequeño—, que sigue
+   siendo honesto.
+3. **Solo entonces, acelera**, y el bloque entero.
+
+Si la demostración a velocidad real no cabe, **el problema es de guion, no de velocidad**.
 
 **Cómo acelerar sin equivocarse** — un solo comando sobre el bloque entero, nunca sobre un trozo:
 
@@ -263,6 +280,29 @@ ffmpeg -sseof -3 -i toma3_2x.mp4 -frames:v 1 fin.png   # y míralos
 Y el rótulo tiene que decirlo. **Usar el rótulo de 1× sobre metraje acelerado sería afirmar algo
 falso justo encima de la única parte del vídeo cuyo valor entero es que se puede creer.** Los dos
 rótulos se regeneran con `python3 assets/slides/generar_rotulos.py <velocidad>`.
+
+**Comprueba que los registros siguen leyéndose después de acelerar.** El criterio que se puntúa
+nombra literalmente *terminal logs*: unos registros que pasan demasiado rápido para leerse dejan
+de ser prueba de nada. Si a 2× no se leen, ese bloque no se acelera.
+
+### 5.2 Mostrar, no proclamar
+
+El rótulo **ya no dice «UNEDITED»**, y el cambio vino de un ataque que se acoge: era una
+afirmación **absoluta** puesta sobre un vídeo cuyo envoltorio sí está editado. Un jurado
+adversarial no lee el matiz «no cuts *inside this block*» — lee la palabra grande, ve un fundido
+dos minutos después, y la defensa se vuelve una acusación contra uno mismo. Ahora dice
+**`DEMO BLOCK — ONE CONTINUOUS TAKE`**, que delimita lo que promete.
+
+Y como la honestidad se enseña mejor de lo que se declara, **que estas tres cosas estén en
+pantalla durante la demostración**, que además son lo que la regla formal exige ver:
+
+- **El identificador del proyecto y la región** de Google Cloud, en el símbolo del sistema o en
+  la propia salida (`ai-transf-lab-0827`, `us-central1`).
+- **Un reloj visible** —el de la barra del sistema basta— durante la espera. Es lo que convierte
+  el paso del tiempo en algo comprobable en vez de en algo afirmado.
+- **Los registros corriendo**, no una pantalla quieta.
+
+Con eso, el rótulo pasa de ser la prueba a ser un rótulo, que es lo que debe ser.
 
 **Repite también el aviso en la descripción del vídeo**, que es lo que el organizador pidió «para
 mayor seguridad»: *“The demo block is a single continuous run, played back at a uniform 2×. No

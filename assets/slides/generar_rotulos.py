@@ -43,17 +43,34 @@ def rotulo(destino: Path, titulo: str, pie: str) -> None:
     d.rounded_rectangle([2, 2, ANCHO - 3, ALTO - 3], radius=14, fill=FONDO, outline=BORDE, width=2)
     # El punto de grabación: lo mismo que enseña cualquier cámara, y se lee sin idioma.
     d.ellipse([26, 42, 42, 58], fill=BORDE)
-    d.text((58, 26), titulo, font=ImageFont.truetype(NEGRITA, 27), fill=TITULO)
-    d.text((58, 63), pie, font=ImageFont.truetype(NORMAL, 15), fill=PIE)
+    # El cuerpo se ajusta al ancho disponible en vez de fijarse: al cambiar el texto del rótulo
+    # por uno más largo, el título se salía de la caja y la última palabra quedaba cortada en
+    # cámara. Un rótulo recortado dice justo lo contrario de lo que el rótulo viene a decir.
+    def cabe(texto, ruta, tope, maximo):
+        for cuerpo in range(maximo, 8, -1):
+            f = ImageFont.truetype(ruta, cuerpo)
+            if d.textlength(texto, font=f) <= tope:
+                return f
+        return ImageFont.truetype(ruta, 9)
+
+    disponible = ANCHO - 58 - 20
+    d.text((58, 26), titulo, font=cabe(titulo, NEGRITA, disponible, 27), fill=TITULO)
+    d.text((58, 63), pie, font=cabe(pie, NORMAL, disponible, 15), fill=PIE)
     im.save(destino)
     print(f"  {destino.name}  ({ANCHO}×{ALTO})  «{titulo}» · «{pie}»")
 
 
 if __name__ == "__main__":
     v = sys.argv[1] if len(sys.argv) > 1 else "2"
+    # POR QUÉ NO DICE «UNEDITED», que es lo que decía hasta el 2026-08-30. Lo tumbó el disidente
+    # externo, y tenía razón: es una afirmación ABSOLUTA colocada sobre un vídeo cuyo envoltorio
+    # —títulos, diagrama, fundidos— sí está editado. Un jurado adversarial no lee el matiz «no
+    # cuts INSIDE this block»: lee la palabra grande, ve un fundido dos minutos después, y la
+    # defensa se convierte en una acusación contra uno mismo. El rótulo ahora dice exactamente
+    # qué cubre —este bloque— y deja de proclamar lo que no puede prometer del vídeo entero.
     rotulo(AQUI / "rotulo_toma_unica.png",
-           "UNEDITED — SINGLE TAKE",
-           "live against Google Cloud · no cuts inside this block")
+           "DEMO BLOCK — ONE CONTINUOUS TAKE",
+           "no cuts within this segment · live against Google Cloud")
     rotulo(AQUI / "rotulo_toma_unica_acelerado.png",
-           "UNEDITED — SINGLE TAKE",
-           f"live against Google Cloud · no cuts · uniform {v}x playback")
+           "DEMO BLOCK — ONE CONTINUOUS TAKE",
+           f"no cuts within this segment · live · uniform {v}x playback")
