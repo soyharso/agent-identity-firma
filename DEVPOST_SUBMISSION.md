@@ -107,10 +107,21 @@ If any of them is wrong, hallucinates, or is poisoned, **none of them opens a do
 case is that a person gets asked one time too many. That is what "additional models" bought here:
 more surface, and not one extra gram of authority.
 
-> **A note on honesty, since this is the section that pays.** We are not counting Cloud Run, KMS,
-> Firestore or Scheduler as models — they are infrastructure, and claiming them would be padding.
-> We are also not counting `Gemini 3.6 Flash` and `Gemini 3.7 Flash` as two: it is one model
-> family doing one job. **Three additional models, three code paths, three ways for you to check.**
+### What we are NOT claiming, and why
+
+The cap is 0.6 and we claim exactly three. Here is everything else this project runs on, listed so
+you can see the line we drew — **a submission whose entire thesis is that nothing is overstated
+cannot overstate this section**:
+
+| Also used, **not claimed** | Why not |
+|---|---|
+| `Gemini 3.6 Flash`, `Gemini 3.7 Flash` | Gemini 3.5+ is **mandatory**, so it is not "additional" — and two versions of one family doing one job is still one |
+| Google ADK 2.8 | a framework, not a model — and also mandatory |
+| Cloud Run, Cloud KMS, Firestore, Cloud Scheduler | infrastructure, not models. Claiming these would be padding |
+
+**If you disagree with any one of our three, subtract it.** We would rather you score us 0.4 on a
+claim you can audit than 0.6 on one you cannot. Every row above and below names the model, the
+file that calls it, and a command that shows it running.
 
 ### 2 · Content contribution (0.2)
 
