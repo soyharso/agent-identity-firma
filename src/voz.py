@@ -50,13 +50,22 @@ def _cabeceras():
             "x-goog-user-project": PROYECTO}
 
 
-def escuchar(audio_wav: bytes, idioma: str = None) -> str:
-    """Nota de voz -> texto. Lo que devuelve es DATO, nunca una orden."""
+def escuchar(audio_wav: bytes, idioma: str = None, codificacion: str = "LINEAR16") -> str:
+    """Nota de voz -> texto. Lo que devuelve es DATO, nunca una orden.
+
+    `codificacion` existe porque el audio no siempre llega del mismo sitio. Una nota de voz de
+    WhatsApp llega en OGG_OPUS y el micrófono de un navegador en WEBM_OPUS; declarar LINEAR16
+    para cualquiera de los dos devuelve o silencio o una transcripción que no se parece a lo
+    que se dijo — que es exactamente el fallo que se vio en el portal. Los formatos comprimidos
+    llevan la frecuencia dentro, así que no se le manda: mandarla equivocada es otra forma de
+    obtener basura.
+    """
+    config = {"languageCode": idioma or IDIOMA, "encoding": codificacion}
+    if codificacion == "LINEAR16":
+        config["sampleRateHertz"] = 16000
     r = requests.post("https://speech.googleapis.com/v1/speech:recognize",
                       headers=_cabeceras(), timeout=60,
-                      json={"config": {"languageCode": idioma or IDIOMA,
-                                       "encoding": "LINEAR16",
-                                       "sampleRateHertz": 16000},
+                      json={"config": config,
                             "audio": {"content": base64.b64encode(audio_wav).decode()}})
     r.raise_for_status()
     res = r.json().get("results") or []

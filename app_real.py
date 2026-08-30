@@ -118,6 +118,50 @@ def api_verificar():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/transcribir", methods=["POST"])
+def api_transcribir():
+    """Audio del micrófono del navegador -> texto, con Speech-to-Text de verdad.
+
+    El portal enseñaba una transcripción escrita a mano: el cliente decía una cosa y en
+    pantalla salía otra. En un producto cuya tesis es que la evidencia se prueba y no se
+    declara, esa era la mentira más cara del demo. Aquí no hay texto de reserva: si la
+    transcripción falla, se dice que falló.
+    """
+    try:
+        from src.voz import escuchar
+    except Exception as e:                                       # noqa: BLE001
+        return jsonify({"error": "transcripcion_no_disponible", "detalle": str(e)}), 503
+
+    audio = request.files.get("audio")
+    if audio is None:
+        return jsonify({"error": "no llegó audio"}), 400
+
+    # El navegador graba en WEBM/OPUS salvo Safari, que usa MP4. Declarar el formato
+    # equivocado no da error: da una transcripción que no se parece a lo que se dijo.
+    tipo = (audio.mimetype or "").lower()
+    if "webm" in tipo:
+        codificacion = "WEBM_OPUS"
+    elif "ogg" in tipo:
+        codificacion = "OGG_OPUS"          # notas de voz de WhatsApp
+    elif "wav" in tipo or "x-wav" in tipo:
+        codificacion = "LINEAR16"          # lo que produce Text-to-Speech, útil para ensayar
+    elif "mp4" in tipo or "m4a" in tipo or "aac" in tipo:
+        codificacion = "MP3"               # Safari graba en MP4/AAC
+    else:
+        codificacion = "WEBM_OPUS"         # el caso normal del navegador
+    idioma = request.form.get("idioma", "es-CO")
+
+    try:
+        texto = escuchar(audio.read(), idioma=idioma, codificacion=codificacion)
+    except Exception as e:                                       # noqa: BLE001
+        return jsonify({"error": "transcripcion_fallida", "detalle": str(e)[:200]}), 502
+
+    if not texto:
+        return jsonify({"error": "no_se_entendio",
+                        "mensaje": "No se entendió el audio. Vuelve a intentarlo."}), 422
+    return jsonify({"texto": texto, "idioma": idioma, "codificacion": codificacion}), 200
+
+
 @app.route("/api/inbound", methods=["POST"])
 def api_inbound():
     # RECIBE EL AUDIO/TEXTO DEL PORTAL Y LO ENCOLA (TRABAJO REAL)
@@ -158,24 +202,32 @@ def api_inbound():
 def api_auditoria_datos():
     # LEE LOS DATOS REALES (NO MOCKS) PARA EL TABLERO
     try:
-        # 1. Leer firmas
+        # 1. Leer firmas (TODAS, el frontend agrupa)
         firmas = []
-        if os.path.exists(FIRMAS):
-            with open(FIRMAS, "r") as f:
+        import os, json
+        if os.path.exists("libro/firmas_grafo.jsonl"):
+            with open("libro/firmas_grafo.jsonl", "r") as f:
                 for line in f:
                     if line.strip():
                         firmas.append(json.loads(line))
         
         # 2. Leer pruebas de ruptura
         pruebas = {}
-        if os.path.exists(RUPTURA):
-            with open(RUPTURA, "r") as f:
+        if os.path.exists("libro/pruebas_de_ruptura.json"):
+            with open("libro/pruebas_de_ruptura.json", "r") as f:
                 pruebas = json.load(f)
                 
+        # 3. Leer peticiones para contexto
+        peticiones = {}
+        if os.path.exists("libro/peticiones.json"):
+            with open("libro/peticiones.json", "r") as f:
+                peticiones = json.load(f)
+                
         return jsonify({
-            "firmas": firmas[-10:], # Últimas 10 operaciones
+            "firmas": firmas,
             "pruebas_fecha": pruebas.get("fecha", "N/A"),
-            "pruebas_tests": pruebas.get("pruebas", [])
+            "pruebas_tests": pruebas.get("pruebas", []),
+            "peticiones": peticiones
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -198,6 +250,13 @@ def serve_ui(name):
         return send_file(os.path.join(base_path, "assets", "slides", "ui_unified_dashboard.html"))
     elif name == "portal":
         return send_file(os.path.join(base_path, "assets", "slides", "ui_portal_cliente.html"))
+    # Marca: Qnowa da la cara al cliente en el portal, Cleveria gobierna por dentro.
+    marca = {"qnowa-logo.svg": ("assets", "qnowa", "qnowa-logo.svg"),
+             "qnowa-mark.svg": ("assets", "qnowa", "qnowa-mark.svg"),
+             "cleveria-logo.svg": ("assets", "cleveria-logo.svg"),
+             "cleveria-mark.svg": ("assets", "cleveria-mark.svg")}
+    if name in marca:
+        return send_file(os.path.join(base_path, *marca[name]), mimetype="image/svg+xml")
     return "UI no encontrada", 404
 
 if __name__ == "__main__":

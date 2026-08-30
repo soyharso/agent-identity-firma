@@ -1,103 +1,193 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qnowa Portal - Cleveria Identity</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #06111F; color: #E9FFFB; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .mobile-container { width: 380px; height: 750px; background: #0B2940; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 8px solid #06111F; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .header { background: #06111F; padding: 20px; text-align: center; font-weight: 600; border-bottom: 1px solid #4B6BFF; display: flex; justify-content: center; align-items: center; }
-        .chat-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .msg { padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; max-width: 80%; }
-        .msg-bot { background: #4B6BFF; color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .msg-user { background: #27E6D2; color: #06111F; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
-        .input-area { padding: 15px; background: #06111F; display: flex; gap: 10px; align-items: center; }
-        .input-box { flex: 1; background: #0B2940; border: none; border-radius: 20px; padding: 10px 15px; color: white; font-size: 0.95rem; outline: none; }
-        .btn-mic { background: #8D72FF; border: none; width: 40px; height: 40px; border-radius: 50%; color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
-        .btn-mic.recording { background: #FF6B6B; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,107,107, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255,107,107, 0); } 100% { box-shadow: 0 0 0 0 rgba(255,107,107, 0); } }
-        .wave-container { display: none; align-items: center; gap: 3px; height: 20px; margin-left: 10px; }
-        .wave-container.active { display: flex; }
-        .bar { width: 4px; background: #27E6D2; border-radius: 2px; animation: sound 0s -10ms linear infinite alternate; }
-        @keyframes sound { 0% { height: 3px; } 100% { height: 20px; } }
-        .system-notice { font-size: 0.75rem; color: #93A8B8; text-align: center; margin-top: 5px; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qnowa Support</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Imagen corporativa de QNOWA: esta pantalla da la cara al cliente, así que es de Qnowa.
+   Cleveria no aparece aquí — el cliente no tiene por qué saber quién gobierna la autoridad
+   por dentro, igual que no sabe qué banco compensa su tarjeta. La capa de agentes y su
+   paleta oscura empiezan en la pantalla siguiente, y ese contraste es parte del relato. */
+:root{
+  --qnowa-blue:#2563EB; --qnowa-cyan:#06B6D4; --tinta:#0F172A;
+  --gris:#64748B; --niebla:#F1F5F9; --blanco:#fff; --borde:#E2E8F0;
+}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.55 Inter,system-ui,sans-serif;color:var(--tinta);
+     background:var(--niebla);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.tel{width:100%;max-width:430px;background:var(--blanco);border-radius:22px;overflow:hidden;
+     box-shadow:0 24px 60px rgba(15,23,42,.16);display:flex;flex-direction:column;height:min(760px,92vh)}
+header{background:linear-gradient(135deg,var(--qnowa-blue),var(--qnowa-cyan));color:#fff;padding:16px 18px;
+       display:flex;align-items:center;gap:12px}
+header img{height:26px;filter:brightness(0) invert(1)}
+header .sub{font-size:12px;opacity:.92}
+.idioma{margin-left:auto;display:flex;background:rgba(255,255,255,.18);border-radius:999px;padding:3px}
+.idioma button{border:0;background:none;color:#fff;font:600 11px Inter,sans-serif;padding:5px 11px;
+               border-radius:999px;cursor:pointer;opacity:.75}
+.idioma button[aria-pressed="true"]{background:#fff;color:var(--qnowa-blue);opacity:1}
+.chat{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--niebla)}
+.msg{max-width:84%;padding:11px 14px;border-radius:16px;font-size:14px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.bot{background:var(--blanco);border-bottom-left-radius:5px}
+.yo{background:var(--qnowa-blue);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
+.meta{font-size:11px;color:var(--gris);margin-top:5px}
+.yo .meta{color:rgba(255,255,255,.88)}
+.estado{align-self:center;font:600 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;
+        background:#FEF3C7;color:#92400E;padding:7px 13px;border-radius:999px;border:1px solid #FDE68A}
+.estado.err{background:#FEE2E2;color:#991B1B;border-color:#FECACA}
+footer{padding:12px;background:var(--blanco);border-top:1px solid var(--borde);display:flex;gap:9px;align-items:center}
+input[type=text]{flex:1;border:1px solid var(--borde);border-radius:999px;padding:11px 15px;font:14px Inter,sans-serif;outline:0}
+input[type=text]:focus{border-color:var(--qnowa-blue)}
+.btn{border:0;width:44px;height:44px;border-radius:50%;cursor:pointer;display:grid;place-items:center;
+     background:var(--niebla);color:var(--gris);font-size:18px;flex:none}
+.btn.env{background:var(--qnowa-blue);color:#fff}
+.btn.mic.grabando{background:#DC2626;color:#fff;animation:late 1.1s infinite}
+@keyframes late{50%{box-shadow:0 0 0 11px rgba(220,38,38,.16)}}
+.ondas{display:none;gap:3px;align-items:center;height:26px;flex:1;padding-left:6px}
+.ondas.on{display:flex}
+.ondas i{width:3px;background:var(--qnowa-cyan);border-radius:2px;height:6px}
+.pie{text-align:center;font-size:10.5px;color:var(--gris);padding:7px}
+.pie b{color:var(--qnowa-blue)}
+</style>
 </head>
 <body>
-    <div class="mobile-container">
-        <div class="header">
-            Qnowa Support
-        </div>
-        <div class="chat-area" id="chat">
-            <div class="msg msg-bot">Hola. Soy tu asistente de Qnowa. ¿En qué puedo ayudarte hoy?</div>
-        </div>
-        <div class="input-area">
-            <div class="wave-container" id="wave">
-                <div class="bar" style="animation-duration: 474ms;"></div>
-                <div class="bar" style="animation-duration: 433ms;"></div>
-                <div class="bar" style="animation-duration: 407ms;"></div>
-                <div class="bar" style="animation-duration: 458ms;"></div>
-            </div>
-            <input type="text" id="text-input" class="input-box" placeholder="Escribe o envía audio...">
-            <button class="btn-mic" id="mic-btn">🎙</button>
-        </div>
+<div class="tel">
+  <header>
+    <img src="/ui/qnowa-logo.svg" alt="Qnowa"
+         onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'Qnowa',style:'font-size:19px'}))">
+    <div><div style="font-weight:600" id="t_titulo">Soporte</div><div class="sub" id="t_sub">Atención al cliente</div></div>
+    <div class="idioma">
+      <button id="b_es" aria-pressed="true"  onclick="setIdioma('es-CO')">ES</button>
+      <button id="b_en" aria-pressed="false" onclick="setIdioma('en-US')">EN</button>
     </div>
+  </header>
 
-    <script>
-        const micBtn = document.getElementById('mic-btn');
-        const wave = document.getElementById('wave');
-        const chat = document.getElementById('chat');
-        const textInput = document.getElementById('text-input');
-        let recording = false;
+  <div class="chat" id="chat">
+    <div class="msg bot" id="saludo">Hola. Soy tu asistente de Qnowa. ¿En qué puedo ayudarte hoy?</div>
+  </div>
 
-        micBtn.addEventListener('click', async () => {
-            if(!recording) {
-                recording = true;
-                micBtn.classList.add('recording');
-                wave.classList.add('active');
-                textInput.style.display = 'none';
-                
-                // Simulate speaking duration
-                setTimeout(async () => {
-                    recording = false;
-                    micBtn.classList.remove('recording');
-                    wave.classList.remove('active');
-                    textInput.style.display = 'block';
-                    
-                    // Add user audio bubble
-                    const audioMsg = document.createElement('div');
-                    audioMsg.className = 'msg msg-user';
-                    audioMsg.innerHTML = '▶ Audio (0:04)';
-                    chat.appendChild(audioMsg);
-                    
-                    const notice = document.createElement('div');
-                    notice.className = 'system-notice';
-                    notice.textContent = 'Transcribiendo...';
-                    chat.appendChild(notice);
-                    
-                    // FETCH REAL
-                    try {
-                        const response = await fetch('/api/inbound', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ texto: "Me cobraron dos veces, exijo una devolución inmediata." })
-                        });
-                        const data = await response.json();
-                        
-                        notice.remove();
-                        const transcript = document.createElement('div');
-                        transcript.className = 'system-notice';
-                        transcript.innerHTML = `Transcripción: "${data.transcription}"<br><span style="color:#FF6B6B">ESTADO: ${data.estado.toUpperCase()}</span>`;
-                        chat.appendChild(transcript);
-                        
-                    } catch (e) {
-                        notice.textContent = "Error de red";
-                    }
-                    
-                }, 4000);
-            }
-        });
-    </script>
+  <footer>
+    <button class="btn mic" id="mic" onclick="alternarGrabacion()" title="Grabar nota de voz">🎤</button>
+    <div class="ondas" id="ondas"></div>
+    <input type="text" id="txt" placeholder="Escribe tu mensaje…" onkeydown="if(event.key==='Enter')enviarTexto()">
+    <button class="btn env" onclick="enviarTexto()" title="Enviar">➤</button>
+  </footer>
+  <div class="pie">Voz transcrita por <b>Google Speech-to-Text</b> · sin texto de reserva</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Nada de transcripciones escritas a mano. El micrófono graba de verdad, el audio
+// viaja al backend y lo transcribe Speech-to-Text. Si falla, se dice que falló:
+// nunca se rellena con una frase de ejemplo, porque en cámara eso es indistinguible
+// de una transcripción real, y es justo lo que este producto existe para impedir.
+// ─────────────────────────────────────────────────────────────────────────────
+let idioma = 'es-CO', grabadora = null, trozos = [], desde = 0;
+
+const T = {
+  'es-CO': {titulo:'Soporte', sub:'Atención al cliente',
+            saludo:'Hola. Soy tu asistente de Qnowa. ¿En qué puedo ayudarte hoy?',
+            ph:'Escribe tu mensaje…', pensando:'Transcribiendo…', audio:'Audio',
+            transcripcion:'Transcripción', espera:'Esperando decisión humana',
+            nomic:'No se pudo abrir el micrófono', fallo:'La transcripción falló'},
+  'en-US': {titulo:'Support', sub:'Customer care',
+            saludo:'Hi. I am your Qnowa assistant. How can I help you today?',
+            ph:'Type your message…', pensando:'Transcribing…', audio:'Audio',
+            transcripcion:'Transcript', espera:'Awaiting human decision',
+            nomic:'Could not open the microphone', fallo:'Transcription failed'}
+};
+const t = () => T[idioma];
+
+function setIdioma(x){
+  idioma = x;
+  document.documentElement.lang = x.slice(0,2);
+  b_es.setAttribute('aria-pressed', String(x === 'es-CO'));
+  b_en.setAttribute('aria-pressed', String(x === 'en-US'));
+  t_titulo.textContent = t().titulo;
+  t_sub.textContent = t().sub;
+  saludo.textContent = t().saludo;
+  txt.placeholder = t().ph;
+}
+
+function pinta(html, clase){
+  const d = document.createElement('div');
+  d.className = clase;
+  d.innerHTML = html;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function encolar(texto, seg){
+  const cab = (seg != null)
+    ? `▶ ${t().audio} (0:${String(seg).padStart(2,'0')})<div class="meta">${t().transcripcion}: “${esc(texto)}”</div>`
+    : esc(texto);
+  pinta(cab, 'msg yo');
+  const est = pinta('…', 'estado');
+  try{
+    const r = await fetch('/api/inbound', {method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({texto, de:'cliente-portal', origen:'portal', idioma})});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || r.status);
+    est.textContent = `${d.id} · ${t().espera}`;
+  }catch(e){
+    est.className = 'estado err';
+    est.textContent = String(e.message || e);
+  }
+}
+
+function enviarTexto(){
+  const v = txt.value.trim();
+  if(!v) return;
+  txt.value = '';
+  encolar(v, null);
+}
+
+async function alternarGrabacion(){
+  if(grabadora && grabadora.state === 'recording'){ grabadora.stop(); return; }
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+  catch(e){ pinta(t().nomic, 'estado err'); return; }
+
+  trozos = []; desde = Date.now();
+  grabadora = new MediaRecorder(stream);
+  grabadora.ondataavailable = e => trozos.push(e.data);
+  grabadora.onstop = async () => {
+    stream.getTracks().forEach(x => x.stop());
+    mic.classList.remove('grabando');
+    ondas.classList.remove('on');
+    ondas.innerHTML = '';
+    const seg = Math.max(1, Math.round((Date.now() - desde)/1000));
+    const blob = new Blob(trozos, {type: grabadora.mimeType || 'audio/webm'});
+    const est = pinta(t().pensando, 'estado');
+    const fd = new FormData();
+    fd.append('audio', blob, 'nota.webm');
+    fd.append('idioma', idioma);
+    try{
+      const r = await fetch('/api/transcribir', {method:'POST', body: fd});
+      const d = await r.json();
+      est.remove();
+      if(!r.ok){ pinta(esc(d.mensaje || d.error || t().fallo), 'estado err'); return; }
+      encolar(d.texto, seg);
+    }catch(e){
+      est.className = 'estado err';
+      est.textContent = t().fallo;
+    }
+  };
+  grabadora.start();
+  mic.classList.add('grabando');
+  ondas.classList.add('on');
+  ondas.innerHTML = Array.from({length:22}, () => '<i></i>').join('');
+  animar();
+}
+
+function animar(){
+  if(!grabadora || grabadora.state !== 'recording') return;
+  [...ondas.children].forEach(b => b.style.height = (5 + Math.random()*20) + 'px');
+  setTimeout(animar, 110);
+}
+</script>
 </body>
 </html>
