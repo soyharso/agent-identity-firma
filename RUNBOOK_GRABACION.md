@@ -130,8 +130,24 @@ cambia de escena, no de captura, y por eso el salto es instantáneo.
 Fundido de 0,4 s entre escenas —ya configurado—. **Corte seco dentro de la demostración, nunca
 fundido**: un fundido en medio de una prueba es exactamente lo que hace dudar de si se cortó algo.
 
-> Si la captura de pantalla sale en negro, es que la sesión es Wayland y no X11. Cambia la fuente
-> «Pantalla» por **Captura de pantalla (PipeWire)** y concede el permiso que pide el sistema.
+**La captura ya va por PipeWire, y no es un detalle.** Este equipo es Fedora con GNOME sobre
+Wayland: la fuente de captura X11 habría dado **pantalla negra**. Al seleccionar la escena, GNOME
+enseña un diálogo pidiendo permiso para compartir la pantalla — **hay que aprobarlo a mano**, y
+por eso ninguna grabación de esta casa puede lanzarse desatendida. Apruébalo antes de empezar,
+con la casilla de recordar marcada.
+
+> **Plan B si OBS falla en Wayland**, ya medido en esta casa y documentado en
+> `cleveria-dominios/tools/HERRAMIENTA_grabacion_pantalla.md`: **GPU Screen Recorder** es el único
+> grabador que se ha probado que funciona aquí. El grabador nativo de GNOME produce un archivo de
+> 48 bytes sin fotogramas, y `wf-recorder` no sirve en GNOME.
+>
+> ```bash
+> flatpak run --command=gpu-screen-recorder com.dec05eba.gpu_screen_recorder \
+>   -w portal -f 30 -o "$HOME/Videos/toma3.mp4"     # -w portal es obligatorio
+> ```
+> Se cierra con `kill -INT`, nunca con `kill -9`: el archivo se escribe al cerrar. Y mientras
+> graba **el archivo pesa 0 bytes**, así que mirar su tamaño no dice si está funcionando —
+> lo que lo dice es la línea `update fps: NN` en su salida.
 
 ---
 
@@ -229,7 +245,19 @@ minutos, el organizador contestó — respuesta de *Shawni Dev*, manager, aporta
 **Cómo acelerar sin equivocarse** — un solo comando sobre el bloque entero, nunca sobre un trozo:
 
 ```bash
-ffmpeg -i toma3.mkv -filter:v "setpts=PTS/2" -filter:a "atempo=2.0" toma3_2x.mkv
+# libopenh264, NO libx264: en este equipo x264 no está instalado (ficha de grabación del repo).
+ffmpeg -i toma3.mkv -filter:v "setpts=PTS/2" -filter:a "atempo=2.0" \
+       -c:v libopenh264 -b:v 6000k toma3_2x.mp4
+```
+
+**Y compruébalo mirando fotogramas, no suponiendo.** La regla de la casa, escrita después de
+entregar un vídeo de 152 segundos que resultó ser una imagen fija: un vídeo que demuestra que
+algo *ocurre* se valida extrayendo fotogramas del principio y del final **y nombrando qué
+cambió**. El peso del archivo no vale como veredicto.
+
+```bash
+ffmpeg -ss 2  -i toma3_2x.mp4 -frames:v 1 ini.png
+ffmpeg -sseof -3 -i toma3_2x.mp4 -frames:v 1 fin.png   # y míralos
 ```
 
 Y el rótulo tiene que decirlo. **Usar el rótulo de 1× sobre metraje acelerado sería afirmar algo
