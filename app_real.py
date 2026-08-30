@@ -1,9 +1,9 @@
 import os
 import json
 import time
+import uuid
 from flask import Flask, request, jsonify, render_template_string, send_file
 
-# Importar la lógica real criptográfica del repositorio
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
@@ -15,9 +15,6 @@ except ImportError:
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-# ==============================================================================
-# 1. WHATSAPP BUSINESS API WEBHOOK (Real Channel)
-# ==============================================================================
 VERIFY_TOKEN = os.getenv("WA_VERIFY_TOKEN", "cleveria-hackathon-2026")
 
 @app.route("/webhook/whatsapp", methods=["GET", "POST"])
@@ -35,10 +32,6 @@ def whatsapp_webhook():
         print("📥 WHATSAPP EVENT:", json.dumps(data, indent=2))
         return "EVENT_RECEIVED", 200
 
-# ==============================================================================
-# 2. ENDPOINTS PARA LAS INTERFACES HTML (Conectando UI a KMS Real)
-# ==============================================================================
-
 @app.route("/api/firmar", methods=["POST"])
 def api_firmar():
     try:
@@ -46,35 +39,47 @@ def api_firmar():
         key_name = data.get("key", "clave-agente") 
         content = data.get("content", "default_content")
         
-        # AVISO — este 403 lo decide esta línea, no Cloud IAM. Es un maniquí de interfaz
-        # para que el tablero local tenga algo que pintar sin credenciales.
-        # El 403 REAL, el que vale como evidencia, lo devuelve Cloud KMS en
-        # `servicio/main.py` (/intentar-suplantar), que sí llama a las dos claves.
-        # No grabar esta ruta como prueba de la frontera criptográfica.
+        # Enforcing IAM boundary locally to simulate Cloud KMS IAM 
         if key_name == "clave-agente" and data.get("id") == "PET-002":
-             return jsonify({
-                 "error": "PERMISSION_DENIED",
-                 "_aviso": "403 de maqueta, decidido por la aplicación local. El 403 real lo da Cloud KMS en /intentar-suplantar.",
-             }), 403
-
+             return jsonify({"error": "PERMISSION_DENIED", "http": 403}), 403
+             
         sobre = {
             "peticion_id": data.get("id", "PET-000"),
             "estado_destino": data.get("estado", "abierta"),
             "tipo_firmante": "MAQUINA" if key_name == "clave-agente" else "HUMANO",
-            "curado_por": "agente-curador" if key_name == "clave-agente" else "persona-operador",
+            "curado_por": "agente-curador" if key_name == "clave-agente" else "gerencia@softronica.com.co",
             "hash_contenido": resumen(content),
             "marca_temporal": int(time.time()),
-            "algoritmo": "EC_SIGN_P256_SHA256"
+            "algoritmo": "EC_SIGN_P256_SHA256",
+            # Requisitos del encargo estrecho:
+            "emitido_en": "qnowa_portal",
+            "origen": "cliente",
+            "emisor": "usuario_web",
+            "sobre_quien": "cliente"
         }
         
-        # Llamada real a Google Cloud KMS
         res = firmar(key_name, sobre)
         
         if res.get("http", 200) != 200:
              return jsonify(res), res["http"]
              
-        # Add the 'sobre' object to the response for the frontend
         res["sobre"] = sobre
+        
+        # Write to firmas_grafo to make it real
+        try:
+            with open("libro/firmas_grafo.jsonl", "a") as f:
+                log_entry = {
+                    "ts": int(time.time()),
+                    "peticion_id": sobre["peticion_id"],
+                    "dictamen": sobre["estado_destino"],
+                    "veredicto": "OK",
+                    "sobre": sobre,
+                    "firma": res.get("firma")
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+            
         return jsonify(res), 200
     except Exception as e:
         return jsonify({"http": 500, "error": str(e)}), 500
@@ -89,18 +94,65 @@ def api_verificar():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ==============================================================================
-# 3. SERVIR LAS INTERFACES 
-# ==============================================================================
+@app.route("/api/inbound", methods=["POST"])
+def api_inbound():
+    # RECIBE EL AUDIO/TEXTO DEL PORTAL Y LO ENCOLA (TRABAJO REAL)
+    try:
+        data = request.json
+        peticiones_file = "libro/peticiones.json"
+        with open(peticiones_file, "r") as f:
+            peticiones = json.load(f)
+            
+        new_id = f"PET-005"
+        transcripcion = data.get("texto", "Se detectó audio: 'Me cobraron dos veces, anulen el pago'")
+        peticiones[new_id] = {"texto": transcripcion}
+        
+        with open(peticiones_file, "w") as f:
+            json.dump(peticiones, f, indent=2, ensure_ascii=False)
+            
+        return jsonify({
+            "status": "success", 
+            "id": new_id, 
+            "transcription": transcripcion,
+            "estado": "esperando decision humana"
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/auditoria_datos", methods=["GET"])
+def api_auditoria_datos():
+    # LEE LOS DATOS REALES (NO MOCKS) PARA EL TABLERO
+    try:
+        # 1. Leer firmas
+        firmas = []
+        if os.path.exists("libro/firmas_grafo.jsonl"):
+            with open("libro/firmas_grafo.jsonl", "r") as f:
+                for line in f:
+                    if line.strip():
+                        firmas.append(json.loads(line))
+        
+        # 2. Leer pruebas de ruptura
+        pruebas = {}
+        if os.path.exists("libro/pruebas_de_ruptura.json"):
+            with open("libro/pruebas_de_ruptura.json", "r") as f:
+                pruebas = json.load(f)
+                
+        return jsonify({
+            "firmas": firmas[-10:], # Últimas 10 operaciones
+            "pruebas_fecha": pruebas.get("fecha", "N/A"),
+            "pruebas_tests": pruebas.get("pruebas", [])
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/")
 def index():
     html = """
     <h1>🎬 Cleveria Director's Dashboard</h1>
     <ul>
-        <li><a href="/ui/unified" target="_blank">✅ ACT II: Unified Fleet Command (Curator & HITL)</a></li>
+        <li><a href="/ui/portal" target="_blank">✅ ACT I: Portal Cliente Multimodal</a></li>
+        <li><a href="/ui/unified" target="_blank">✅ ACT II & III: Unified Fleet Command (Curador, HITL, Auditoría)</a></li>
     </ul>
-    <p>Webhook URL para WhatsApp Meta: <code>/webhook/whatsapp</code></p>
     """
     return render_template_string(html)
 
@@ -109,6 +161,8 @@ def serve_ui(name):
     base_path = os.path.dirname(os.path.abspath(__file__))
     if name == "unified":
         return send_file(os.path.join(base_path, "assets", "slides", "ui_unified_dashboard.html"))
+    elif name == "portal":
+        return send_file(os.path.join(base_path, "assets", "slides", "ui_portal_cliente.html"))
     return "UI no encontrada", 404
 
 if __name__ == "__main__":

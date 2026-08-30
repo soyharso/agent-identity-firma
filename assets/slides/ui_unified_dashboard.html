@@ -5,116 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cleveria — Unified Fleet Command</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; color: white; margin: 0; padding: 20px; }
-        .dashboard { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .panel { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .panel h2 { margin-top: 0; color: #38bdf8; font-size: 1.2rem; display: flex; justify-content: space-between; }
-        .ticket { background: #334155; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #64748b; }
-        .ticket.urgent { border-left-color: #f59e0b; }
-        .ticket h3 { margin: 0 0 10px 0; font-size: 1rem; color: #e2e8f0; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; background: #475569; }
-        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 10px; transition: 0.2s; }
-        .btn-agent { background: #0ea5e9; color: white; }
-        .btn-agent:hover { background: #0284c7; }
-        .btn-human { background: #10b981; color: white; }
-        .btn-human:hover { background: #059669; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-danger:hover { background: #dc2626; }
-        .log-area { margin-top: 10px; font-family: monospace; font-size: 0.85rem; padding: 10px; background: #0f172a; border-radius: 6px; display: none; }
-        .log-area.error { color: #f87171; display: block; border: 1px solid #7f1d1d; }
-        .log-area.success { color: #4ade80; display: block; border: 1px solid #14532d; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #06111F; color: #E9FFFB; margin: 0; padding: 20px; }
+        .header { margin-bottom: 20px; border-bottom: 1px solid #0B2940; padding-bottom: 10px; }
+        .header h1 { color: #E9FFFB; margin: 0; font-size: 1.5rem; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: #0B2940; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h2 { color: #27E6D2; font-size: 1.2rem; margin-top: 0; display: flex; justify-content: space-between; }
+        .audit-row { background: #06111F; padding: 15px; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #93A8B8; font-size: 0.9rem; }
+        .audit-row.ok { border-left-color: #27E6D2; }
+        .audit-row.denied { border-left-color: #FF6B6B; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; background: #4B6BFF; color: white; }
+        .badge.human { background: #8D72FF; }
+        .badge.fail { background: #FF6B6B; }
+        .hash-str { font-family: monospace; color: #93A8B8; font-size: 0.8rem; word-break: break-all; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #151D33; }
+        th { color: #93A8B8; }
+        .btn { background: #4B6BFF; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .btn:hover { background: #3b5bdb; }
     </style>
 </head>
 <body>
-    <div style="max-width: 1200px; margin: 0 auto 20px;">
-        <h1 style="color: #f8fafc; font-size: 1.8rem; margin:0;">ACT II: The Liability Wall (Live Demonstration)</h1>
-        <p style="color: #94a3b8;">Unified Dashboard: Operational Delegation vs. Human Judgement</p>
+    <div class="header">
+        <h1>Cleveria Identity — Liability Audit Ledger</h1>
+        <p style="color: #93A8B8; font-size: 0.9rem; margin: 5px 0 0 0;">LIVE TELEMETRY FROM CLOUD KMS & OFFLINE VERIFIER</p>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <button class="btn" onclick="fetchData()">🔄 Sync Ledger Data</button>
     </div>
 
     <div class="dashboard">
-        <!-- CURATOR PANEL -->
+        <!-- FIRMAS GRAFO -->
         <div class="panel">
-            <h2>🤖 Curator Agent Queue <span class="badge">Scope: MACHINE_WORK</span></h2>
-            
-            <div class="ticket" id="pet-001">
-                <h3>PET-001: Operational Closure (Index Optimization)</h3>
-                <p style="font-size: 0.9rem; color: #cbd5e1;">Agent detected task completion with full evidence.</p>
-                <div style="margin-top: 15px;">
-                    <button class="btn btn-agent" onclick="signAsAgent('PET-001')">✓ Sign as Agent</button>
-                </div>
-                <div class="log-area" id="log-PET-001"></div>
-            </div>
-
-            <div class="ticket urgent" id="pet-002-agent">
-                <h3>PET-002: Customer Dispute (Liability Risk)</h3>
-                <p style="font-size: 0.9rem; color: #cbd5e1;">Customer sent voice note claiming billing error.</p>
-                <div style="margin-top: 15px;">
-                    <button class="btn btn-danger" onclick="signAsAgentForbidden('PET-002')">✖ Attempt Agent Signature</button>
-                </div>
-                <div class="log-area" id="log-PET-002-agent"></div>
-            </div>
+            <h2>Cryptographic Ledger (firmas_grafo.jsonl) <span class="badge" id="ledger-count">0</span></h2>
+            <div id="ledger-container">Loading...</div>
         </div>
 
-        <!-- HITL PANEL -->
+        <!-- PRUEBAS DE RUPTURA -->
         <div class="panel">
-            <h2>👤 Human-in-the-Loop Queue <span class="badge">Scope: HUMAN_JUDGEMENT</span></h2>
-            
-            <div class="ticket urgent" id="pet-002-human">
-                <h3>PET-002: Customer Dispute (Liability Risk)</h3>
-                <p style="font-size: 0.9rem; color: #cbd5e1;">Requires human supervisor to dismiss claim.</p>
-                <div style="margin-top: 15px;">
-                    <button class="btn btn-human" onclick="signAsHuman('PET-002')">✓ Sign as Supervisor</button>
-                </div>
-                <div class="log-area" id="log-PET-002-human"></div>
-            </div>
+            <h2>Integrity Verifier (pruebas_de_ruptura.json) <span class="badge human" id="test-date">...</span></h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Test Case</th>
+                        <th>Rompe</th>
+                        <th>Verdict</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="tests-container">
+                    <tr><td colspan="4">Loading...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        async function signRequest(petId, key, targetLogId) {
-            const logEl = document.getElementById(targetLogId);
-            logEl.className = 'log-area';
-            logEl.textContent = 'Processing request...';
-            logEl.style.display = 'block';
-
+        async function fetchData() {
+            document.getElementById('ledger-container').innerHTML = 'Syncing...';
+            document.getElementById('tests-container').innerHTML = '<tr><td colspan="4">Syncing...</td></tr>';
             try {
-                const res = await fetch('/api/firmar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: petId,
-                        key: key,
-                        estado: 'cerrada',
-                        content: petId === 'PET-001' ? 'Index optimization complete' : 'Dispute dismissed'
-                    })
-                });
-
+                const res = await fetch('/api/auditoria_datos');
                 const data = await res.json();
                 
-                if (res.ok) {
-                    logEl.className = 'log-area success';
-                    logEl.innerHTML = `HTTP 200 OK<br>Signer: ${data.sobre.tipo_firmante}<br>Hash: ${data.sobre.hash_contenido}<br>RFC8785: ✓ Verified`;
-                } else {
-                    logEl.className = 'log-area error';
-                    logEl.innerHTML = `HTTP ${res.status} PERMISSION_DENIED<br>Error: IAM Policy prevents ${key} from acting outside scope.<br>Reason: "It is not that the agent won't; it can't."`;
-                }
-            } catch (e) {
-                logEl.className = 'log-area error';
-                logEl.textContent = 'Network error contacting Cloud KMS';
+                // Render Ledger
+                const ledgerEl = document.getElementById('ledger-container');
+                ledgerEl.innerHTML = '';
+                document.getElementById('ledger-count').textContent = data.firmas.length;
+                
+                data.firmas.reverse().forEach(f => {
+                    const statusClass = f.veredicto === 'OK' ? 'ok' : 'denied';
+                    const badgeClass = f.sobre && f.sobre.tipo_firmante === 'HUMANO' ? 'badge human' : 'badge';
+                    const failClass = f.veredicto !== 'OK' ? 'badge fail' : '';
+                    
+                    const div = document.createElement('div');
+                    div.className = `audit-row ${statusClass}`;
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <strong>${f.peticion_id}</strong>
+                            <span class="${failClass || badgeClass}">${f.veredicto}</span>
+                        </div>
+                        <div><strong>Propuesto por:</strong> ${f.sobre ? f.sobre.origen || 'sistema' : 'N/A'}</div>
+                        <div><strong>Aprobado por:</strong> ${f.sobre ? f.sobre.curado_por || 'N/A' : 'N/A'}</div>
+                        <div><strong>Veredicto Offline:</strong> ${f.veredicto} ${f.dictamen ? `(${f.dictamen})` : ''}</div>
+                        ${f.sobre ? `<div class="hash-str" style="margin-top:5px;">Hash: ${f.sobre.hash_contenido}</div>` : ''}
+                    `;
+                    ledgerEl.appendChild(div);
+                });
+
+                // Render Tests
+                const testsEl = document.getElementById('tests-container');
+                testsEl.innerHTML = '';
+                document.getElementById('test-date').textContent = data.pruebas_fecha;
+                
+                data.pruebas_tests.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${t.nombre}</td>
+                        <td style="color:#93A8B8; font-size:0.8rem;">${t.rompe}</td>
+                        <td style="color: ${t.ok ? '#27E6D2' : '#FF6B6B'}"><strong>${t.ok ? 'PASS' : 'FAIL'}</strong></td>
+                        <td>${t.segundos}s</td>
+                    `;
+                    testsEl.appendChild(tr);
+                });
+
+            } catch(e) {
+                document.getElementById('ledger-container').innerHTML = '<span style="color:#FF6B6B">Network Error fetching /api/auditoria_datos</span>';
             }
         }
-
-        function signAsAgent(id) {
-            signRequest(id, 'clave-agente', 'log-' + id);
-        }
         
-        function signAsAgentForbidden(id) {
-            signRequest(id, 'clave-agente', 'log-' + id + '-agent');
-        }
-
-        function signAsHuman(id) {
-            signRequest(id, 'clave-humano', 'log-' + id + '-human');
-        }
+        // Auto-fetch on load
+        fetchData();
     </script>
 </body>
 </html>

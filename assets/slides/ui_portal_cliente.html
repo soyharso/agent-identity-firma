@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qnowa Portal - Cleveria Identity</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #06111F; color: #E9FFFB; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .mobile-container { width: 380px; height: 750px; background: #0B2940; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 8px solid #06111F; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .header { background: #06111F; padding: 20px; text-align: center; font-weight: 600; border-bottom: 1px solid #4B6BFF; display: flex; justify-content: center; align-items: center; }
+        .chat-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; max-width: 80%; }
+        .msg-bot { background: #4B6BFF; color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg-user { background: #27E6D2; color: #06111F; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
+        .input-area { padding: 15px; background: #06111F; display: flex; gap: 10px; align-items: center; }
+        .input-box { flex: 1; background: #0B2940; border: none; border-radius: 20px; padding: 10px 15px; color: white; font-size: 0.95rem; outline: none; }
+        .btn-mic { background: #8D72FF; border: none; width: 40px; height: 40px; border-radius: 50%; color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
+        .btn-mic.recording { background: #FF6B6B; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,107,107, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255,107,107, 0); } 100% { box-shadow: 0 0 0 0 rgba(255,107,107, 0); } }
+        .wave-container { display: none; align-items: center; gap: 3px; height: 20px; margin-left: 10px; }
+        .wave-container.active { display: flex; }
+        .bar { width: 4px; background: #27E6D2; border-radius: 2px; animation: sound 0s -10ms linear infinite alternate; }
+        @keyframes sound { 0% { height: 3px; } 100% { height: 20px; } }
+        .system-notice { font-size: 0.75rem; color: #93A8B8; text-align: center; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <div class="header">
+            Qnowa Support
+        </div>
+        <div class="chat-area" id="chat">
+            <div class="msg msg-bot">Hola. Soy tu asistente de Qnowa. ¿En qué puedo ayudarte hoy?</div>
+        </div>
+        <div class="input-area">
+            <div class="wave-container" id="wave">
+                <div class="bar" style="animation-duration: 474ms;"></div>
+                <div class="bar" style="animation-duration: 433ms;"></div>
+                <div class="bar" style="animation-duration: 407ms;"></div>
+                <div class="bar" style="animation-duration: 458ms;"></div>
+            </div>
+            <input type="text" id="text-input" class="input-box" placeholder="Escribe o envía audio...">
+            <button class="btn-mic" id="mic-btn">🎙</button>
+        </div>
+    </div>
+
+    <script>
+        const micBtn = document.getElementById('mic-btn');
+        const wave = document.getElementById('wave');
+        const chat = document.getElementById('chat');
+        const textInput = document.getElementById('text-input');
+        let recording = false;
+
+        micBtn.addEventListener('click', async () => {
+            if(!recording) {
+                recording = true;
+                micBtn.classList.add('recording');
+                wave.classList.add('active');
+                textInput.style.display = 'none';
+                
+                // Simulate speaking duration
+                setTimeout(async () => {
+                    recording = false;
+                    micBtn.classList.remove('recording');
+                    wave.classList.remove('active');
+                    textInput.style.display = 'block';
+                    
+                    // Add user audio bubble
+                    const audioMsg = document.createElement('div');
+                    audioMsg.className = 'msg msg-user';
+                    audioMsg.innerHTML = '▶ Audio (0:04)';
+                    chat.appendChild(audioMsg);
+                    
+                    const notice = document.createElement('div');
+                    notice.className = 'system-notice';
+                    notice.textContent = 'Transcribiendo...';
+                    chat.appendChild(notice);
+                    
+                    // FETCH REAL
+                    try {
+                        const response = await fetch('/api/inbound', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ texto: "Me cobraron dos veces, exijo una devolución inmediata." })
+                        });
+                        const data = await response.json();
+                        
+                        notice.remove();
+                        const transcript = document.createElement('div');
+                        transcript.className = 'system-notice';
+                        transcript.innerHTML = `Transcripción: "${data.transcription}"<br><span style="color:#FF6B6B">ESTADO: ${data.estado.toUpperCase()}</span>`;
+                        chat.appendChild(transcript);
+                        
+                    } catch (e) {
+                        notice.textContent = "Error de red";
+                    }
+                    
+                }, 4000);
+            }
+        });
+    </script>
+</body>
+</html>
