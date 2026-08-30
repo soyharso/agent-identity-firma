@@ -39,8 +39,13 @@ demonstrate the backend is running on Google Cloud"*. This script is written to 
 | Voice note audio waveform: *"dismiss the claim"* | "Spoken in WhatsApp. Transcribed, parsed, and **landed with a human**. Modality changes; the key does not." |
 | "I think the backup works now" | "No evidence. Returned, unsigned." |
 
-> "One model decides. Six deterministic functions do everything else. And the model can only ask
-> for **more** caution — it can never grant itself more authority."
+<!-- Sin el número, y a propósito. Decía «Six deterministic functions» y el conteo ya no cuadra
+     —hoy son catorce en `agente/grafo.py`—, pero el problema no es el número de hoy: es que un
+     número exacto en una frase grabada caduca con el primer commit posterior, y entonces el vídeo
+     miente sin que nadie lo haya tocado. Lo que la frase quiere decir no depende del conteo. -->
+> "One model proposes. Deterministic functions do everything else, and a second model family has
+> to agree before anything is signed. The model can only ask for **more** caution — it can never
+> grant itself more authority."
 
 ---
 
