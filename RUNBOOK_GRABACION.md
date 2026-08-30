@@ -87,20 +87,43 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 
 ---
 
-## 3. Escenas de OBS
+## 3. OBS — ya instalado y con las siete escenas montadas
 
-| # | Escena | Fuente | Se usa en |
+> **Hecho el 2026-08-30.** OBS Studio no estaba en esta máquina: se instaló (`flatpak --user`,
+> versión 32.2.2) y se dejó **una colección de escenas ya armada**, con las cinco piezas de
+> `assets/slides/` colocadas en su sitio. No hay que crear ninguna fuente a mano.
+
+**Para usarla**: abre OBS → menú **Colección de escenas** → **Cleveria_Hackathon**.
+
+| # | Escena | Qué lleva dentro | Se usa en |
 |---|---|---|---|
-| 1 | **Portada** | logotipo de Cleveria sobre Obsidian Navy `#06111F` | 0–3 s y cierre |
-| 2 | **Portal del cliente** | navegador en `…/ui/portal` | la entrada del caso y la voz |
-| 3 | **Terminal** | terminal a pantalla completa | **toda la demostración** |
-| 4 | **Libro de autoridad** | navegador en `…/ui/unified` | la auditoría |
-| 5 | **Consola de Google Cloud** | el llavero de Cloud KMS | junto al 403 |
-| 6 | **Arquitectura** | `ARCHITECTURE.svg` a pantalla completa | el bloque de arquitectura |
-| 7 | **Cierre** | fondo liso con la tesis | los últimos 20 s |
+| 1 | **Portada** | `portada.png` a pantalla completa | 0–3 s y antes del cierre |
+| 2 | **Portal del cliente** | pantalla + marca de agua | la entrada del caso y la voz |
+| 3 | **Demostración — toma única** | pantalla + **rótulo `unedited — single take`** + marca de agua | **toda la demostración** |
+| 4 | **Libro de autoridad** | pantalla + marca de agua | la auditoría |
+| 5 | **Consola de Google Cloud** | pantalla + marca de agua | junto al 403 |
+| 6 | **Arquitectura** | pantalla + marca de agua | el bloque de arquitectura |
+| 7 | **Cierre** | `cierre.png` a pantalla completa | los últimos 20 s |
 
-Fundido de 0,4 s entre escenas. **Corte seco dentro de la demostración, nunca fundido**: un
-fundido en medio de una prueba es exactamente lo que hace dudar de si se cortó algo.
+El rótulo va arriba a la izquierda y la marca de agua abajo a la derecha, al 50 % de opacidad, ya
+posicionados para 1920×1080. Las escenas 2 a 6 comparten **la misma fuente de pantalla**: se
+cambia de escena, no de captura, y por eso el salto es instantáneo.
+
+**Lo único que queda por hacer a mano, y son dos minutos:**
+
+1. **Ajustes → Salida → Grabación**: formato `mkv`, codificador por hardware si aparece, calidad
+   *Indistinguible*. El `mkv` no se corrompe si la máquina se cae a mitad de grabación; un `mp4`
+   sí. Se convierte a `mp4` al final con **Archivo → Remuxar grabaciones**.
+2. **Ajustes → Vídeo**: base y salida en **1920×1080**, a **30 fps**. Más resolución no suma y
+   pesa; más fotogramas tampoco, porque aquí no hay movimiento rápido.
+3. **Ajustes → Atajos**: asigna una tecla a *Iniciar grabación* y otra a cada escena. Cambiar de
+   escena con el ratón se ve en el vídeo.
+
+Fundido de 0,4 s entre escenas —ya configurado—. **Corte seco dentro de la demostración, nunca
+fundido**: un fundido en medio de una prueba es exactamente lo que hace dudar de si se cortó algo.
+
+> Si la captura de pantalla sale en negro, es que la sesión es Wayland y no X11. Cambia la fuente
+> «Pantalla» por **Captura de pantalla (PipeWire)** y concede el permiso que pide el sistema.
 
 ---
 
@@ -109,7 +132,7 @@ fundido en medio de una prueba es exactamente lo que hace dudar de si se cortó 
 Graba primero lo difícil, con la máquina fresca y tú también:
 
 1. **La toma 3 completa, de una pasada.** El 403, la firma de la persona, el cierre verificado.
-   Si sale, el resto es cuesta abajo.
+   Si sale, el resto es cuesta abajo. **El paso a paso está en la §4.1, aquí abajo.**
 2. **La toma 4**, y enséñala **desconectando la red de verdad**. Es gratis y es la prueba más
    fuerte, porque el jurado puede repetirla en su casa.
 3. **Las tomas 1, 2 y 5.**
@@ -117,6 +140,52 @@ Graba primero lo difícil, con la máquina fresca y tú también:
 5. **La narración al final**, sobre el metraje ya montado. Así el ritmo lo pone la imagen.
 
 ---
+
+### 4.1 La toma 3, paso a paso
+
+Es la única que no se puede repetir mal, así que va escrita entera. Dura entre **50 y 80
+segundos** de reloj: casi todo es la espera del despertador, que **no se corta** — es la prueba de
+que el trabajo se reanuda solo.
+
+**Antes de pulsar grabar** (fuera de cámara, en otra terminal):
+
+```bash
+gcloud auth print-identity-token | head -c 20   # tiene que devolver algo
+python3 sembrar_demo.py --borrar && python3 sembrar_demo.py
+bash demo.sh 3                                  # ENSAYO EN FRÍO, entero
+```
+
+> **Si el token está vacío, no grabes.** Sin sesión de nube, el guion imprime una respuesta de
+> ejemplo con el rótulo `CANNED SAMPLE — DO NOT RECORD`. Grabarlo sería enseñar como prueba algo
+> que no ocurrió, y es justo lo contrario de lo que el vídeo defiende. Vuelve a sembrar antes de
+> la toma buena: el ensayo deja `PET-002` ya cerrada.
+
+**En cámara** — escena 3 de OBS, terminal a pantalla completa, y una sola orden:
+
+```bash
+bash demo.sh 3
+```
+
+| Momento | Qué aparece | Qué se narra |
+|---|---|---|
+| 1 | El rótulo del bloque: *the cloud boundary — IAM & Cloud KMS* | «Un mismo servicio, dos llaves.» |
+| 2 | **`200` con su propia clave** | «Con la suya, firma.» |
+| 3 | **`403 PERMISSION_DENIED`** sobre `clave-humano`, con el recurso completo | **Aquí se para de hablar.** Deja el 403 en pantalla dos segundos enteros. Es el plano del vídeo. |
+| 4 | La persona firma desde su máquina: `decidir_como_persona.py PET-002 descartada` | «La autorización la firma una persona, con una llave que el programa no puede pedir.» |
+| 5 | El despertador se dispara (`scheduler jobs run despertar-candado`) | «Nadie vuelve a tocar nada.» |
+| 6 | La espera, hasta 90 s, sondeando | **No la cortes.** «El trabajo se reanuda solo.» |
+| 7 | `PET-002 closed → signer=HUMANO` | «Y se cierra con la firma de la persona, no con la del programa.» |
+
+**Lo que puede salir mal, y qué hacer:**
+
+- **El paso 6 agota los 90 segundos.** El despertador corre cada quince minutos; si acaba de
+  pasar, la reanudación tarda. Repite la toma, no la edites.
+- **Sale un correo o una ruta del disco.** Corta y repite: `/decidir` ya devuelve solo el dominio,
+  pero este dato ha reaparecido tres veces en sitios distintos.
+- **`PET-002` ya estaba cerrada** (por el ensayo). Vuelve a sembrar.
+
+**Después de la toma 3, y en este orden**: la toma 4 desconectando la red de verdad, luego 1, 2 y
+5, luego el portal con una nota de voz, y la narración al final.
 
 ## 5. El montaje
 
