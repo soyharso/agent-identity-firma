@@ -184,23 +184,38 @@ overstate this section**:
 above and below names the model, the file that calls it, and a command that shows it running. We
 left 0.2 on the table on purpose, and this section is the receipt.
 
-### 2 · Content contribution (0.2)
+### 2 · Content contribution (0.2) — **the long technical article**
 
 A technical write-up of what broke while building this, including three findings from red-teaming
-ourselves before shipping — **and one we failed**. Published publicly on **LinkedIn** (article
-format, public, not unlisted), and it states that it was written for this hackathon.
+ourselves before shipping — **and one we failed**. Public, not unlisted, and it states in its own
+text that it was written for this hackathon.
 
 **→ URL: _pending — paste the public link here before submitting._**
 
-### 3 · Social media post (0.2)
+### 3 · Social media post (0.2) — **the short post, a different piece**
 
-A public post on **LinkedIn** carrying **`#AllThingsAgenticHackathon`**, linking both the article
-above and the live boundary check at `https://sign.qnowa.com`.
+A short public post carrying **`#AllThingsAgenticHackathon`**, linking both the article above and
+the live boundary check at `https://sign.qnowa.com`.
 
 **→ URL: _pending — paste the public link here before submitting._**
 
-> Both of the above are worth 0.2 each and neither needs a line of code. Leaving the URL blank
-> forfeits the points: the rules require the content to be **public**, and unlisted does not count.
+> ### These are two separate pieces, and here is which is which
+>
+> **They are not the same publication counted twice.** One is a ~6,600-word technical article
+> about how the system was built and what broke; the other is a short post pointing at it. If both
+> URLs resolve to the same platform, **the article is the long one and the post is the short one**
+> — the word count alone tells them apart, and each URL is listed against its own bonus above.
+>
+> On platform eligibility, quoting the rules of this hackathon directly:
+>
+> - Content contribution: *«Publish a piece of content (blog, podcast, video): Cover how the
+>   project was built **on any public platform** (e.g., medium.com, dev.to, Youtube, etc.).»* —
+>   the rule is explicitly platform-agnostic; the list is illustrative.
+> - Social media post: *«Highlight or promote your project on social media post on X, **LinkedIn**,
+>   Instagram, or Facebook.»*
+>
+> Both of the above are worth 0.2 each. Leaving either URL blank forfeits its points: the rules
+> require the content to be **public**, and unlisted does not count.
 
 ---
 
