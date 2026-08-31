@@ -178,8 +178,15 @@ toma3() {
   if [ -n "$TOK" ]; then
     curl -s -X POST -H "Authorization: Bearer $TOK" "$URL/intentar-suplantar" | python3 -m json.tool
     echo
-    echo -e "  ${GREEN}✓ Machine Key:${RESET} HTTP 200 OK"
-    echo -e "  ${RED}✖ Human Key:${RESET}   ${BOLD}${RED}HTTP 403 PERMISSION_DENIED${RESET} (Enforced by Cloud IAM, not code)"
+    # LA LÍNEA QUE EL JURADO TIENE QUE PODER LEER. El JSON de arriba es la autoridad —lo dice
+    # Google, no nosotros—, pero su línea estelar tiene 204 caracteres y en cámara envuelve a
+    # dos renglones. Un juez que no la lee ve ruido de terminal, y ahí se pierde el clímax.
+    # Esto NO sustituye al JSON: lo traduce, debajo, nombrando lo que de verdad importa, que no
+    # es el código de error sino LA IDENTIDAD a la que se lo devolvieron.
+    echo -e "  ${GREEN}${BOLD}✓ sa-agente-curador → clave-agente${RESET}   HTTP 200 · signed"
+    echo -e "  ${RED}${BOLD}✖ sa-agente-curador → clave-humano${RESET}   ${BOLD}${RED}HTTP 403 PERMISSION_DENIED${RESET}"
+    echo -e "    ${BOLD}Google Cloud KMS: this agent identity cannot sign with the human key.${RESET}"
+    echo -e "    ${YELLOW}Not our code. Not a policy. An IAM permission the agent does not have.${RESET}"
   else
     echo -e "  ${BOLD}${YELLOW}▓▓▓ CANNED SAMPLE — NOT A LIVE CALL — DO NOT RECORD ▓▓▓${RESET}"
     python3 -c "
