@@ -4,38 +4,64 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Qnowa — Human queue</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* ─── IMAGEN CORPORATIVA: QNOWA, LA MISMA DEL PORTAL ─────────────────────────────────────
-   Esta pantalla era oscura, con la paleta de Cleveria, y llevaba el logotipo de Qnowa pegado
-   sobre una placa blanca porque el wordmark es tinta #0F172A y sobre navy desaparecía. Ese
-   apaño se retira entero.
+/* ─── IMAGEN CORPORATIVA: LA DE QNOWA DE VERDAD ──────────────────────────────────────────
+   ESTA PANTALLA LLEVABA UNA MARCA INVENTADA, y conviene que quede escrito porque el error es
+   de los que no se ven mirando el archivo. Los tokens decían `--azul:#2563EB` y `--cian:#06B6D4`,
+   y `assets/qnowa/qnowa-logo.svg` dibujaba el mismo degradado azul→cian. Todo coherente, todo
+   documentado... y todo aproximado: nadie había ido nunca a `qnowa.com`.
 
-   Qnowa es la marca de atención al cliente. El portal (`ui_portal_cliente.html`) es un lado
-   del mostrador y esta bandeja es el otro: el mismo producto, la misma empresa, la misma gente.
-   Un jurado que ve las dos pantallas seguidas tiene que entenderlo sin que nadie se lo cuente,
-   y eso no se consigue poniendo el mismo logotipo en dos paletas distintas — se consigue
-   compartiendo la paleta, la tipografía y el aire.
+   La marca real es VERDE. Comprobado el 2026-08-31 leyendo la página en producción, que declara
+   sus propias variables y no deja lugar a interpretación:
 
-   Así que se toman del portal, literalmente, las mismas variables: azul → cian en la cabecera,
-   fondo niebla, tarjetas blancas, tinta oscura, Inter. El logotipo va en blanco sobre el
-   gradiente con el mismo `brightness(0) invert(1)` que usa el portal; sin placa, sin parche.
+       --q-teal:#0F6F66   --q-teal-deep:#0A4A44   --q-amber:#D99A2B
+       --q-ink:#16211E    --q-ivory:#F7F5EF       --q-mist:#DCE7E4
+
+   Y la tipografía es Plus Jakarta Sans para los titulares con Inter para el texto, que es lo
+   que la página carga de Google Fonts. Se copian tal cual, sin retocar: cuando existe un
+   sistema de diseño, el trabajo es aplicarlo, no mejorarlo por libre.
+
+   EL SÍMBOLO también estaba mal. El nuestro era una lupa azul; el de verdad es un aro verde con
+   un asta y TRES PUNTOS que se apagan —el primero ámbar, los otros dos teal a media y a poca
+   opacidad—, y el rótulo lleva bajada: «orquestación de atención». Ese aro es lo que se lee como
+   un ojo, y es el detalle por el que el operador notó que esto no era Qnowa.
+
+   QUÉ PAPEL JUEGA CADA COLOR, porque una marca no es una lista de colores sino un reparto:
+     · teal      la casa. Cabecera, enlaces, lo que Qnowa firma con su nombre.
+     · ámbar     ESPERA, y nada más. Es el color con voz, y por eso no se gasta en adornos.
+     · rojo      rechazo.
+     · marfil    el suelo. No es blanco: el blanco puro delata que nadie eligió el fondo.
 
    Cleveria no aparece aquí, igual que no aparece en el portal: la capa de agentes y su paleta
    oscura viven en el libro de autoridad, que es otra pantalla y otro público. */
 :root{
-  --azul:#2563EB; --cian:#06B6D4; --tinta:#0F172A;
-  --gris:#475569;            /* el gris del portal, ya endurecido para el submuestreo de YouTube */
-  --gris-claro:#64748B;
-  --niebla:#F1F5F9; --blanco:#fff; --borde:#E2E8F0;
-  /* El ámbar es el único color con voz propia: dice «esto espera». Es el mismo chip del
-     portal (fondo saturado, letra casi negra) y por la misma razón medida allí: el contraste
-     tiene que vivir en la LUMINANCIA, que es lo único que el códec conserva entero. */
-  --ambar:#F59E0B; --ambar-borde:#B45309; --ambar-tinta:#2B1601; --ambar-oscuro:#B45309;
-  --rojo:#B91C1C; --rojo-suave:#FEE2E2;
-  --verde-borde:#0E7490;
+  --teal:#0F6F66; --teal-hondo:#0A4A44; --teal-claro:#E3EFED;
+  --tinta:#16211E;
+  --gris:#4A5854;            /* endurecido sobre el #5F6B66 del sitio para el submuestreo de YouTube */
+  --gris-claro:#5F6B66;
+  --niebla:#F7F5EF;          /* marfil: el suelo de la marca */
+  --blanco:#fff; --borde:#DCE7E4;
+  /* El ámbar es el único color con voz propia: dice «esto espera». Y ahora además es el ámbar
+     DE LA MARCA, el mismo punto del logotipo, no uno parecido. El contraste vive en la
+     LUMINANCIA, que es lo único que el códec conserva entero. */
+  --ambar:#D99A2B; --ambar-borde:#8A5B0F; --ambar-tinta:#2B1601; --ambar-oscuro:#8A5B0F;
+  --rojo:#A3311F; --rojo-suave:#FBE7E3;
+  --verde-borde:#0F6F66;
+  /* Alias de compatibilidad: quedan reglas escritas contra los nombres viejos, y renombrarlas
+     todas a horas del cierre es riesgo sin ganancia. Apuntan a la paleta nueva. */
+  --azul:#0F6F66; --cian:#0A4A44;
 }
 *{box-sizing:border-box}
+/* LA BANDA NEGRA DE LA DERECHA no era del diseño: era la BARRA DE DESPLAZAMIENTO, que el
+   navegador pinta según el tema del ESCRITORIO. Con el sistema en oscuro sale una franja negra
+   pegada al borde, y sobre marfil, en cámara, canta muchísimo. `color-scheme:light` le dice al
+   navegador que esta página es clara y la barra se pinta clara aunque el sistema no lo esté; el
+   color explícito va detrás porque no todos los motores hacen caso al primero. */
+html{color-scheme:light;scrollbar-color:#C7D5D1 var(--niebla);background:var(--niebla)}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:var(--niebla)}
+::-webkit-scrollbar-thumb{background:#C7D5D1;border-radius:99px;border:3px solid var(--niebla)}
 /* Piso tipográfico de 16 px, sin excepciones: se graba a 1920x1200 y YouTube recodifica a
    ~2500 kbps. Por debajo de 16 px el texto se vuelve mancha gris. Donde algo no cabía se
    quitó información o se dejó envolver, nunca se encogió. */
@@ -43,11 +69,20 @@ body{margin:0;background:var(--niebla);color:var(--tinta);
      font:16px/1.55 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
 
 /* ─── CABECERA ───────────────────────────────────────────────────────────────────────── */
-.top{background:linear-gradient(135deg,var(--azul),var(--cian));color:#fff;
+.top{background:linear-gradient(135deg,var(--teal),var(--teal-hondo));color:#fff;
      padding:15px 26px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.top img{height:30px;flex:none;filter:brightness(0) invert(1)}
-.top h1{font-size:21px;margin:0;font-weight:600;letter-spacing:.1px}
+/* El logotipo es un ENLACE a qnowa.com, como en cualquier producto de la casa. Va en SVG en
+   línea y no en <img> por una razón concreta: sobre el teal el rótulo en tinta desaparecería, y
+   el apaño de antes era un `invert()` que también apagaba el punto ámbar — el único acento de
+   la marca. En línea se recolorea con `currentColor` y el ámbar sobrevive. */
+.top a.marca-q{display:flex;align-items:center;text-decoration:none;flex:none;border-radius:8px}
+.top a.marca-q:hover{opacity:.88}
+.top a.marca-q:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.top svg.logo{height:34px;width:auto;display:block}
+.top h1{font-size:21px;margin:0;font-weight:700;letter-spacing:-.2px;
+        font-family:Plus Jakarta Sans,Inter,sans-serif}
 .top .sub{font-size:17px;opacity:.95}
+h2,h3,h4{font-family:Plus Jakarta Sans,Inter,sans-serif;letter-spacing:-.2px}
 .vivo{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:16px}
 /* Punto fijo, no latiendo: un halo que se expande cada dos segundos durante toda la toma le
    roba bits al texto en cada GOP y la pantalla entera sale a tirones. */
@@ -62,7 +97,10 @@ button.ref:hover{background:rgba(255,255,255,.32)}
 .sitio.local{background:#fff;color:var(--azul)}
 .sitio.nube{background:var(--ambar);color:var(--ambar-tinta);border:1px solid var(--ambar-borde)}
 
-.wrap{padding:20px 26px 40px;max-width:1640px}
+/* Sin tope de ancho: 1640 px dejaba una franja de fondo a la derecha en la pantalla de
+   grabación, que es de 1920. Esto no es una columna de lectura —las de texto ya tienen su
+   propio tope en `ch`— sino el marco de una bandeja, y una bandeja ocupa su mesa. */
+.wrap{padding:20px 26px 40px}
 .ayuda{font-size:17px;line-height:1.5;color:var(--gris);margin:0 0 8px;max-width:84ch}
 .ayuda b{color:var(--tinta)}
 .cuenta{font:600 19px Inter,sans-serif;color:var(--tinta);margin:0 0 6px}
@@ -77,13 +115,25 @@ button.ref:hover{background:rgba(255,255,255,.32)}
       border-radius:13px;margin-bottom:10px;box-shadow:0 1px 2px rgba(15,23,42,.06);overflow:hidden}
 .caso.abierto{border-color:var(--azul);border-left-color:var(--azul);
               box-shadow:0 10px 28px rgba(15,23,42,.13)}
-.cab{display:grid;grid-template-columns:270px 128px 1fr auto 26px;gap:18px;align-items:center;
+/* EL ORDEN SE VE O NO EXISTE. La cola siempre se ordenó por antigüedad, pero en cámara no se
+   leía así: la primera columna ancha era el reloj y la segunda el número de petición, y el ojo
+   va al número. Al ver PET-005 encima de PET-010 el espectador lee «desordenado», porque la
+   única secuencia que reconoce es la de los identificadores.
+   Se arregla con jerarquía, no con más texto: entra un ordinal (1.º, 2.º…) que es la posición
+   REAL en la cola, el reloj manda, y el identificador baja a la categoría de dato — mono, gris,
+   pequeño — que es lo que es. Un identificador no es un puesto en la fila. */
+.cab{display:grid;grid-template-columns:34px 250px 1fr auto 26px;gap:16px;align-items:center;
      padding:14px 18px;cursor:pointer;background:none;border:0;width:100%;text-align:left;
      font:inherit;color:inherit}
-.cab:hover{background:#F8FAFC}
-.cab:focus-visible{outline:3px solid var(--azul);outline-offset:-3px}
-@media(max-width:1100px){.cab{grid-template-columns:230px 1fr 26px}
-                         .cab .pid,.cab .chips{grid-column:2}}
+.cab:hover{background:var(--teal-claro)}
+.cab:focus-visible{outline:3px solid var(--teal);outline-offset:-3px}
+.orden{font:700 17px Plus Jakarta Sans,Inter,sans-serif;color:var(--gris-claro);
+       font-variant-numeric:tabular-nums;text-align:right}
+.caso:first-child .orden{color:var(--ambar-oscuro)}
+.col2{display:flex;flex-direction:column;gap:2px;min-width:0}
+.col3{display:flex;flex-direction:column;gap:3px;min-width:0}
+@media(max-width:1100px){.cab{grid-template-columns:34px 1fr 26px}
+                         .cab .col3,.cab .chips{grid-column:2}}
 /* 24 px y en una sola línea. A 27 px el caso más viejo —«1 d 05 h 04 m 26 s»— partía en dos
    renglones, y un contador que cambia de altura cada vez que cruza una unidad baila en cámara.
    La columna mide 270 px para que quepa el formato más largo que este reloj puede producir. */
@@ -91,15 +141,52 @@ button.ref:hover{background:rgba(255,255,255,.32)}
        font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
 /* Sin hora de llegada en el dato no hay reloj, y no se fabrica uno: se dice que falta. */
 .reloj.sinreloj{font-size:17px;color:var(--gris-claro);font-weight:400;font-family:Inter,sans-serif}
-.pid{font:600 18px JetBrains Mono,monospace;color:var(--tinta)}
+/* «waiting» en letra pequeña bajo el reloj: dice qué mide ese número, que sin rótulo puede
+   leerse como cualquier otra cosa. */
+.rotulo{font:500 15px Inter,sans-serif;color:var(--gris-claro);letter-spacing:.02em}
+/* El identificador deja de competir con el reloj: mono, gris y del tamaño de un dato. */
+.pid{font:400 16px JetBrains Mono,monospace;color:var(--gris-claro)}
+/* ─── LA BANDA DE IDENTIDAD ──────────────────────────────────────────────────────────────
+   Quién sostiene esta sesión y qué puede firmar con ella. Es la frase entera del producto
+   puesta en una barra: la clave no está en el código ni en el disco, está en quién eres para
+   Google ahora mismo. Verde cuando hay sesión; ámbar cuando no, porque no tener sesión no es
+   un error — es el estado normal de esta pantalla en cualquier sitio que no sea tu portátil. */
+.ident{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+       margin:0 0 14px;padding:13px 17px;border-radius:12px;
+       border:1px solid var(--borde);background:var(--blanco);font-size:16px}
+.ident.viva{border-color:var(--teal);background:var(--teal-claro)}
+.ident.sinsesion{border-color:var(--ambar-borde);background:#FDF6E9}
+.ident .quien{font:700 17px Plus Jakarta Sans,Inter,sans-serif;color:var(--tinta)}
+.ident .alcance{color:var(--gris);flex:1;min-width:240px}
+.ident .alcance b{color:var(--teal-hondo)}
+.ident .escudo{width:26px;height:26px;flex:none}
+.ident a.entrar{font:600 16px Inter,sans-serif;text-decoration:none;white-space:nowrap;
+                background:var(--teal);color:#fff;padding:8px 16px;border-radius:9px}
+.ident a.entrar:hover{background:var(--teal-hondo)}
+.ident a.entrar:focus-visible{outline:3px solid var(--teal-hondo);outline-offset:2px}
+/* La banda que dice en voz alta cómo está ordenada la cola. Sin esto, el orden es una
+   convención que el espectador tiene que adivinar — y adivinó mal. */
+.ordenpor{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+          margin:0 0 12px;padding:11px 16px;border-radius:11px;
+          background:var(--teal-claro);border:1px solid var(--borde);
+          font-size:16px;color:var(--gris)}
+.ordenpor b{color:var(--teal-hondo);font-family:Plus Jakarta Sans,Inter,sans-serif}
+/* El grupo que NO se puede ordenar por antigüedad va detrás de una separación explícita y con
+   su motivo escrito. Antes se distinguía solo por un chip, y quedaban mezclados con la cola
+   ordenada como si fueran los últimos de la fila: no lo son, están fuera de la fila. */
+.corte{display:flex;align-items:center;gap:12px;margin:22px 0 12px;color:var(--gris-claro);
+       font-size:16px}
+.corte::before,.corte::after{content:"";height:1px;background:var(--borde);flex:1}
+.corte span{white-space:nowrap;font-weight:500}
 .resumen{font-size:18px;color:var(--tinta);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .resumen.falta{color:var(--gris-claro);font-style:italic}
 .chips{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-self:end}
 .chip{font:600 16px Inter,sans-serif;padding:4px 11px;border-radius:999px;white-space:nowrap;
       border:1px solid var(--borde);background:var(--niebla);color:var(--gris)}
 .chip.espera{background:var(--ambar);color:var(--ambar-tinta);border-color:var(--ambar-borde)}
-.chip.canal{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
-.chip.sinop{background:#F8FAFC;color:var(--gris-claro)}
+.chip.canal{background:#E3EFED;color:#0A4A44;border-color:#BFD6D2}
+.lit{font-size:.88em;opacity:.62;font-weight:400}
+.chip.sinop{background:#FBFAF6;color:var(--gris-claro)}
 .flecha{font-size:20px;color:var(--gris-claro);transition:transform .18s;justify-self:center}
 .caso.abierto .flecha{transform:rotate(90deg);color:var(--azul)}
 @media (prefers-reduced-motion: reduce){.flecha{transition:none}}
@@ -123,7 +210,7 @@ button.ref:hover{background:rgba(255,255,255,.32)}
 .dato{display:flex;gap:9px;align-items:baseline;font-size:17px;margin-bottom:5px}
 .dato .k{color:var(--gris-claro);font-size:16px;min-width:98px;flex:none}
 .dato .v{font-family:JetBrains Mono,monospace;font-size:16px;color:var(--tinta);word-break:break-word}
-.marca{background:#FEF3C7;border-bottom:2px solid var(--ambar-borde);padding:0 2px;border-radius:3px}
+.marca{background:#FAEDD6;border-bottom:2px solid var(--ambar-borde);padding:0 2px;border-radius:3px}
 /* Lo que ya pasó con el caso. Cada renglón es un sobre firmado del registro, con su veredicto:
    una operación rechazada se ve igual de bien que una aceptada, que es medio argumento. */
 .ops{display:flex;flex-direction:column;gap:7px}
@@ -134,14 +221,14 @@ button.ref:hover{background:rgba(255,255,255,.32)}
 .op .est{font:600 16px JetBrains Mono,monospace;color:var(--tinta)}
 .op .quien{color:var(--gris)}
 .op .ver{font:600 16px Inter,sans-serif;padding:2px 9px;border-radius:999px;white-space:nowrap}
-.op .ver.ok{background:#CFFAFE;color:#0E4F5C;border:1px solid #67E8F9}
-.op .ver.mal{background:var(--rojo-suave);color:#7F1D1D;border:1px solid #FCA5A5}
+.op .ver.ok{background:#E3EFED;color:#0A4A44;border:1px solid #9CC7C1}
+.op .ver.mal{background:var(--rojo-suave);color:#6B2418;border:1px solid #E4A79B}
 /* Enlaces de profundización: SOLO si el dato existe. Ninguno se fabrica. */
 .enlaces{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .enlaces a,.enlaces button.salto{font:600 16px Inter,sans-serif;text-decoration:none;
-     color:var(--azul);background:#EFF6FF;border:1px solid #BFDBFE;border-radius:9px;
+     color:var(--azul);background:#E3EFED;border:1px solid #BFD6D2;border-radius:9px;
      padding:8px 13px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
-.enlaces a:hover,.enlaces button.salto:hover{background:#DBEAFE}
+.enlaces a:hover,.enlaces button.salto:hover{background:#CFE3DF}
 
 /* ─── EL ACTO DE FIRMAR ──────────────────────────────────────────────────────────────────
    Nada de esto se pinta cuando esta pantalla la sirve la nube: allí no hay credencial humana y
@@ -155,28 +242,28 @@ select.dec{font:600 18px Inter,system-ui,sans-serif;color:var(--tinta);backgroun
            min-width:330px;max-width:560px}
 select.dec:invalid,select.dec.sinbase{border-color:var(--ambar-borde);color:var(--gris-claro)}
 select.dec option{font-size:18px}
-select.dec option:disabled{color:#94A3B8}
+select.dec option:disabled{color:#9AA6A2}
 button.firmar{font:700 18px Inter,sans-serif;color:#fff;background:var(--azul);
               border:1px solid var(--azul);border-radius:9px;padding:11px 20px;cursor:pointer}
-button.firmar:hover:not(:disabled){background:#1D4ED8}
+button.firmar:hover:not(:disabled){background:#0A4A44}
 button.firmar:disabled{opacity:.45;cursor:not-allowed}
 .porque{font-size:16px;line-height:1.45;color:var(--gris);margin:0 0 10px;max-width:84ch}
 .porque b{color:var(--tinta)}
-.porque.sinbase{color:#7C2D12;background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;
+.porque.sinbase{color:#6B2418;background:#FDF9F0;border:1px solid #EBCF9A;border-radius:9px;
                 padding:9px 12px}
 /* El comando. En caja, monoespaciado, seleccionable — es un comando de verdad, no un adorno:
    lo que se lee es EXACTAMENTE lo que el botón ejecuta, y en cámara esa correspondencia es la
    mitad del argumento. */
-.cmd{background:#0F172A;border-radius:9px;padding:11px 14px;
-     font:600 17px/1.4 JetBrains Mono,monospace;color:#E2E8F0;overflow-x:auto;white-space:nowrap}
-.cmd .arg{color:#38BDF8}
-.cmd .pend{color:#94A3B8;font-style:italic}
+.cmd{background:#16211E;border-radius:9px;padding:11px 14px;
+     font:600 17px/1.4 JetBrains Mono,monospace;color:#DCE7E4;overflow-x:auto;white-space:nowrap}
+.cmd .arg{color:#7FD1C8}
+.cmd .pend{color:#9AA6A2;font-style:italic}
 /* La respuesta del servicio, literal. No se resume ni se traduce a un «listo»: lo que contestó
    la nube ES el resultado, y si contestó un error, el error es lo que se ve. */
 .res{margin-top:11px;border-radius:9px;padding:11px 14px;white-space:pre-wrap;
      font:400 16px/1.45 JetBrains Mono,monospace;overflow-x:auto}
-.res.bien{background:#ECFEFF;border:1px solid #67E8F9;color:#0F172A}
-.res.mal{background:var(--rojo-suave);border:1px solid #FCA5A5;color:#7F1D1D}
+.res.bien{background:#F2F8F7;border:1px solid #9CC7C1;color:#16211E}
+.res.mal{background:var(--rojo-suave);border:1px solid #E4A79B;color:#6B2418}
 
 #ultimo{margin-top:22px;background:var(--blanco);border:1px solid var(--borde);border-radius:13px;
         padding:16px 18px}
@@ -204,15 +291,29 @@ button.firmar:disabled{opacity:.45;cursor:not-allowed}
 </head>
 <body>
 <div class="top">
-  <!-- Qnowa da la cara al cliente, y una bandeja de atención es suya aunque se trabaje por
-       dentro. El mismo logotipo del portal, servido por la misma ruta, y en blanco sobre el
-       mismo gradiente: dos dibujos distintos de la misma empresa en dos pantallas del mismo
-       vídeo restan. -->
-  <img src="/ui/qnowa-logo.svg" alt="Qnowa"
-       onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'Qnowa',style:'font-size:21px;color:#fff'}))">
+  <!-- EL LOGOTIPO DE VERDAD, calcado del que sirve qnowa.com: el aro y el asta en el teal de la
+       casa, y los tres puntos que se apagan con el primero en ámbar. Aquí va sobre teal, así que
+       el aro, el asta y el rótulo se pintan en blanco y SOLO EL PUNTO ÁMBAR conserva su color:
+       es el acento de la marca y apagarlo era lo que hacía el `invert()` que había antes.
+       Enlaza a qnowa.com, que es lo que un logotipo hace en cualquier producto de la casa. -->
+  <a class="marca-q" href="https://qnowa.com" target="_blank" rel="noopener"
+     title="qnowa.com — orquestación de atención">
+    <svg class="logo" viewBox="0 0 300 92" xmlns="http://www.w3.org/2000/svg"
+         role="img" aria-label="Qnowa — go to qnowa.com">
+      <circle cx="38" cy="38" r="22" fill="none" stroke="#fff" stroke-width="11"/>
+      <line x1="52" y1="54" x2="60" y2="74" stroke="#fff" stroke-width="11" stroke-linecap="round"/>
+      <circle cx="74" cy="78" r="5" fill="#D99A2B"/>
+      <circle cx="90" cy="78" r="4" fill="#fff" opacity=".55"/>
+      <circle cx="104" cy="78" r="4" fill="#fff" opacity=".3"/>
+      <text x="122" y="53" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="42"
+            font-weight="800" letter-spacing="-1" fill="#fff">qnowa</text>
+      <text x="124" y="74" font-family="Inter, sans-serif" font-size="11.5"
+            letter-spacing=".8" fill="#fff" opacity=".8">orquestación de atención</text>
+    </svg>
+  </a>
   <div>
     <h1>Human queue</h1>
-    <div class="sub">Cases the agent stopped on purpose · oldest at the top, newest at the bottom</div>
+    <div class="sub">Cases the agent stopped on purpose · longest wait at the top</div>
   </div>
   <div class="vivo">
     <!-- Quién sirve esta página. Lo declara el servidor en /api/puede_firmar, no el navegador
@@ -231,6 +332,13 @@ button.firmar:disabled{opacity:.45;cursor:not-allowed}
      the rest stay collapsed.</p>
   <p class="ayuda" style="margin-bottom:16px" id="explica">Each case shows the command the person
      runs <b>on their own machine</b>, with their own credential.</p>
+
+  <!-- QUIÉN ESTÁ FIRMANDO. Va arriba y no en cada caso porque no es un detalle del expediente:
+       es la condición de todo lo que hay debajo. Lo rellena `identidad()` con lo que contestó
+       el servidor, nunca con lo que el navegador crea. -->
+  <div id="identidad" class="ident" hidden></div>
+
+  <p class="ordenpor" id="ordenpor" hidden></p>
 
   <div id="bandeja"><div class="vacio">Loading…</div></div>
 
@@ -363,6 +471,84 @@ async function sondear(){
       + '<span class="mono">src/decidir_como_persona.py</span>, the same flow as always, on this '
       + 'machine. Move that process to a server and the 403 comes back.';
   }
+  identidad();
+}
+
+// ─── LOS NOMBRES EN INGLÉS, SIN PERDER EL VALOR REAL ───────────────────────────────────────
+// El jurado lee inglés y el registro habla español: `descartada`, `cerrada_con_juicio`,
+// `perdonada`. Traducirlos a secas sería peor que dejarlos, porque el sobre firmado que el
+// mismo jurado puede abrir dice `descartada` — y una pantalla que dice `dismissed` donde la
+// evidencia dice `descartada` obliga a fiarse de la traducción, que es justo lo que este
+// producto se niega a pedir.
+//
+// Así que se enseñan LOS DOS: el inglés para entender, y el valor literal detrás, en mono. Lo
+// que viaja firmado no cambia; cambia lo que se lee. Un valor que no esté en esta tabla sale
+// tal cual, sin inventarle una traducción.
+const EN = {
+  cerrada:'closed', abierta:'open', descartada:'dismissed',
+  cerrada_con_juicio:'closed with judgement', perdonada:'written off',
+  exige_humano:'needs a person', no:'refuse to sign',
+  portal:'the customer portal', whatsapp:'WhatsApp', voz:'a voice note',
+  'medicion-fase0':'a phase-zero measurement'
+};
+function ingles(v){ return EN[String(v||'').toLowerCase()] || null; }
+// Etiqueta larga: «dismissed (descartada)». Para donde hay sitio y la persona decide.
+function etiqueta(v){
+  const t = ingles(v);
+  return t ? `${t} <span class="mono lit">${esc(v)}</span>` : `<span class="mono">${esc(v)}</span>`;
+}
+// Etiqueta corta, en texto plano, para un <option> que no admite marcado.
+function etiquetaPlana(v){
+  const t = ingles(v);
+  return t ? `${t}  ·  ${v}` : String(v);
+}
+
+// ─── QUIÉN ESTÁ FIRMANDO ───────────────────────────────────────────────────────────────────
+// LO QUE ESTA BANDA NO ES: un formulario de acceso. No hay campo de contraseña y no lo habrá —
+// esta pantalla nunca ve una credencial. Lo que hace es DECIR quién es la sesión que la
+// sostiene, leído de `gcloud auth list` por el servidor, y ofrecer el camino de Google cuando
+// no hay ninguna.
+//
+// Y ES EL ARGUMENTO ENTERO PUESTO EN UNA BARRA. Lo que separa esta pantalla de la que sirve
+// Cloud Run no es el código —es el mismo archivo— sino quién la sostiene. Por eso la banda va
+// arriba del todo: no es un detalle de un expediente, es la condición de todo lo que hay debajo.
+//
+// El dominio, nunca el correo: el vídeo es público, y lo que importa no es quién es la persona
+// sino que HAY una y que Google pudo comprobarlo.
+function identidad(){
+  const el = document.getElementById('identidad');
+  if(!el) return;
+  el.hidden = false;
+  const escudo = `<svg class="escudo" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2.5 4.5 5.8v5.4c0 4.6 3.2 8.4 7.5 9.8 4.3-1.4 7.5-5.2 7.5-9.8V5.8Z"
+            stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="m8.6 12.1 2.4 2.4 4.4-4.9" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  if(FIRMA.puede){
+    const quien = FIRMA.dominio ? `Signed in as a person at ${esc(FIRMA.dominio)}`
+                                : 'Signed in — session identity could not be read';
+    const n = FIRMA.decisiones.length;
+    el.className = 'ident viva';
+    el.style.color = 'var(--teal-hondo)';
+    el.innerHTML = escudo
+      + `<span class="quien">${quien}</span>`
+      + `<span class="alcance">This Google identity may sign <b>${n}</b> `
+      + `state${n===1?'':'s'} on this ledger: ${FIRMA.decisiones.map(etiqueta).join(', ')}. `
+      + `Nothing else — and no machine identity may sign any of them.</span>`;
+  }else{
+    // NO PODER FIRMAR NO ES UN FALLO, y la banda no lo pinta como tal. Es lo que le pasa a
+    // cualquiera que abra esta página sin ser la persona: un jurado, un curioso, el propio
+    // servicio en la nube. El enlace lleva a Google, que es quien decide, no a nosotros.
+    el.className = 'ident sinsesion';
+    el.style.color = 'var(--ambar-oscuro)';
+    el.innerHTML = escudo
+      + `<span class="quien">Not signed in — this session cannot sign</span>`
+      + `<span class="alcance">The cases below are readable by anyone. Signing one is not: it
+         needs a Google identity that holds the human key, and this session does not have one.
+         ${esc(FIRMA.motivo || '')}</span>`
+      + `<a class="entrar" href="https://accounts.google.com/" target="_blank" rel="noopener">
+         Sign in with Google</a>`;
+  }
 }
 
 // ─── ESTADO DE LA PANTALLA ─────────────────────────────────────────────────────────────────
@@ -453,15 +639,43 @@ async function cargar(forzado){
   const primeraCarga = vistos.size === 0;
   for(const c of casos) c.nuevo = !primeraCarga && !vistos.has(c.id);
 
-  cuenta.innerHTML = casos.length
-    ? `<b>${casos.length}</b> case${casos.length===1?'':'s'} waiting for a person`
+  // SIN HORA DE LLEGADA NO SE LISTAN. Una bandeja es una fila, y un caso al que no se le puede
+  // medir la espera no tiene sitio en una fila. Antes iban al final, rotulados, y en cámara se
+  // leían como «los últimos» — que es justo lo que no son: no están detrás, están fuera.
+  //
+  // PERO NO DESAPARECEN EN SILENCIO, y ahí está la diferencia que importa: la banda de orden
+  // dice cuántos son y por qué no están. Un dato que falta se declara. Lo que no vale es ni
+  // enseñarlo como si fuera comparable ni borrarlo sin decirlo.
+  const sinReloj = casos.filter(c => !c.desde).length;
+  const enCola   = casos.filter(c => c.desde);
+
+  let n = 0;
+  for(const c of enCola) c.puesto = ++n;
+
+  cuenta.innerHTML = enCola.length
+    ? `<b>${enCola.length}</b> case${enCola.length===1?'':'s'} waiting for a person`
     : 'Queue clear';
 
-  for(const c of casos) datos.set(c.id, c);
-  render(casos);
+  // Se escribe con las cifras de esta carga, no con una frase fija: el día que no haya casos sin
+  // hora, la segunda mitad desaparece sola en vez de mentir.
+  ordenpor.hidden = !enCola.length && !sinReloj;
+  ordenpor.innerHTML =
+      (enCola.length
+        ? `<b>Ordered by wait, longest first.</b>
+           <span>The case number (<span class="mono">PET-…</span>) is an identifier, not a place
+           in line.</span>`
+        : '')
+    + (sinReloj
+        ? ` <span>${sinReloj} ${sinReloj===1?'case is':'cases are'} not listed: the record carries
+             no arrival time for ${sinReloj===1?'it':'them'}, so there is no wait to rank
+             ${sinReloj===1?'it':'them'} by.</span>`
+        : '');
+
+  for(const c of enCola) datos.set(c.id, c);
+  render(enCola);
 
   vistos.clear();
-  for(const c of casos) vistos.add(c.id);
+  for(const c of enCola) vistos.add(c.id);
   tictac();
 }
 
@@ -599,7 +813,10 @@ function render(casos){
 
 // La huella de lo que se ve de un caso. Si no cambia, no se toca el DOM.
 function firmaDe(c){
-  return [c.id, c.desde, c.evs.length, (c.pet.texto||'').length, c.pet.de, c.pet.origen,
+  // `c.puesto` entra en la huella: si un caso cambia de puesto en la fila —porque el de encima
+  // se firmó— su ordinal cambia y la tarjeta tiene que repintarse. Sin esto el número se queda
+  // congelado y la fila dice 1, 3, 4.
+  return [c.id, c.puesto, c.desde, c.evs.length, (c.pet.texto||'').length, c.pet.de, c.pet.origen,
           c.pet.peticion_padre, c.propuesta && c.propuesta.estado, expandido === c.id].join('|');
 }
 
@@ -610,26 +827,37 @@ function pinta(n, c){
 }
 
 function cabecera(c){
+  // El reloj lleva su rótulo debajo, y el identificador va con él en la misma columna pero un
+  // escalón por debajo: así el espectador ve QUÉ ordena la fila antes de ver CÓMO se llama el
+  // caso. El ordinal de la izquierda es la posición real, calculada al pintar.
   const reloj = c.desde
-    ? `<div class="reloj" data-desde="${c.desde}">…</div>`
-    : `<div class="reloj sinreloj">arrival time not on file</div>`;
+    ? `<div class="reloj" data-desde="${c.desde}">…</div><div class="rotulo">waiting</div>`
+    : `<div class="reloj sinreloj">no arrival time on file</div>
+       <div class="rotulo">cannot be ranked by age</div>`;
   const resumen = c.pet.texto
     ? `<div class="resumen">${esc(c.pet.texto)}</div>`
     : `<div class="resumen falta">No request text on file for this case.</div>`;
   // Chips: solo con datos que existen. Sin `de` no se pone chip de cliente; sin `origen`, no
   // se pone chip de canal. Nada de «unknown» decorativo.
+  // CUATRO CHIPS SE COMÍAN LA MITAD DERECHA DE LA PANTALLA, y tres de los cuatro decían lo
+  // mismo en todas las filas: «waiting» es la definición de estar en esta bandeja, «via portal»
+  // es por donde entra todo, y «no operation yet» es lo normal. Un rótulo que sale idéntico en
+  // cada fila no informa: solo ocupa el sitio del texto de la petición, que es lo único que la
+  // persona necesita leer para decidir cuál abre.
+  // Queda UNO: el cliente, que es lo único que cambia de fila a fila. Lo demás está dentro del
+  // caso, que es donde se mira cuando ya se ha decidido abrirlo.
   const chips = [
-    `<span class="chip espera">waiting</span>`,
-    c.pet.origen ? `<span class="chip canal">via ${esc(c.pet.origen)}</span>` : '',
     c.pet.de ? `<span class="chip">${esc(c.pet.de)}</span>` : '',
-    c.evs.length ? `<span class="chip">${c.evs.length} operation${c.evs.length===1?'':'s'}</span>`
-                 : `<span class="chip sinop">no operation yet</span>`
+    c.evs.length ? `<span class="chip">${c.evs.length} operation${c.evs.length===1?'':'s'}</span>` : ''
   ].filter(Boolean).join('');
+  // El ordinal solo existe para los que SÍ tienen reloj: los que no se pueden ordenar por
+  // antigüedad no ocupan un puesto en la fila, y darles uno sería inventarlo.
+  const orden = c.puesto ? `<div class="orden">${c.puesto}</div>` : `<div class="orden">·</div>`;
   return `<button class="cab" aria-expanded="${expandido === c.id}"
                   onclick="alternar('${esc(c.id)}')">
-      ${reloj}
-      <div class="pid">${esc(c.id)}</div>
-      ${resumen}
+      ${orden}
+      <div class="col2">${reloj}<div class="pid">${esc(c.id)}</div></div>
+      <div class="col3">${resumen}</div>
       <div class="chips">${chips}</div>
       <div class="flecha" aria-hidden="true">›</div>
     </button>`;
@@ -687,7 +915,7 @@ function detalle(c){
   const sobreQuien = (c.evs.find(e => (e.sobre||{}).sobre_quien) || {}).sobre;
   const quien = [
     c.pet.de     ? `<div class="dato"><span class="k">customer</span><span class="v">${esc(c.pet.de)}</span></div>` : '',
-    c.pet.origen ? `<div class="dato"><span class="k">channel</span><span class="v">${esc(c.pet.origen)}</span></div>` : '',
+    c.pet.origen ? `<div class="dato"><span class="k">channel</span><span class="v">${etiqueta(c.pet.origen)}</span></div>` : '',
     c.llegada    ? `<div class="dato"><span class="k">arrived</span><span class="v">${esc(fecha(c.llegada))}</span></div>` : '',
     (sobreQuien && sobreQuien.sobre_quien && sobreQuien.sobre_quien !== c.pet.de)
       ? `<div class="dato"><span class="k">about</span><span class="v">${esc(sobreQuien.sobre_quien)}</span></div>` : '',
@@ -706,7 +934,7 @@ function detalle(c){
         const ok = e.veredicto === 'OK';
         return `<div class="op">
           <span class="cuando">${esc(s.emitido_en || fecha(e.ts))}</span>
-          <span class="est">${esc(s.estado_destino || e.dictamen || '—')}</span>
+          <span class="est">${etiqueta(s.estado_destino || e.dictamen || '—')}</span>
           <span class="quien">${esc(s.emisor || '—')} · ${esc(s.tipo_firmante || '')}</span>
           <span class="ver ${ok ? 'ok' : 'mal'}">${esc(e.veredicto || '—')}</span>
         </div>`;
@@ -758,7 +986,7 @@ function bloqueDeFirma(c){
     ...FIRMA.decisiones.map(x => {
       const ok = aceptaElServicio(x);
       return `<option value="${esc(x)}"${x === elegido ? ' selected' : ''}${ok ? '' : ' disabled'}>`
-           + `${esc(x)}${ok ? '' : ' — refused by the deployed service (HTTP 400)'}</option>`;
+           + `${esc(etiquetaPlana(x))}${ok ? '' : ' — refused by the deployed service (HTTP 400)'}</option>`;
     })
   ].join('');
   const fuera = FIRMA.aceptadas

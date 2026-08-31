@@ -4,15 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Qnowa Support</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Imagen corporativa de QNOWA: esta pantalla da la cara al cliente, así que es de Qnowa.
    Cleveria no aparece aquí — el cliente no tiene por qué saber quién gobierna la autoridad
    por dentro, igual que no sabe qué banco compensa su tarjeta. La capa de agentes y su
    paleta oscura empiezan en la pantalla siguiente, y ese contraste es parte del relato. */
+/* LA MARCA DE VERDAD, no la que este archivo llevaba. Aquí ponia `--qnowa-blue:#2563EB` y
+   nadie habia ido nunca a qnowa.com: la marca es VERDE. Comprobado el 2026-08-31 leyendo la
+   pagina en produccion, que declara sus propias variables — las mismas seis que hay abajo — y
+   carga Plus Jakarta Sans con Inter. Se copian tal cual. La bandeja (`ui_bandeja_humana.html`)
+   lleva las mismas: son los dos lados del mismo mostrador y tienen que verse de la misma casa. */
 :root{
-  --qnowa-blue:#2563EB; --qnowa-cyan:#06B6D4; --tinta:#0F172A;
-  --gris:#64748B; --niebla:#F1F5F9; --blanco:#fff; --borde:#E2E8F0;
+  --qnowa-blue:#0F6F66;      /* nombre heredado; el valor ya es el teal de la marca */
+  --qnowa-cyan:#0A4A44;
+  --tinta:#16211E;
+  --gris:#5F6B66; --niebla:#F7F5EF; --blanco:#fff; --borde:#DCE7E4;
 }
 /* ─── Piso tipográfico de 16 px ────────────────────────────────────────────────
    Esta pantalla se graba a 1920x1200 y YouTube la recodifica a ~2500 kbps. Por
@@ -43,12 +50,12 @@ header .sub{font-size:16px;opacity:.95}
 .yo{background:var(--qnowa-blue);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
 /* La transcripción bajo la nota de voz era de 11 px: es justo el dato que prueba
    que el audio se transcribió de verdad, y era el primero en desaparecer al
-   comprimir. Sube a 16 px y el gris se oscurece (#475569) para aguantar el
+   comprimir. Sube a 16 px y el gris se oscurece (#4A5854) para aguantar el
    submuestreo de color. */
-.meta{font-size:16px;color:#475569;margin-top:6px;line-height:1.45}
+.meta{font-size:16px;color:#4A5854;margin-top:6px;line-height:1.45}
 .yo .meta{color:rgba(255,255,255,.95)}
 /* ─── Etiqueta de estado: TINTA OSCURA SOBRE CHIP DE COLOR ─────────────────────
-   Antes era ámbar claro (#FEF3C7) con letra café sobre un fondo casi blanco: dos
+   Antes era ámbar claro (#FAEDD6) con letra café sobre un fondo casi blanco: dos
    claros juntos. El submuestreo de croma de YouTube (4:2:0) guarda el color a la
    mitad de resolución, así que un chip claro sobre fondo claro se deshace por los
    bordes y la etiqueta se lee a medias. Ahora el chip es ámbar saturado y la letra
@@ -56,8 +63,8 @@ header .sub{font-size:16px;opacity:.95}
    conserva entero. Misma regla en el chip de error. */
 .estado{align-self:center;max-width:100%;text-align:center;
         font:700 16px/1.35 Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;
-        background:#F59E0B;color:#2B1601;padding:8px 15px;border-radius:999px;border:1px solid #B45309}
-.estado.err{background:#FCA5A5;color:#3B0708;border-color:#B91C1C}
+        background:#D99A2B;color:#2B1601;padding:8px 15px;border-radius:999px;border:1px solid #8A5B0F}
+.estado.err{background:#E4A79B;color:#3B0708;border-color:#A3311F}
 footer{padding:12px;background:var(--blanco);border-top:1px solid var(--borde);display:flex;gap:9px;align-items:center}
 input[type=text]{flex:1;min-width:0;border:1px solid var(--borde);border-radius:999px;padding:12px 16px;
                  font:16px Inter,sans-serif;outline:0}
@@ -69,7 +76,7 @@ input[type=text]:focus{border-color:var(--qnowa-blue)}
    corre mientras se graba — no es un bucle permanente de los que ensucian la
    compresión toda la toma. Se queda, pero apagado bajo prefers-reduced-motion:
    el relleno rojo sólido ya dice «grabando» sin moverse. */
-.btn.mic.grabando{background:#DC2626;color:#fff;animation:late 1.1s infinite}
+.btn.mic.grabando{background:#A3311F;color:#fff;animation:late 1.1s infinite}
 @keyframes late{50%{box-shadow:0 0 0 11px rgba(220,38,38,.16)}}
 @media (prefers-reduced-motion: reduce){.btn.mic.grabando{animation:none}}
 .ondas{display:none;gap:3px;align-items:center;height:26px;flex:1;padding-left:6px}
@@ -77,7 +84,7 @@ input[type=text]:focus{border-color:var(--qnowa-blue)}
 .ondas i{width:3px;background:var(--qnowa-cyan);border-radius:2px;height:6px}
 /* El pie subió de 10,5 a 16 px. A ese cuerpo ya no cabía en un renglón, así que se
    deja envolver en dos: prefiero dos líneas legibles que una ilegible. */
-.pie{text-align:center;font-size:16px;line-height:1.4;color:#475569;padding:9px 12px}
+.pie{text-align:center;font-size:16px;line-height:1.4;color:#4A5854;padding:9px 12px}
 .pie b{color:var(--qnowa-blue)}
 </style>
 </head>

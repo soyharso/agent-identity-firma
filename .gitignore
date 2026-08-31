@@ -45,10 +45,14 @@ subtitulos.srt
 # Viven aqui porque es donde se usan, pero quien juzga el PRODUCTO no tiene por que leer
 # el plan de rodaje, los pasos de inscripcion ni las llamadas a modelos de otros proveedores.
 INSCRIPCION.md
-VIDEO_SCRIPT.en.md
+VIDEO_SCRIPT_v1.0_SUPERSEDED.en.md
 STORYBOARD_JURADO.en.md
 MEDICION_articulo.md
 ARTICULO_v1.0_SUPERSEDED.en.md
+# La produccion del video: el plan cronometrado, su traduccion y las pistas generadas.
+narracion_es.txt
+narracion/
+subtitulos.es.srt
 PROPUESTA_PERSISTENCIA_NO_MEMORIA.md
 docs/mediciones/*aislado*/
 docs/mediciones/_prompt_*
