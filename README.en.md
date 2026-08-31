@@ -117,7 +117,7 @@ flowchart TD
     style H fill:#ea4335,color:#fff
 ```
 
-**Three models. None can grant itself authority. Six functions decide.** Gemini adjudicates;
+**Six models take part. One decides. None can grant itself authority.** Gemini adjudicates;
 a second Google model (embeddings) is a semantic fence that may only ask for *more* caution —
 it can raise the bar to "a human must decide", never lower it. A third, **Gemma on Model
 Garden, has to co-sign** before the machine key is ever used, and it too can only withhold.
@@ -273,6 +273,18 @@ Declaring a component absent is honest engineering:
 - **Agent Gateway as a separate proxy product**: Not built; replaced by direct cryptographic scope verification.
 - **Conversational Memory Bank / Vector DB**: Not built; workflow continuity relies on durable domain facts in Firestore, not probabilistic memory.
 - **Passkeys for human authentication**: Planned; currently signed via operator workstation key.
+- **Event-driven triggering.** A scheduler wakes the agent every fifteen minutes with its own
+  identity. That proves something the thesis needs — **nobody launches it by hand** — but the
+  right pattern in production is to fire when the request arrives. And there is a larger debt
+  behind it: **the portal queue is not wired to the agent**; the scheduler walks a seed file. We
+  say it because a judge following that thread will find it, and finding it unannounced is worse
+  than reading it here.
+- **A dedicated identity for the public demo — fixed on 2026-08-31.** It ran as the default
+  compute account, which holds project-level Firestore write access, and it is open to
+  `allUsers`. It now runs as `sa-demo` with four roles and **no signing role at all**: asked to
+  sign, Cloud KMS answers 403. We leave the note because the mistake is instructive — this
+  project had already found and fixed the same class of error once, and it reappeared where
+  nobody was looking.
 - **The ledger anchor is installed and tested, and it is not yet protecting anything.** The
   mechanism exists (`src/ancla.py`) and passes fourteen adversarial cases against copies of the
   ledger. But an anchor only starts guarding a ledger once a person signs the first one, and at

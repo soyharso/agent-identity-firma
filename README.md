@@ -48,7 +48,7 @@ flowchart TD
     style H fill:#ea4335,color:#fff
 ```
 
-**Dos modelos. Ninguno puede darse autoridad. Seis funciones deciden.** Gemini dictamina; un
+**Seis modelos toman parte. Uno decide. Ninguno puede darse autoridad.** Gemini dictamina; un
 segundo modelo de Google (embeddings) es un cerco semántico que solo puede pedir MÁS prudencia
 —puede subir el listón a «que decida una persona», nunca bajarlo—. Si falla, alucina o lo
 envenenan, no abre ninguna puerta: en el peor caso molesta a alguien de más. Todo lo determinista
@@ -122,10 +122,10 @@ puede producirla.
 
 ## Las pruebas que lo cierran
 
-**Son nueve**, todas se ejecutan y ninguna es decorativa. Las nueve de una vez, con su resumen:
+**Son dieciséis**, todas se ejecutan y ninguna es decorativa. Las dieciséis de una vez, con su resumen:
 
 ```bash
-./pruebas_de_ruptura.sh              # las nueve en bloque (~2 min)
+./pruebas_de_ruptura.sh              # las dieciséis en bloque (~204 s)
 ./pruebas_de_ruptura.sh --resumen    # el resultado de la última corrida, con su fecha
 ```
 
@@ -143,9 +143,9 @@ python3 agente/killtest_cerco_semantico.py  # el banco adversarial: 9/9 cazados,
 python3 agente/killtest_durabilidad.py      # la pausa sobrevive a que el proceso muera (5 pasos, 5 procesos)
 ```
 
-Ocho de las nueve corren **sin sesión de `gcloud`**; `killtest_blindaje.py` consulta el filtro
-gestionado del proveedor y necesita credenciales. Las nueve tardan unos dos minutos: la más lenta
-es la de durabilidad, 47 segundos, porque arranca cinco procesos de verdad.
+La mayoría corren **sin sesión de `gcloud`**; `killtest_blindaje.py` consulta el filtro
+gestionado del proveedor y necesita credenciales. Las dieciséis tardan 204 segundos: la más lenta
+es la del cerco doble, 52 segundos, porque consulta dos modelos de embeddings de verdad.
 
 ### El dato que justifica toda la arquitectura
 
@@ -184,6 +184,17 @@ Declarar una pieza ausente vale más que fingirla:
 - **Memoria de largo plazo** — no está, y no es el relato de esto.
 - **Llaves de acceso del navegador** para la clave humana — sería mejor que la clave gestionada,
   porque ni el administrador podría suplantar. Es trabajo de días y queda fuera.
+- **El disparo por evento.** El agente lo despierta un temporizador cada quince minutos, con su
+  propia identidad. Eso prueba algo que la tesis necesita —**nadie lo lanza a mano**— pero el
+  patrón correcto en producción es disparar por evento cuando la petición entra. Y hay una deuda
+  mayor detrás: **la cola del portal no está cableada al agente**; el temporizador recorre un
+  archivo de siembra. Se dice porque un jurado que siga ese hilo lo encuentra, y encontrarlo sin
+  aviso es peor que leerlo aquí.
+- **Una identidad propia para la demostración, corregida el 2026-08-31.** El servicio público
+  corría con la cuenta por defecto de compute —con escritura en Firestore a nivel de proyecto— y
+  abierto a `allUsers`. Ya tiene `sa-demo`, con cuatro roles y **ninguno de firma**: ahora ese
+  servicio recibe 403 de Cloud KMS si lo intenta. Lo dejamos escrito porque el error es
+  instructivo: el proyecto ya había corregido uno igual, y volvió a aparecer donde nadie miraba.
 - **El ancla del libro está instalada y probada, y todavía no protege nada.** El mecanismo
   existe (`src/ancla.py`) y pasa sus catorce casos adversariales contra copias del libro. Pero
   un ancla solo empieza a custodiar un libro cuando una persona firma la primera, y al escribir

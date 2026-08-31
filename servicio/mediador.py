@@ -4,8 +4,22 @@ QUÉ RESUELVE. Hasta hoy el agente tenía `roles/datastore.user` y escribía el 
 sobre firmado se producía, se guardaba y probaba DESPUÉS quién cerró qué — pero nada rechazaba un
 cierre que llegara sin él. Era un recibo, no una puerta.
 
-Este servicio corre con OTRA identidad —`sa-mediador`, la única con permiso de escritura sobre
-Firestore— y expone exactamente dos entradas:
+Este servicio corre con OTRA identidad —`sa-mediador`— y expone exactamente dos entradas:
+
+**PRECISIÓN QUE COSTÓ UNA AUDITORÍA, y que esta línea afirmaba de más.** Aquí ponía «la única con
+permiso de escritura sobre Firestore», y `gcloud projects get-iam-policy` decía otra cosa: el
+servicio público de la demostración corría con la **cuenta por defecto de compute**, que tiene
+`roles/datastore.user` a nivel de proyecto y estaba abierto a `allUsers`. Es decir: un servicio
+público, sin autenticación, con permiso de escritura en la misma base. El mismo error que este
+proyecto ya había encontrado y corregido una vez —las dos claves de máquina compartiendo una
+cuenta— repetido en otro sitio.
+
+Corregido el 2026-08-31: la demostración tiene ahora su propia identidad, `sa-demo`, con cuatro
+roles y ninguno de firma. Lo comprobado después del cambio: pide firmar a Cloud KMS y recibe
+**403 PERMISSION_DENIED**. Lo que sigue siendo cierto y ahora sí se sostiene solo: `sa-mediador`
+es **la única identidad que escribe el registro de cierres**, y el agente tiene
+`datastore.viewer` — lee y no escribe.
+
 
   · `/aplicar-cierre`  verifica el sobre CONTRA ESTA petición y solo entonces escribe. Es lo
                        único en todo el sistema que puede escribir `sobre`, `firma` y

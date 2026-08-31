@@ -26,6 +26,7 @@ sitio que no sea la máquina donde corre.
 Uso:
     python3 bandeja_local.py            # http://localhost:8800/
 """
+import ast
 import json
 import pathlib
 import re
@@ -41,6 +42,10 @@ sys.path.insert(0, str(RAIZ))
 PAGINA = RAIZ / "assets" / "slides" / "ui_bandeja_humana.html"
 DIRECTORIO = RAIZ / "claves" / "directorio.json"
 DECIDIR = RAIZ / "src" / "decidir_como_persona.py"
+# Dos archivos que esta bandeja LEE pero no reimplementa. Ver `aceptadas_por_el_servicio` y
+# `marcas_de_juicio`: la lista se saca del código que manda, nunca se vuelve a teclear aquí.
+PUERTA_SERVICIO = RAIZ / "servicio" / "main.py"
+GRAFO = RAIZ / "agente" / "grafo.py"
 
 # El registro durable vive en la nube y lo publica el servicio de la demostración. Esta
 # bandeja NO tiene datos propios ni los inventa: lee de ahí y hace de intermediaria para que
@@ -59,6 +64,114 @@ app = Flask(__name__)
 def decisiones_de_la_persona() -> list:
     d = json.loads(DIRECTORIO.read_text())
     return list(d["claves"]["persona-operador"]["alcance_permitido"])
+
+
+def aceptadas_por_el_servicio() -> list:
+    """Qué decisiones acepta de verdad la puerta `/decidir` del servicio desplegado.
+
+    NO es lo mismo que el alcance de la clave. El directorio le permite a la persona cinco
+    estados; la puerta desplegada solo admite tres —`cerrada`, `descartada` y `no`— y a los
+    demás les contesta HTTP 400 sin llegar a mirar la firma. Ofrecer en el selector un estado
+    que el servicio va a rechazar es preparar un error delante de la cámara.
+
+    La lista se saca del ÁRBOL SINTÁCTICO de `servicio/main.py`, que es el archivo que se
+    despliega, en vez de volver a teclearla aquí: dos copias de una lista son dos formas de
+    equivocarse, y la que se vería en pantalla sería la falsa. Si el archivo cambia de forma y
+    no se reconoce, se devuelve `None` y la pantalla lo dice — no se adivina.
+    """
+    try:
+        arbol = ast.parse(PUERTA_SERVICIO.read_text())
+    except Exception:                                             # noqa: BLE001
+        return None
+    for nodo in ast.walk(arbol):
+        if not isinstance(nodo, ast.Compare) or not nodo.ops:
+            continue
+        if not isinstance(nodo.ops[0], ast.NotIn):
+            continue
+        derecha = nodo.comparators[0]
+        if not isinstance(derecha, (ast.Tuple, ast.List, ast.Set)):
+            continue
+        valores = [e.value for e in derecha.elts
+                   if isinstance(e, ast.Constant) and isinstance(e.value, str)]
+        # La firma de la puerta humana: contiene los dos estados y la negativa.
+        if {"cerrada", "descartada", "no"} <= set(valores):
+            # `no` no es una decisión que se firme: es la negativa, y no tiene sitio en un
+            # selector cuyo botón firma. Se deja fuera aquí y no en la pantalla.
+            return [v for v in valores if v != "no"]
+    return None
+
+
+def marcas_de_juicio() -> list:
+    """Las marcas de texto con las que el TECHO DE AUTORIDAD decide que hace falta una persona.
+
+    Es lo único de «por qué se detuvo este caso» que se puede saber con certeza, porque el
+    techo es determinista: no lo decide un modelo, lo decide `techo_de_autoridad` mirando si el
+    texto contiene alguna de estas raíces. El registro durable NO guarda esa razón —el sobre
+    firmado solo lleva el estado— así que la pantalla la recalcula con ESTA MISMA lista y lo
+    dice en pantalla: calculado aquí, no leído del registro.
+
+    Se lee por árbol sintáctico, sin importar `agente.grafo`, que arrastra el agente entero.
+    """
+    try:
+        arbol = ast.parse(GRAFO.read_text())
+    except Exception:                                             # noqa: BLE001
+        return None
+    for nodo in ast.walk(arbol):
+        if isinstance(nodo, ast.Assign) and any(
+                isinstance(t, ast.Name) and t.id == "MARCAS_DE_JUICIO" for t in nodo.targets):
+            if isinstance(nodo.value, (ast.Tuple, ast.List)):
+                return [e.value for e in nodo.value.elts
+                        if isinstance(e, ast.Constant) and isinstance(e.value, str)]
+    return None
+
+
+def sesion_activa() -> dict:
+    """QUIÉN sostiene esta pantalla. No se autentica a nadie: se LEE una sesión que ya existe.
+
+    Aquí no hay ni habrá un inicio de sesión propio —ni formulario, ni OAuth, ni usuarios—, y no
+    por pereza: toda la tesis del proyecto es que la autoridad la da la infraestructura y no el
+    software. Un login escrito por nosotros sería exactamente el control blando que esto rechaza,
+    y encima sería el que un jurado sabe saltarse. La sesión de Google YA es el login: es la que
+    Cloud KMS acepta o rechaza tres funciones más abajo, y es la única que decide si esta máquina
+    puede firmar. Lo que se añade es enseñarla.
+
+    Y se enseña A MEDIAS, a propósito. El vídeo es público y en él no entra un correo personal.
+    La regla ya está sellada en `servicio/main.py` —el servicio devuelve el dominio de quien
+    llamó y no su correo, «dice lo mismo sin poner un correo personal en cámara»— y aquí se
+    repite: `dominio` es lo que la pantalla pinta, `cuenta` viaja en el JSON local para depurar
+    y no se pinta nunca. La identidad completa sigue dentro del sobre firmado, que es donde
+    tiene que estar para poder auditar.
+    """
+    try:
+        p = subprocess.run(["gcloud", "auth", "list", "--filter=status:ACTIVE",
+                            "--format=value(account)"],
+                           capture_output=True, text=True, timeout=30)
+        cuenta = (p.stdout or "").strip().splitlines()
+        cuenta = cuenta[0].strip() if cuenta else ""
+    except Exception as e:                                        # noqa: BLE001
+        return {"cuenta": None, "dominio": None,
+                "motivo": f"could not read the active session: {type(e).__name__}: {e}"}
+    if not cuenta:
+        # Sin sesión activa no se inventa una. Que la pantalla lo diga es mejor que un nombre
+        # de relleno, que en cámara es indistinguible de uno real.
+        return {"cuenta": None, "dominio": None,
+                "motivo": "gcloud reports no active account on this machine"}
+    return {"cuenta": cuenta,
+            "dominio": cuenta.split("@")[-1] if "@" in cuenta else cuenta,
+            "motivo": "read from the active gcloud session on this machine"}
+
+
+# Se lee UNA vez al arrancar, por lo mismo que la sonda de KMS: es la misma sesión durante toda
+# la grabación, y llamar a `gcloud` en cada latido del reloj de la pantalla sería pagar un
+# proceso por segundo para que conteste siempre lo mismo.
+_SESION = None
+
+
+def sesion():
+    global _SESION
+    if _SESION is None:
+        _SESION = sesion_activa()
+    return _SESION
 
 
 def sondear_clave_humana() -> dict:
@@ -134,11 +247,23 @@ def api_puede_firmar():
     correcta: allí no se puede firmar.
     """
     s = sonda()
+    ses = sesion()
     return jsonify({"puede_firmar": s["puede"],
                     "motivo": s["motivo"],
                     "kms_http": s["http"],
                     "servido_desde": "esta máquina · credencial de la persona",
+                    # `dominio` es lo ÚNICO que la pantalla pinta. `cuenta` va aquí para poder
+                    # depurar desde la consola local; si algún día alguien la pinta, estará
+                    # rompiendo la misma regla que `servicio/main.py` ya sella.
+                    "dominio": ses["dominio"],
+                    "cuenta": ses["cuenta"],
+                    "sesion_motivo": ses["motivo"],
                     "decisiones": decisiones_de_la_persona(),
+                    # Lo que la CLAVE permite y lo que la PUERTA acepta son dos cosas, y la
+                    # diferencia se ve en el selector: los estados que el servicio rechaza
+                    # salen deshabilitados y con el motivo, en vez de fallar en cámara.
+                    "aceptadas_por_el_servicio": aceptadas_por_el_servicio(),
+                    "marcas_de_juicio": marcas_de_juicio(),
                     "comando": "python3 src/decidir_como_persona.py"})
 
 
@@ -221,14 +346,19 @@ def anunciar():
     """Lo primero que se lee en la consola es si esta máquina puede firmar o no. Arrancar sin
     saberlo llevaría a descubrirlo delante de la cámara, con un caso real de por medio."""
     s = sonda()
+    ses = sesion()
     print()
     print("  Bandeja humana — servida desde ESTA máquina")
+    print(f"  sesión activa: {ses['cuenta'] or '(ninguna) — ' + ses['motivo']}")
+    print(f"  en pantalla se verá solo el dominio: {ses['dominio'] or '—'}")
     print(f"  http://localhost:{PUERTO}/")
     print(f"  datos: {BACKEND}")
     print()
     if s["puede"]:
         print("  ✓ HAY CREDENCIAL HUMANA. Cloud KMS firmó con la clave de la persona (HTTP 200).")
-        print(f"    Decisiones en alcance: {', '.join(decisiones_de_la_persona())}")
+        print(f"    Alcance de la clave (directorio): {', '.join(decisiones_de_la_persona())}")
+        acep = aceptadas_por_el_servicio()
+        print(f"    Acepta la puerta desplegada:      {', '.join(acep) if acep else 'no se pudo leer de servicio/main.py'}")
         print("    La pantalla mostrará selector y botón de firma.")
     else:
         print(f"  ✗ SIN CREDENCIAL HUMANA (KMS HTTP {s['http']}).")
