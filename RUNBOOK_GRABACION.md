@@ -1,6 +1,10 @@
-# RUNBOOK DE GRABACIÓN — CLEVERIA · v3
+# RUNBOOK DE GRABACIÓN — CLEVERIA · v8
 
-**Fecha:** 2026-08-30 · **Versión:** 7.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+**Fecha:** 2026-08-31 · **Versión:** 8.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+*(v8: la apertura pasa a TRES planos y empieza en la portada; la nota de voz del portal entra
+por un sumidero virtual de audio y NO por el aire —medido: por el aire no se transcribe—; el
+plano del 403 es ahora `demo.sh 3a`, porque la toma 3 entera se pisaba con la firma en la
+bandeja; son OCHO escenas, no siete; y la cola sella su hora de llegada justo antes de grabar)*
 *(v7: el banner de la toma 4 **arreglado en el código** y vigilado por una prueba — ya se graba
 entera; el identificador de sesión dura una hora; menos de diez minutos entre ensayo y toma;
 y son dieciséis pruebas, la del ancla no entra)*
@@ -60,8 +64,23 @@ miente a medias; y se retiró el residuo que aún mandaba desconectar el cable)*
 > | | Archivo | Dónde |
 > |---|---|---|
 > | **QUÉ** se graba y qué se dice | `2026-08-31_ESCALETA_corregida_contra_lo_medido.md` | `cleveria-dominios`, en `docs/strategy/metodo/ganar-hackathon/` |
-> | **CÓMO** se graba | **este runbook**, v7 | aquí |
-> | Lo que **EJECUTA** la toma | `plan_toma.txt` + `dirigir_grabacion.py` | aquí |
+> | **CÓMO** se graba | **este runbook**, v8 | aquí |
+> | Lo que **EJECUTA** la toma | `plan_toma.txt` + `dirigir_grabacion.py` | aquí, **y sin versionar**: ver el recuadro de abajo |
+>
+> ### ⚠ EL PLAN QUE EJECUTA LA TOMA NO ESTÁ VERSIONADO EN ESTE REPOSITORIO
+>
+> `plan_toma.txt`, `dirigir_grabacion.py`, `generar_subtitulos.py`, `narracion_es.txt`,
+> `subtitulos*.srt` y `narracion/` están **en `.gitignore` a propósito**: quien juzga el producto
+> no tiene por qué leer el plan de rodaje. La consecuencia es que **un cambio en el plan no queda
+> en la historia de este repositorio**, y por eso existe la copia de referencia:
+>
+> ```
+> cleveria-dominios/docs/strategy/metodo/ganar-hackathon/produccion-entregable/
+> ```
+>
+> **Tocar el plan y no sincronizar esa copia es la forma silenciosa de perder el guion.** Al
+> terminar cualquier cambio en los archivos de arriba, cópialos allí y comitéalos. Sincronizado
+> por última vez el **2026-08-31**, con la apertura de tres planos y la toma `3a` dentro.
 >
 > **`VIDEO_SCRIPT.en.md` YA NO ESTÁ EN ESTE REPOSITORIO**: era anterior a las mediciones del 30
 > y 31 de agosto —cinco tomas de terminal, sin el portal ni el libro de autoridad— y se movió a
@@ -164,6 +183,39 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
    > sola, en una centésima de segundo, y ahí se queda hasta que el operador decida instalarla
    > **después** de entregar. Si te la encuentras y te parece que falta: no falta, se decidió.
 3. **Siembra la cola**: `python3 sembrar_demo.py --borrar && python3 sembrar_demo.py`.
+   Y **si la siembra no es de hace un rato, vuelve a sellar la hora** justo antes de grabar:
+   `python3 sembrar_demo.py --solo-horas`. Pone a `PET-001..004` una hora de llegada de HOY
+   —hace 12, 9, 6 y 3 minutos— y las marca `via seed`. Sin esto salen en el panel **sin hora**
+   al lado del caso que entra en vivo, que sí la tiene, y la comparación delata la cola.
+   La hora no se escribe a mano en `libro/peticiones.json`: se sella al preparar la toma, así
+   que es cierta. Un dato fabricado dentro de la entrega es lo que la rúbrica castiga.
+3-bis. **El portal, en inglés**: pulsa `EN` arriba a la derecha. Arranca en `es-CO`
+   (`assets/slides/ui_portal_cliente.html`), y en español la nota de voz en inglés se
+   transcribe destrozada. No hay segunda toma.
+3-ter. **La voz de la clienta entra por un sumidero virtual, no por el aire.**
+
+   > ### ⚠ MEDIDO EL 2026-08-31: POR EL ALTAVOZ NO SE TRANSCRIBE
+   >
+   > Reproduciendo la nota por el altavoz y capturándola con el micrófono del portátil,
+   > Speech-to-Text devolvió **«sin habla reconocible»** al 27 % y al 55 % de ganancia. Al 100 %,
+   > saturado, transcribió **«call Michelle Pfeiffer Associates»** — una frase que nadie dijo,
+   > que es peor que el silencio. Por el sumidero virtual sale **palabra por palabra**.
+   >
+   > ```bash
+   > pactl load-module module-null-sink sink_name=cliente_sim \
+   >       sink_properties=device.description=ClienteSimulado
+   > pactl set-default-source cliente_sim.monitor
+   > # al terminar:
+   > pactl unload-module module-null-sink
+   > ```
+   >
+   > En OBS deja tu micrófono **fijado al dispositivo real**, no a «predeterminado», o tu
+   > narración se irá con el sumidero. Y es la MISMA ejecución en vivo: Speech-to-Text
+   > transcribe de verdad, en cámara. Cambia el cable, no el hecho.
+   >
+   > La nota está sintetizada en `narracion/cliente_simulado.wav` (voz
+   > `en-US-Chirp3-HD-Autonoe`, 6,6 s), distinta de la voz de narración (`en-US-Studio-Q`) para
+   > que se oiga que habla otra persona. En pantalla, rótulo `simulated customer`.
 4. **Ensayo en frío de la toma 3**, que es la que no se puede repetir mal.
    **El identificador de sesión de la nube vive UNA HORA.** El ensayo del 30 de agosto arrancó
    con el identificador vencido y `demo.sh` se negó a correr la toma —hizo lo correcto—, pero si
@@ -188,7 +240,7 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 
 ---
 
-## 3. OBS — ya instalado y con las siete escenas montadas
+## 3. OBS — ya instalado y con las ocho escenas montadas
 
 > **Hecho el 2026-08-30.** OBS Studio no estaba en esta máquina: se instaló (`flatpak --user`,
 > versión 32.2.2) y se dejó **una colección de escenas ya armada**, con las cinco piezas de
@@ -198,13 +250,24 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 
 | # | Escena | Qué lleva dentro | Se usa en |
 |---|---|---|---|
-| 1 | **Portada** | `portada.png` a pantalla completa | 0–3 s y antes del cierre |
+| 1 | **Portada** | `portada.png` a pantalla completa | **0–8 s**, que es donde empieza el vídeo, y antes del cierre |
 | 2 | **Portal del cliente** | pantalla + marca de agua | la entrada del caso y la voz |
 | 3 | **Demostración — toma única** | pantalla + **rótulo `unedited — single take`** + marca de agua | **toda la demostración** |
 | 4 | **Libro de autoridad** | pantalla + marca de agua | la auditoría |
 | 5 | **Consola de Google Cloud** | pantalla + marca de agua | junto al 403 |
 | 6 | **Arquitectura** | pantalla + marca de agua | el bloque de arquitectura |
 | 7 | **Cierre** | `cierre.png` a pantalla completa | los últimos 20 s |
+| 8 | **Bandeja humana** | pantalla + marca de agua | **la firma de la persona**, 2:23–2:49 |
+
+> **Son ocho, y en la colección van con su número delante** (`1 · Portada`, `2 · Portal del
+> cliente`, …). `dirigir_grabacion.py` las resuelve por ese nombre y **falla antes de grabar** si
+> una no existe: compruébalo con `python3 dirigir_grabacion.py --probar`, que enseña la lista.
+>
+> **Si OBS abre con una colección vacía**, no la reconstruyas: es que la colección activa quedó
+> en `Untitled`. Con OBS cerrado, en
+> `~/.var/app/com.obsproject.Studio/config/obs-studio/user.ini`, deja
+> `SceneCollection=Cleveria_Hackathon` y `SceneCollectionFile=Cleveria_Hackathon.json`. Pasó el
+> 2026-08-31 tras un cierre en falso, y desde fuera parecía que se habían perdido las escenas.
 
 El rótulo va arriba a la izquierda y la marca de agua abajo a la derecha, al 50 % de opacidad, ya
 posicionados para 1920×1080. Las escenas 2 a 6 comparten **la misma fuente de pantalla**: se
@@ -273,6 +336,25 @@ Graba primero lo difícil, con la máquina fresca y tú también:
 ### 4.1 La toma 3, paso a paso
 
 Es la única que no se puede repetir mal, así que va escrita entera.
+
+> ### ⚠ EN EL VÍDEO SE GRABA `demo.sh 3a`, NO `demo.sh 3`
+>
+> **Corregido el 2026-08-31.** `demo.sh 3` hace dos cosas: el 403 de Cloud KMS **y la firma
+> humana por línea de comandos** (`src/decidir_como_persona.py PET-002 descartada`). El plan de
+> la toma manda a la persona a firmar **en la bandeja** cuarenta segundos después — sobre un
+> caso que la toma 3 ya habría cerrado. La escena del clímax se quedaba sin nada que firmar,
+> en directo y sin segunda pasada.
+>
+> `demo.sh 3a` corre **solo el 403** y para ahí. La firma humana ocurre donde el guion la
+> enseña: en la bandeja, con la persona abriendo **el caso de la clienta que entró en el 0:30**
+> y pulsando Firmar. Así el vídeo cuenta **un solo caso de punta a punta**.
+>
+> `demo.sh 3` sigue existiendo y sirve para ensayar el ciclo entero fuera de cámara.
+>
+> **Y al narrar, cuidado con una frase falsa fácil**: `/intentar-suplantar`
+> (`servicio/main.py:102`) firma sobre un sobre de demostración con `peticion_id: DEMO` y **no
+> anota nada en el libro**. El intento rechazado que se ve en el panel es el que sembró
+> `sembrar_demo.py`, no el que se acaba de disparar en cámara.
 
 > ### ⏱ Dura **13 segundos**, no 80. Y no hay espera del despertador.
 >
