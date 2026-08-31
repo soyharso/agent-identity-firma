@@ -253,5 +253,5 @@ We would rather you find our limits in our own comments than in your reading of 
   refusal is the product, not an outage.
 - **Technical Deep-Dive Article**: [LinkedIn article link]
 
-**Run the break tests yourself**: `./pruebas_de_ruptura.sh` — sixteen tests, 204 seconds, and
+**Run the break tests yourself**: `./pruebas_de_ruptura.sh` — sixteen tests, 196 seconds on our last run (31 August 2026), and
 most need no credentials and no network at all.

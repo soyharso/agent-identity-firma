@@ -336,7 +336,7 @@ That is why the guarantee is an IAM binding and not a prompt, a keyword ceiling 
 
 ## You do not have to take our word for any of it
 
-The repository ships with the submission: **sixteen break tests** — all sixteen green, in 204 seconds — the adversarial bank, and a verifier that runs with **no network, no credentials and no Google account**.
+The repository ships with the submission: **sixteen break tests** — all sixteen green in 196 seconds on our last run, 31 August 2026 — the adversarial bank, and a verifier that runs with **no network, no credentials and no Google account**.
 
 Be precise about that last part, because we were not until someone measured it. **Six of the sixteen run with no credentials at all** — `canonical-json`, `signature-replay`, `act-binding`, `prompt-injection`, `ledger-chain` and `ledger-order`. We know because we ran them with the credentials taken away. **The other ten need them**, because they call KMS, Vertex, Firestore or the speech services, which is the entire point of those ten.
 
