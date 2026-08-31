@@ -22,13 +22,47 @@ import requests  # noqa: E402
 from src.firma_kms import CLAVE_HUMANO, firmar, resumen  # noqa: E402
 
 SERVICIO = "https://candado-firma-141981963817.us-central1.run.app"
-PETICIONES = pathlib.Path(__file__).resolve().parent.parent / "libro" / "peticiones.json"
+RAIZ = pathlib.Path(__file__).resolve().parent.parent
+PETICIONES = RAIZ / "libro" / "peticiones.json"
+DIRECTORIO = RAIZ / "claves" / "directorio.json"
+# El registro durable. El archivo de arriba es una siembra de ejemplos para el README; los
+# casos que entran de verdad por el portal viven aquí y nunca bajan al disco.
+BACKEND = "https://demo.cleveria.co/api/auditoria_datos"
+
+
+def decisiones_permitidas() -> list:
+    """Lo que la persona puede autorizar sale del directorio de claves, que es la única
+    compuerta de política del verificador. Tenerlo además escrito a mano aquí era prometer en
+    la línea de comandos un alcance distinto del que la firma iba a poder ejercer."""
+    return list(json.loads(DIRECTORIO.read_text())
+                ["claves"]["persona-operador"]["alcance_permitido"])
+
+
+def peticion_de(peticion_id: str) -> dict:
+    """El caso sobre el que se firma. Local primero; si no está, se pide al registro durable.
+
+    El archivo local no es el registro: es una siembra de ejemplos. Un caso que entró por el
+    portal esta mañana no está ahí, y hasta hoy eso moría con un KeyError seco. Se firma sobre
+    el texto que el sistema tiene guardado, venga de donde venga — nunca sobre uno inventado
+    aquí para que el comando no falle.
+    """
+    locales = json.loads(PETICIONES.read_text())
+    if peticion_id in locales:
+        return locales[peticion_id]
+    r = requests.get(BACKEND, timeout=30)
+    r.raise_for_status()
+    remotas = (r.json() or {}).get("peticiones", {})
+    if peticion_id not in remotas:
+        raise SystemExit(f"{peticion_id} is not in {PETICIONES.name} nor in the durable record")
+    return remotas[peticion_id]
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("peticion_id")
-    ap.add_argument("decision", choices=["cerrada", "descartada", "no"])
+    # «no» no es un estado del directorio: es la negativa, que no firma nada y por eso no
+    # necesita alcance. Los demás salen del directorio, no de esta línea.
+    ap.add_argument("decision", choices=decisiones_permitidas() + ["no"])
     ap.add_argument("--servicio", default=SERVICIO)
     ap.add_argument("--origen", default="portal",
                     help="por dónde entró la petición: portal, whatsapp, correo…")
@@ -40,7 +74,7 @@ def main():
                     help="expediente del que nace esta decisión (aún opcional)")
     args = ap.parse_args()
 
-    peticion = json.loads(PETICIONES.read_text())[args.peticion_id]
+    peticion = peticion_de(args.peticion_id)
     texto = peticion["texto"]
     import datetime
     import time

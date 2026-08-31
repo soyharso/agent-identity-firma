@@ -85,6 +85,39 @@ button.ref:hover{background:rgba(75,107,255,.32)}
      overflow-x:auto;white-space:nowrap}
 .cmd .arg{color:var(--ambar-tinta)}
 .pie{font-size:16px;color:var(--gris-texto);margin-top:7px}
+
+/* ─── LA FIRMA ───────────────────────────────────────────────────────────────────
+   Nada de esto se pinta cuando esta pantalla la sirve la nube: allí no hay credencial
+   humana y un botón sería una promesa que el sistema no puede cumplir. Aparece solo
+   cuando el servidor que sirve la página declara que SÍ puede firmar, que es tanto
+   como decir: cuando la sirve la máquina de la persona.
+   El cian es el único color de esta pantalla que dice «aquí sí se puede», frente al
+   ámbar, que en todas las filas dice «esto espera». */
+.acto{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+.acto label{font:600 16px Inter,sans-serif;color:var(--gris-texto)}
+select.dec{font:600 18px Inter,system-ui,sans-serif;color:var(--ice);background:rgba(6,17,31,.9);
+           border:1px solid rgba(39,230,210,.45);border-radius:9px;padding:9px 12px;cursor:pointer}
+select.dec option{background:#06111F;color:#E9FFFB;font-size:18px}
+button.firmar{font:700 18px Inter,sans-serif;color:#04231E;background:var(--cyan);
+              border:1px solid var(--cyan);border-radius:9px;padding:10px 20px;cursor:pointer}
+button.firmar:hover{filter:brightness(1.12)}
+button.firmar:disabled{opacity:.5;cursor:progress}
+/* La respuesta del servicio, literal. No se resume ni se traduce a un «listo»: lo que
+   contestó la nube ES el resultado, y si contestó un error, el error es lo que se ve. */
+.res{margin-top:11px;border-radius:9px;padding:11px 14px;white-space:pre-wrap;
+     font:400 16px/1.45 JetBrains Mono,monospace;overflow-x:auto}
+.res.bien{background:rgba(39,230,210,.10);border:1px solid rgba(39,230,210,.45);color:var(--ice)}
+.res.mal{background:rgba(255,107,107,.10);border:1px solid rgba(255,107,107,.5);color:#FFD9D9}
+/* Chip de sitio: las dos pantallas son idénticas a propósito, así que en cámara hay que
+   poder decir de un vistazo cuál de las dos se está mirando. */
+.sitio{font:600 16px Inter,sans-serif;padding:6px 12px;border-radius:999px;white-space:nowrap}
+.sitio.local{background:rgba(39,230,210,.14);border:1px solid rgba(39,230,210,.5);color:var(--cyan)}
+.sitio.nube{background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);color:var(--ambar-tinta)}
+/* Lo último que se firmó sobrevive al refresco de tres segundos. Sin esto el caso
+   desaparece de la bandeja —que es lo correcto— y con él la prueba de qué pasó. */
+#ultimo{margin-top:22px}
+#ultimo h3{font:700 17px Inter,sans-serif;margin:0 0 9px;color:var(--ice)}
+
 /* La entrada de un caso nuevo se ve en cámara: 1,1 s, y se apaga con reduced-motion,
    porque una animación que no se puede apagar es un problema de accesibilidad. */
 @keyframes entra{
@@ -113,6 +146,10 @@ button.ref:hover{background:rgba(75,107,255,.32)}
     <div class="sub">The agent stopped here on purpose. Oldest first.</div>
   </div>
   <div class="vivo">
+    <!-- Quién sirve esta página. Lo declara el servidor en /api/puede_firmar, no el
+         navegador mirando el nombre del host: `localhost` puede ser cualquier cosa y un
+         túnel lo volvería mentira. Quien sabe si hay credencial humana es quien la tiene. -->
+    <span class="sitio nube" id="sitio">checking…</span>
     <span class="pulso"></span><span id="fuente">…</span>
     <button class="ref" onclick="cargar()">Refresh</button>
   </div>
@@ -125,10 +162,16 @@ button.ref:hover{background:rgba(75,107,255,.32)}
        frase son nueve renglones de ruido y 270 px de alto robados a las tarjetas, que es
        lo que hay que leer. Se dice una vez, arriba, y ya vale para toda la bandeja. -->
   <p class="cuenta" id="cuenta">…</p>
-  <p class="ayuda" style="margin-bottom:16px">Each case shows the command the person runs
-     <b>on their own machine</b>, with their own credential. The last word is the decision:
+  <p class="ayuda" style="margin-bottom:16px" id="explica">Each case shows the command the person
+     runs <b>on their own machine</b>, with their own credential. The last word is the decision:
      <span class="mono">cerrada</span> or <span class="mono">descartada</span>.</p>
   <div id="bandeja"><div class="vacio">Loading…</div></div>
+
+  <!-- El resultado de la última firma. Se queda aquí a propósito: en cuanto el registro
+       acepta el sobre, el caso deja de esperar a una persona y sale de la bandeja en el
+       refresco siguiente —que es lo correcto— y con él se iría la única prueba de qué
+       contestó el servicio. Esta caja la conserva. -->
+  <div id="ultimo" hidden></div>
 
   <!-- ─── POR QUÉ NO HAY UN BOTÓN DE FIRMAR ────────────────────────────────────────
        Porque esta página la sirve el mismo servicio que NO PUEDE firmar. La clave humana
@@ -140,7 +183,11 @@ button.ref:hover{background:rgba(75,107,255,.32)}
        Por eso la bandeja es de SOLO LECTURA. No ofrece la firma: enseña el comando que la
        persona ejecuta en su propia máquina, con su propia credencial. La distancia entre
        leer aquí y firmar allá no es una molestia del flujo: es el producto. -->
-  <div class="nota">
+  <!-- LA MISMA PANTALLA, DOS SITIOS. Este párrafo se reescribe cuando la sirve la máquina
+       de la persona. No hay dos archivos: hay uno, y por eso la comparación prueba algo.
+       Servida por Cloud Run el texto de abajo es literal y no hay botón; servida en local
+       aparecen el selector y el botón, y el texto lo explica. -->
+  <div class="nota" id="nota">
     <b>This screen cannot sign anything, and that is the point.</b> The human key lives in
     Cloud KMS and this service's identity has no permission over it — asking returns
     <span class="mono">403 PERMISSION_DENIED</span>. So there is no button here. The person
@@ -179,10 +226,94 @@ function espera(desde, ahora){
 
 const vistos = new Set();
 
+// ─── DÓNDE ESTÁ CORRIENDO ESTA PANTALLA ──────────────────────────────────────────────────
+// Lo contesta el servidor que la sirve, no el navegador. Cloud Run no define esta entrada,
+// así que allí la respuesta es un 404 — y un 404 aquí no es un fallo: es la respuesta
+// correcta. Ese servicio corre con la identidad del agente y Cloud KMS le niega la clave de
+// la persona; por eso allí no hay botón, y por eso no hace falta preguntárselo dos veces.
+const FIRMA = {puede:false, decisiones:[], motivo:'', consultado:false};
+
+async function sondear(){
+  try{
+    const r = await fetch('/api/puede_firmar');
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    FIRMA.puede = !!d.puede_firmar;
+    FIRMA.decisiones = d.decisiones || [];   // salen del directorio de claves, no de aquí
+    FIRMA.motivo = d.motivo || '';
+  }catch(e){
+    FIRMA.puede = false;
+    FIRMA.motivo = 'this server does not offer a signing endpoint (' + e.message + ')';
+  }
+  FIRMA.consultado = true;
+
+  sitio.className = 'sitio ' + (FIRMA.puede ? 'local' : 'nube');
+  // Se dice lo que se sabe, no lo que se supone: la página no puede afirmar QUIÉN la sirve,
+  // solo si de este lado hay una credencial humana que Cloud KMS acepte. En la nube no la hay.
+  sitio.textContent = FIRMA.puede ? 'this machine holds the human credential · can sign'
+                                  : 'no human credential on this side · cannot sign';
+  if(FIRMA.puede){
+    explica.innerHTML = 'This page is being served <b>from the person’s own machine</b>, '
+      + 'with their own credential — so here, and only here, the signature can actually be '
+      + 'produced. Pick the decision and sign. The button runs the very command shown below it.';
+    nota.innerHTML = '<b>Same screen, different machine — and that is the whole argument.</b> '
+      + 'Served by Cloud Run this page has no button: that service runs as the agent, and Cloud '
+      + 'KMS answers <span class="mono">403 PERMISSION_DENIED</span> when it asks for the human '
+      + 'key. Served here it does, because the key answers to the person sitting in front of it. '
+      + 'The button does not sign either — it runs '
+      + '<span class="mono">src/decidir_como_persona.py</span>, the same flow as always, on this '
+      + 'machine. Move that process to a server and the 403 comes back.';
+  }
+}
+
+// Lo firmado en esta sesión, para que el resultado sobreviva al refresco de tres segundos.
+const resultados = new Map();
+// Y lo ELEGIDO y todavía no firmado, por el mismo motivo y por uno más grave: la bandeja se
+// repinta entera cada tres segundos, así que sin esto la decisión que la persona acababa de
+// escoger volvía sola al valor por defecto entre el clic del selector y el del botón. Se
+// detectó firmando de verdad: se pidió `descartada` y se firmó `cerrada`. Una pantalla que
+// firma algo distinto de lo que muestra es exactamente lo que este proyecto dice evitar.
+const eleccion = new Map();
+
+// Los casos que ESTA sesión ya resolvió, y por qué hace falta apuntarlos aquí.
+//
+// La bandeja se calcula sobre el libro de la demostración, que registra las pasadas del
+// agente. La decisión humana no se escribe ahí: va a la colección de estado del servicio
+// —`peticiones`, la que manda para el flujo—, donde el caso deja de esperar a una persona.
+// Son dos registros distintos y a propósito, y ninguno miente; simplemente el que pinta esta
+// pantalla no se entera de lo que decidió la persona hasta que el agente vuelve a pasar.
+//
+// Así que el caso se retira SOLO cuando el servicio ha confirmado que quedó anotado
+// (`recorded: true`, con la firma verificada contra la clave pública). No se retira porque el
+// botón se haya pulsado ni porque el comando terminara: se retira porque hay acuse. Y es
+// memoria de esta sesión: al recargar la página el caso vuelve a aparecer hasta que el agente
+// pase. Eso se prefiere a escribir una segunda vez la decisión desde aquí, que sería abrir un
+// camino de escritura paralelo al que el propio proyecto existe para cerrar.
+const decididos = new Map();
+// Mientras una firma está en vuelo no se repinta la bandeja: arrancar el selector y el botón
+// del DOM a mitad de un acto es la forma más tonta de perder una toma.
+let firmando = false;
+
 async function cargar(){
+  if(firmando) return;
+  // Tampoco se repinta mientras la persona tiene el foco en un selector o en un botón: un
+  // desplegable abierto que se cierra solo a mitad de la toma no hay forma de disimularlo.
+  const foco = document.activeElement;
+  if(foco && (foco.classList.contains('dec') || foco.classList.contains('firmar'))) return;
   let d;
   try{ d = await (await fetch('/api/auditoria_datos')).json(); }
   catch(e){ bandeja.innerHTML = '<div class="vacio">No response from the backend.</div>'; return; }
+
+  // El intermediario local devuelve el fallo del registro tal cual en vez de inventarse una
+  // bandeja. Si no hay datos, se dice de quién es el silencio.
+  if(d.error){
+    fuente.textContent = 'backend unreachable';
+    fuente.style.color = 'var(--coral)';
+    cuenta.textContent = '';
+    bandeja.innerHTML = '<div class="vacio">The durable record did not answer, so there is '
+      + 'nothing truthful to show.<br><span class="mono">' + esc(d.error) + '</span></div>';
+    return;
+  }
 
   fuente.textContent = d.duradero ? 'Firestore · durable' : 'container disk · not durable';
   fuente.style.color = d.duradero ? 'var(--cyan)' : 'var(--coral)';
@@ -210,7 +341,7 @@ async function cargar(){
     const primera = evs.length ? (evs[evs.length-1].ts || 0) : 0;
     const desde = llegada || primera || 0;
     return {id, pet, evs, enEspera, desde};
-  }).filter(c => c.enEspera)
+  }).filter(c => c.enEspera && !decididos.has(c.id))   // ya no espera: una persona lo firmó
     // Al revés que el ledger: el MÁS VIEJO arriba. Una bandeja se trabaja por antigüedad;
     // lo que lleva más tiempo esperando es lo más urgente, no lo que acaba de llegar.
     // Los que no traen hora de llegada no se pueden ordenar por antigüedad sin inventarles
@@ -247,11 +378,78 @@ function pinta(c){
   const reloj = c.desde
     ? `<div class="reloj" data-desde="${c.desde}">…</div><div class="rotulo">waiting</div>`
     : `<div class="reloj sinreloj">arrival not on file</div><div class="rotulo">waiting</div>`;
+  // Lo ya elegido manda sobre el valor por defecto, que es el primero del alcance de la
+  // persona. El catálogo llega del directorio de claves: esta pantalla no decide qué se
+  // puede autorizar, solo enseña lo que esa clave tiene permitido.
+  const elegido = eleccion.get(c.id) || FIRMA.decisiones[0] || 'descartada';
+  const cmd = `<div class="cmd" id="cmd-${esc(c.id)}">python3 src/decidir_como_persona.py `
+            + `<span class="arg">${esc(c.id)}</span> <span class="arg">${esc(elegido)}</span></div>`;
+  // El acto solo se pinta si el servidor declaró que esta máquina puede firmar. En la nube
+  // este bloque no existe — no está oculto, no está deshabilitado: no se genera.
+  const acto = FIRMA.puede ? `<div class="acto">
+      <label for="dec-${esc(c.id)}">Decision</label>
+      <select class="dec" id="dec-${esc(c.id)}" onchange="verCmd('${esc(c.id)}')">
+        ${FIRMA.decisiones.map(x => `<option value="${esc(x)}"${x === elegido ? ' selected' : ''}>${esc(x)}</option>`).join('')}
+      </select>
+      <button class="firmar" id="btn-${esc(c.id)}" onclick="firmar('${esc(c.id)}')">Sign as the person</button>
+    </div>` : '';
+  const r = resultados.get(c.id);
+  const res = r ? `<div class="res ${r.ok ? 'bien' : 'mal'}">${esc(r.texto)}</div>` : '';
   return `<div class="fila${c.nuevo ? ' entra' : ''}">
     <div>${reloj}<div class="pid">${esc(c.id)}</div><div class="de">${origen}</div></div>
     <div>${texto}
-      <div class="cmd">python3 src/decidir_como_persona.py <span class="arg">${esc(c.id)}</span> <span class="arg">descartada</span></div>
+      ${cmd}${acto}${res}
     </div></div>`;
+}
+
+// El comando de la fila sigue al selector. No es adorno: lo que se lee es exactamente lo que
+// el botón va a ejecutar, y en cámara esa correspondencia es la mitad del argumento.
+function verCmd(id){
+  const sel = document.getElementById('dec-' + id), caja = document.getElementById('cmd-' + id);
+  if(!sel) return;
+  eleccion.set(id, sel.value);     // se recuerda: el siguiente repintado no puede desdecirla
+  if(caja) caja.innerHTML = 'python3 src/decidir_como_persona.py '
+    + `<span class="arg">${esc(id)}</span> <span class="arg">${esc(sel.value)}</span>`;
+}
+
+// ─── FIRMAR ──────────────────────────────────────────────────────────────────────────────
+// Esta función no firma nada: le pide al servidor local que corra el flujo humano de siempre.
+// La clave privada no pasa por aquí, ni por el navegador, ni por la red — vive en Cloud KMS y
+// solo responde a la credencial de esta máquina. Lo que vuelve es la salida literal de ese
+// proceso, incluida la respuesta del servicio y, si lo hubo, el error.
+async function firmar(id){
+  const sel = document.getElementById('dec-' + id), btn = document.getElementById('btn-' + id);
+  const estado = sel ? sel.value : '';
+  if(!estado) return;
+  firmando = true;
+  if(btn){ btn.disabled = true; btn.textContent = 'Signing on this machine…'; }
+  let salida, ok = false;
+  try{
+    const r = await fetch('/firmar', {method:'POST', headers:{'Content-Type':'application/json'},
+                                      body: JSON.stringify({peticion_id:id, estado})});
+    const d = await r.json();
+    ok = !!d.ok;
+    salida = (d.comando ? '$ ' + d.comando + '\n' : '') + (d.salida || '(no output)');
+    // Solo el acuse del servicio saca el caso de la bandeja. Un error se queda a la vista.
+    if(d.registrado) decididos.set(id, estado);
+  }catch(e){
+    salida = 'the local tray could not be reached: ' + e.message;
+  }
+  resultados.set(id, {ok, texto: salida});
+  pintaUltimo(id, ok, salida);
+  firmando = false;
+  cargar();   // el caso ya no espera a nadie: el registro lo dirá y saldrá de la bandeja
+}
+
+// El último resultado, fuera de la fila, porque la fila está a punto de desaparecer.
+function pintaUltimo(id, ok, salida){
+  ultimo.hidden = false;
+  const fuera = decididos.has(id)
+    ? `<p class="ayuda" style="margin:9px 0 0">The service acknowledged it, so ${esc(id)} is no `
+      + `longer waiting for a person and has left the queue above.</p>`
+    : '';
+  ultimo.innerHTML = `<h3>Last signature attempt — ${esc(id)}</h3>`
+                   + `<div class="res ${ok ? 'bien' : 'mal'}">${esc(salida)}</div>` + fuera;
 }
 
 // El reloj corre en el cliente, cada segundo, sin volver a pedir datos: la espera es
@@ -263,7 +461,9 @@ function tictac(){
     el.textContent = espera(+el.dataset.desde, ahora);
 }
 
-cargar();
+// La sonda va PRIMERO y se espera: pintar la bandeja antes de saber dónde estamos haría
+// aparecer los botones un segundo tarde, y en cámara eso se lee como un fallo.
+sondear().then(cargar);
 setInterval(cargar, 3000);
 setInterval(tictac, 1000);
 </script>

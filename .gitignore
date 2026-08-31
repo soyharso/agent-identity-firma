@@ -34,7 +34,10 @@ dirigir_grabacion.py
 ensayar_narracion.py
 generar_subtitulos.py
 subtitulos.srt
-bandeja_local.py
+# `bandeja_local.py` estuvo aqui y se SACO a proposito: no es produccion del video,
+# es PRODUCTO. Es la herramienta con la que la persona firma, como
+# src/decidir_como_persona.py. Sin ella, quien abra el repositorio ve la pantalla que
+# NO puede firmar y no ve la que si — que es justo la mitad del argumento.
 
 # --- Produccion del video y aparato del metodo: NO se comparte con el jurado -------
 # Copia de referencia en cleveria-dominios:
