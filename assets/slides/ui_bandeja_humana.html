@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qnowa — Human queue</title>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Misma paleta que el ledger: esto sigue siendo la trastienda, no el canal del cliente.
+   El fondo oscuro es el mismo de la capa de agentes, y por eso la cabecera lleva a Qnowa
+   sobre una placa clara — la marca de atención al cliente entra a la trastienda a decir
+   de quién es este trabajo, no a repintar la pantalla. */
+:root{
+  --navy:#06111F; --harbor:#0B2940; --cyan:#27E6D2;
+  --ice:#E9FFFB; --slate:#93A8B8; --coral:#FF6B6B;
+  --linea:rgba(147,168,184,.18);
+  /* El ámbar es el ÚNICO color con voz aquí. En el ledger competía con el rojo del
+     rechazo; en la bandeja no hay rechazos que mirar —solo espera— así que el ámbar
+     se queda solo y puede permitirse el borde grueso y el reloj. */
+  --ambar:#F5A524; --ambar-tinta:#FFC978;
+  --gris-texto:#B9CBD8;
+}
+*{box-sizing:border-box}
+/* Piso tipográfico de 16 px, heredado del ledger y por la misma razón: se graba a
+   1920x1200 y YouTube recodifica a ~2500 kbps; por debajo de 16 px el texto se vuelve
+   mancha. Aquí el piso sube de hecho a 17 px en todo lo que no sea etiqueta, porque
+   esta pantalla tiene una décima parte de los datos del ledger y le sobra sitio. */
+body{margin:0;background:var(--navy);color:var(--ice);font:17px/1.55 Inter,system-ui,sans-serif}
+.top{display:flex;align-items:center;gap:16px;padding:15px 26px;border-bottom:1px solid var(--linea);
+     background:linear-gradient(180deg,rgba(11,41,64,.85),transparent)}
+/* El wordmark de qnowa-logo.svg es tinta #0F172A: sobre navy desaparecería la palabra y
+   quedaría solo el mosaico azul. La placa clara lo devuelve a su fondo, que es como la
+   marca está dibujada. Se prefiere eso a retocar el SVG, que es de otro dueño. */
+.placa{background:#FFFFFF;border-radius:11px;padding:7px 12px;display:flex;align-items:center;flex:none}
+.placa img{height:26px;display:block}
+.top h1{font-size:21px;margin:0;font-weight:600;letter-spacing:.2px}
+.top .sub{font-size:17px;color:var(--gris-texto)}
+.vivo{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:16px;color:var(--gris-texto)}
+/* Punto fijo, no latiendo: el mismo hallazgo del ledger — un halo que se expande cada dos
+   segundos durante toda la toma le roba bits al texto en cada GOP y sale a tirones. */
+.pulso{width:10px;height:10px;border-radius:50%;background:var(--cyan);flex:none;
+       box-shadow:0 0 0 3px rgba(39,230,210,.18)}
+button.ref{background:rgba(75,107,255,.16);border:1px solid rgba(75,107,255,.5);color:var(--ice);
+           font:600 16px Inter,sans-serif;padding:8px 15px;border-radius:8px;cursor:pointer}
+button.ref:hover{background:rgba(75,107,255,.32)}
+/* 1640 px, no 1420: a 1920 de grabación sobraban 500 px de fondo vacío a la derecha y
+   las peticiones largas partían en dos renglones sin necesidad. El texto de la petición
+   sigue topado a 70ch por su propia regla, así que ensanchar la caja no alarga la línea
+   de lectura — solo deja de desperdiciar encuadre. */
+.wrap{padding:20px 26px 34px;max-width:1640px}
+.ayuda{font-size:17px;line-height:1.5;color:var(--gris-texto);margin:0 0 8px;max-width:82ch}
+.cuenta{font:600 17px Inter,sans-serif;color:var(--ice);margin:0 0 16px}
+.cuenta b{color:var(--ambar-tinta)}
+
+/* ─── LA FILA ────────────────────────────────────────────────────────────────────
+   Rejilla de dos columnas: a la izquierda el reloj, que es el criterio de orden y por
+   tanto lo que se escanea; a la derecha el texto de la petición, que es lo que hay que
+   LEER para decidir. En el ledger el asunto era un subtítulo entre chips; aquí es el
+   protagonista, porque una bandeja no informa de un caso: pide una lectura. */
+.fila{display:grid;grid-template-columns:292px 1fr;gap:22px;align-items:start;
+      background:var(--harbor);border:1px solid var(--linea);border-left:5px solid var(--ambar);
+      border-radius:13px;padding:17px 20px;margin-bottom:13px}
+@media(max-width:900px){.fila{grid-template-columns:1fr;gap:12px}}
+/* 24 px y en una sola línea. A 27 px el caso más viejo de la cola real —«1 d 05 h 04 m
+   26 s»— partía en dos renglones, y un contador que cambia de altura cada vez que cruza
+   una unidad baila en cámara. La columna se ensanchó a 292 px para que quepa el formato
+   más largo que este reloj puede producir, que es ese. */
+.reloj{font:600 24px/1.15 JetBrains Mono,monospace;color:var(--ambar-tinta);
+       font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+/* Sin hora de llegada en el dato no hay reloj, y no se fabrica uno: se dice que falta.
+   Un panel que inventa es indistinguible en cámara de uno que mide. */
+.reloj.sinreloj{font-size:19px;color:var(--gris-texto);font-weight:400}
+.rotulo{font:700 16px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+        color:var(--ambar);margin-top:5px}
+.pid{font:600 17px JetBrains Mono,monospace;color:var(--ice);margin-top:11px}
+.de{font-size:16px;color:var(--gris-texto)}
+/* El texto de la petición: 23 px, peso normal, ancho de lectura. Es la única cosa de
+   esta pantalla que un jurado sin sonido tiene que leer entera. */
+.texto{font-size:23px;line-height:1.42;color:var(--ice);margin:0 0 14px;max-width:70ch}
+.texto.falta{font-size:19px;color:var(--gris-texto);font-style:italic}
+/* El comando. En caja, monoespaciado, seleccionable — es un comando de verdad, no un
+   adorno: la persona lo copia y lo corre EN SU MÁQUINA. Ver la nota de abajo. */
+.cmd{background:rgba(6,17,31,.72);border:1px solid var(--linea);border-radius:9px;
+     padding:11px 14px;font:600 17px/1.4 JetBrains Mono,monospace;color:var(--ice);
+     overflow-x:auto;white-space:nowrap}
+.cmd .arg{color:var(--ambar-tinta)}
+.pie{font-size:16px;color:var(--gris-texto);margin-top:7px}
+/* La entrada de un caso nuevo se ve en cámara: 1,1 s, y se apaga con reduced-motion,
+   porque una animación que no se puede apagar es un problema de accesibilidad. */
+@keyframes entra{
+  0%   {opacity:0; transform:translateY(-14px) scale(.99); box-shadow:0 0 0 0 rgba(245,165,36,.55)}
+  35%  {opacity:1; transform:translateY(0) scale(1);       box-shadow:0 0 0 10px rgba(245,165,36,.28)}
+  100% {opacity:1; transform:none;                          box-shadow:0 0 0 0 rgba(245,165,36,0)}
+}
+.fila.entra{animation:entra 1.1s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion: reduce){.fila.entra{animation:none}}
+.vacio{color:var(--gris-texto);font-size:19px;padding:26px 0;line-height:1.5}
+.nota{margin-top:22px;border-left:2px solid var(--linea);padding-left:14px;
+      font-size:17px;line-height:1.5;color:var(--gris-texto);max-width:82ch}
+.nota b{color:var(--ice)}
+.mono{font-family:JetBrains Mono,monospace;font-size:16px;color:var(--ice)}
+</style>
+</head>
+<body>
+<div class="top">
+  <!-- Qnowa da la cara al cliente, y una bandeja de atención es suya aunque se trabaje
+       por dentro. La misma marca del portal, servida por la misma ruta: dos dibujos
+       distintos de la misma empresa en dos pantallas del mismo vídeo restan. -->
+  <span class="placa"><img src="/ui/qnowa-logo.svg" alt="Qnowa"
+        onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'Qnowa',style:'font-size:20px;color:#0F172A'}))"></span>
+  <div>
+    <h1>Human queue — cases awaiting a person's signature</h1>
+    <div class="sub">The agent stopped here on purpose. Oldest first.</div>
+  </div>
+  <div class="vivo">
+    <span class="pulso"></span><span id="fuente">…</span>
+    <button class="ref" onclick="cargar()">Refresh</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <p class="ayuda">Every case below carries a judgement about a person. The agent can sign what
+     it can prove; it cannot sign what it can only believe. These are waiting for a human.</p>
+  <!-- Esta aclaración iba repetida bajo el comando de CADA fila. Nueve veces la misma
+       frase son nueve renglones de ruido y 270 px de alto robados a las tarjetas, que es
+       lo que hay que leer. Se dice una vez, arriba, y ya vale para toda la bandeja. -->
+  <p class="cuenta" id="cuenta">…</p>
+  <p class="ayuda" style="margin-bottom:16px">Each case shows the command the person runs
+     <b>on their own machine</b>, with their own credential. The last word is the decision:
+     <span class="mono">cerrada</span> or <span class="mono">descartada</span>.</p>
+  <div id="bandeja"><div class="vacio">Loading…</div></div>
+
+  <!-- ─── POR QUÉ NO HAY UN BOTÓN DE FIRMAR ────────────────────────────────────────
+       Porque esta página la sirve el mismo servicio que NO PUEDE firmar. La clave humana
+       vive en Cloud KMS y la identidad de este servicio no tiene permiso sobre ella:
+       cuando lo intenta, Google contesta 403 PERMISSION_DENIED. Un botón «Sign» aquí
+       tendría que llamar hacia atrás, a este mismo proceso, y ese proceso es exactamente
+       el que la nube rechaza — así que el botón sería una promesa que el sistema no puede
+       cumplir, y en un vídeo cuya tesis es esa imposibilidad, sería la contradicción.
+       Por eso la bandeja es de SOLO LECTURA. No ofrece la firma: enseña el comando que la
+       persona ejecuta en su propia máquina, con su propia credencial. La distancia entre
+       leer aquí y firmar allá no es una molestia del flujo: es el producto. -->
+  <div class="nota">
+    <b>This screen cannot sign anything, and that is the point.</b> The human key lives in
+    Cloud KMS and this service's identity has no permission over it — asking returns
+    <span class="mono">403 PERMISSION_DENIED</span>. So there is no button here. The person
+    runs the command above on their own machine, with their own credential, and this service
+    only receives the signature and verifies it.
+  </div>
+</div>
+
+<script>
+// Todo lo que se pinta sale de /api/auditoria_datos. Si un dato no está, se deja vacío o se
+// dice que falta: nunca se rellena con un ejemplo. Un panel que inventa es indistinguible en
+// cámara de uno que mide, y este producto existe justamente para hacer visible esa diferencia.
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// `recibido_en` llega de dos formas según por dónde entró el caso: epoch en segundos por el
+// portal nuevo, y cadena ISO en los sembrados antiguos. Se aceptan las dos y se devuelve 0
+// cuando no hay nada legible — 0 significa «no hay hora», nunca «llegó en 1970».
+function epoch(v){
+  if(typeof v === 'number' && isFinite(v)) return Math.floor(v);
+  if(typeof v === 'string'){ const t = Date.parse(v); if(!isNaN(t)) return Math.floor(t/1000); }
+  return 0;
+}
+// El reloj termina SIEMPRE en segundos, incluso a días de espera. No es precisión: es que
+// se vea correr. Un contador congelado en «29 h» no distingue una bandeja viva de una
+// captura de pantalla, y eso es justo lo que el jurado tiene que poder distinguir.
+function espera(desde, ahora){
+  let s = Math.max(0, ahora - desde);
+  const d = Math.floor(s/86400); s -= d*86400;
+  const h = Math.floor(s/3600);  s -= h*3600;
+  const m = Math.floor(s/60);    s -= m*60;
+  const dd = n => String(n).padStart(2,'0');
+  if(d) return `${d} d ${dd(h)} h ${dd(m)} m ${dd(s)} s`;
+  if(h) return `${h} h ${dd(m)} m ${dd(s)} s`;
+  return `${m} m ${dd(s)} s`;
+}
+
+const vistos = new Set();
+
+async function cargar(){
+  let d;
+  try{ d = await (await fetch('/api/auditoria_datos')).json(); }
+  catch(e){ bandeja.innerHTML = '<div class="vacio">No response from the backend.</div>'; return; }
+
+  fuente.textContent = d.duradero ? 'Firestore · durable' : 'container disk · not durable';
+  fuente.style.color = d.duradero ? 'var(--cyan)' : 'var(--coral)';
+
+  const peticiones = d.peticiones || {};
+  const porCaso = {};
+  for(const f of (d.firmas || [])){
+    const s = f.sobre || {};
+    const id = f.peticion_id || s.peticion_id || '—';
+    (porCaso[id] = porCaso[id] || []).push(f);
+  }
+  for(const id of Object.keys(peticiones)) porCaso[id] = porCaso[id] || [];
+
+  // La misma regla de estado que el ledger, literal: o la última operación paró el flujo
+  // pidiendo persona, o el caso entró y todavía no tiene ninguna operación.
+  const casos = Object.entries(porCaso).map(([id, evs]) => {
+    evs.sort((a,b) => (b.ts||0) - (a.ts||0));
+    const pet = peticiones[id] || {};
+    const ultimo = evs[0] || {};
+    const enEspera = (ultimo.dictamen === 'exige_humano') || (!evs.length);
+    // Espera desde que el caso ENTRÓ, no desde la última operación: lo que la persona
+    // le debe al cliente se cuenta desde que el cliente escribió. Si no hay hora de
+    // llegada, se cae a la primera operación registrada, y si tampoco hay, no hay reloj.
+    const llegada = epoch(pet.recibido_en);
+    const primera = evs.length ? (evs[evs.length-1].ts || 0) : 0;
+    const desde = llegada || primera || 0;
+    return {id, pet, evs, enEspera, desde};
+  }).filter(c => c.enEspera)
+    // Al revés que el ledger: el MÁS VIEJO arriba. Una bandeja se trabaja por antigüedad;
+    // lo que lleva más tiempo esperando es lo más urgente, no lo que acaba de llegar.
+    // Los que no traen hora de llegada no se pueden ordenar por antigüedad sin inventarles
+    // una, así que van al final, rotulados, en vez de colarse arriba con un cero.
+    .sort((a,b) => (a.desde ? 0 : 1) - (b.desde ? 0 : 1) || a.desde - b.desde || a.id.localeCompare(b.id));
+
+  // `vistos` empieza vacío: en la PRIMERA carga no se anima nada. Si no, entraría la
+  // bandeja entera bailando y no se distinguiría lo que acaba de llegar de lo que ya estaba.
+  const primeraCarga = vistos.size === 0;
+  for(const c of casos) c.nuevo = !primeraCarga && !vistos.has(c.id);
+
+  cuenta.innerHTML = casos.length
+    ? `<b>${casos.length}</b> case${casos.length===1?'':'s'} waiting for a human`
+    : 'Queue clear';
+  bandeja.innerHTML = casos.length ? casos.map(pinta).join('')
+    : '<div class="vacio">Nothing is waiting for a human right now.<br>Every case in the ledger was either signed or refused.</div>';
+
+  vistos.clear();
+  for(const c of casos) vistos.add(c.id);
+  tictac();
+}
+
+function pinta(c){
+  const texto = c.pet.texto
+    ? `<p class="texto">${esc(c.pet.texto)}</p>`
+    : '<p class="texto falta">No request text on file for this case.</p>';
+  // «0 operation(s)» no dice nada; «no operation yet» dice que el caso entró y nadie lo
+  // ha tocado, que es exactamente el estado que esta bandeja existe para enseñar.
+  const origen = [c.pet.de ? 'from ' + esc(c.pet.de) : '',
+                  c.pet.origen ? 'via ' + esc(c.pet.origen) : '',
+                  c.pet.peticion_padre ? '↳ from ' + esc(c.pet.peticion_padre) : '',
+                  c.evs.length ? `${c.evs.length} operation(s)` : 'no operation yet'
+                 ].filter(Boolean).join(' · ');
+  const reloj = c.desde
+    ? `<div class="reloj" data-desde="${c.desde}">…</div><div class="rotulo">waiting</div>`
+    : `<div class="reloj sinreloj">arrival not on file</div><div class="rotulo">waiting</div>`;
+  return `<div class="fila${c.nuevo ? ' entra' : ''}">
+    <div>${reloj}<div class="pid">${esc(c.id)}</div><div class="de">${origen}</div></div>
+    <div>${texto}
+      <div class="cmd">python3 src/decidir_como_persona.py <span class="arg">${esc(c.id)}</span> <span class="arg">descartada</span></div>
+    </div></div>`;
+}
+
+// El reloj corre en el cliente, cada segundo, sin volver a pedir datos: la espera es
+// aritmética sobre una hora que ya se trajo, y refrescar la red para mover un contador
+// sería gastar red en algo que el navegador ya sabe.
+function tictac(){
+  const ahora = Math.floor(Date.now()/1000);
+  for(const el of document.querySelectorAll('.reloj[data-desde]'))
+    el.textContent = espera(+el.dataset.desde, ahora);
+}
+
+cargar();
+setInterval(cargar, 3000);
+setInterval(tictac, 1000);
+</script>
+</body>
+</html>

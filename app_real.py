@@ -308,6 +308,8 @@ def serve_ui(name):
         return send_file(os.path.join(base_path, "assets", "slides", "ui_unified_dashboard.html"))
     elif name == "portal":
         return send_file(os.path.join(base_path, "assets", "slides", "ui_portal_cliente.html"))
+    elif name == "bandeja":
+        return send_file(os.path.join(base_path, "assets", "slides", "ui_bandeja_humana.html"))
     # Marca: Qnowa da la cara al cliente en el portal, Cleveria gobierna por dentro.
     marca = {"qnowa-logo.svg": (("assets", "qnowa", "qnowa-logo.svg"), "image/svg+xml"),
              "qnowa-mark.svg": (("assets", "qnowa", "qnowa-mark.svg"), "image/svg+xml"),
