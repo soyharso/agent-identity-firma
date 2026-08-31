@@ -83,6 +83,7 @@ sys.exit(0 if ($cond) else 1)
 # take reaches the climax.
 LIVE=1        # 1 = every cloud shot attempted so far reached the cloud
 NUBE=0        # 1 = at least one cloud shot was attempted in this run
+MIXTO=0       # 1 = this run mixes an offline proof with authenticated calls (shot 4)
 preflight() {
   NUBE=1
   if gcloud auth print-identity-token >/dev/null 2>&1; then return 0; fi
@@ -224,8 +225,23 @@ print('  Requires Cloud SDK / Network? ->', '\033[31mYES\033[0m' if has_cloud el
   paso "Executing All Security Kill-Tests (Canonical, Tampering, Injections):"
   python3 tests/test_verifier_tampered.py | grep -E "✓|VEREDICTO"
   
+  # A partir de aquí la toma DEJA DE SER OFFLINE: una llamada HTTPS autenticada por
+  # caso. El número NO se escribe a mano — se lee de la lista de casos, que es donde
+  # de verdad vive. Escribirlo aquí sería el mismo pecado que este bloque corrige:
+  # una cifra que era cierta el día que se tecleó.
+  LLAMADAS_RED="$(python3 -c "
+import re
+t = open('agente/killtest_blindaje.py').read()
+m = re.search(r'CASOS\s*=\s*\[(.*?)\n\]', t, re.S)
+print(len(re.findall(r'^\s*\(', m.group(1), re.M)) if m else 0)
+" 2>/dev/null || echo 0)"
   paso "Adversarial evaluation: Managed Model Armor vs. Our Semantic Fence:"
-  python3 agente/killtest_blindaje.py 2>&1 | limpio | sed -n '3,10p'
+  # MIXTO solo se enciende si la mitad de red REALMENTE corrió. Si aborta por falta
+  # de credenciales, encenderla haría que el banner declarara unas llamadas que no
+  # ocurrieron — la misma mentira, en el otro sentido.
+  if python3 agente/killtest_blindaje.py 2>&1 | limpio | sed -n '3,10p'; then
+    [ "${PIPESTATUS[0]}" = 0 ] && MIXTO=1
+  fi
   esperar
 }
 
@@ -257,8 +273,20 @@ case "$TOMA" in
 esac
 
 echo
-if [ "$NUBE" = 0 ]; then
-  # Shots 1 and 4 only. They prove what they prove — offline — and nothing more.
+if [ "$MIXTO" = 1 ]; then
+  # Shot 4 has two halves with different natures, and the old banner claimed the
+  # stronger one for both. The offline verifier really does run with no network and
+  # no credentials — that is the strong half. The vendor-filter comparison right
+  # after it makes FOUR authenticated HTTPS calls to Model Armor, plus the access
+  # token it needs first. Printing "no network and no credentials" as the last frame
+  # of that shot was a true sentence covering a half that does not fit it, which is
+  # the exact failure this whole project exists to argue against. Measured 2026-08-30.
+  echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
+  echo -e "  ${BOLD}${CYAN}SHOT 4 COMPLETE${RESET}  ${DIM}·${RESET}  ${GREEN}offline verifier: no network, no credentials${RESET}"
+  echo -e "  ${DIM}vendor-filter comparison above: ${LLAMADAS_RED:-?} authenticated HTTPS calls to Model Armor${RESET}"
+  echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
+elif [ "$NUBE" = 0 ]; then
+  # Shot 1 only. It proves what it proves — offline — and nothing more.
   echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"
   echo -e "  ${BOLD}${GREEN}COMPLETE — verified with no network and no credentials${RESET}"
   echo -e "${BLUE}════════════════════════════════════════════════════════════════════════════════${RESET}"

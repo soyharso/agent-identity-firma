@@ -72,15 +72,39 @@ Con la sesión de Google Cloud abierta, las cinco tomas corren:
 | `bash demo.sh 1` | ✅ | la cola, con las peticiones que exigen persona marcadas |
 | `bash demo.sh 2` | ✅ | el despertador dispara y la flota dictamina en la nube |
 | `bash demo.sh 3` | ✅ **el corazón** | **403 real de Cloud KMS**, con el recurso completo |
-| `bash demo.sh 4` | ⚠ **a medias** | el verificador **sí** corre sin credenciales; su otra mitad, no |
+| `bash demo.sh 4` | ✅ **grabable entera** | dos mitades de distinta naturaleza, y **el banner ya lo dice** |
 | `bash demo.sh 5` | ✅ | Cloud Run, Scheduler, el llavero y sus políticas |
 
-> **⚠ El fotograma final de la toma 4 dice algo que no es cierto.** Imprime
-> `COMPLETE — verified with no network and no credentials` justo después de **cuatro llamadas
-> HTTPS autenticadas** a Model Armor. La primera mitad —el verificador puro— sí corre sin red ni
-> credenciales, y esa es la parte fuerte; la segunda no. **Si grabas esa toma, no dejes ese banner
-> como último plano**, o corta antes. Es el mismo pecado que este runbook lleva todo el día
-> corrigiendo: una afirmación absoluta sobre algo que solo es cierto a medias.
+> ### ✅ ARREGLADO EN EL CÓDIGO — el fotograma final de la toma 4 ya no miente. Puedes grabarla entera.
+>
+> **Decía**: `COMPLETE — verified with no network and no credentials`, justo después de cuatro
+> llamadas HTTPS **autenticadas** a Model Armor. Cierto de la primera mitad —el verificador puro,
+> que es la parte fuerte— y falso de la segunda.
+>
+> **Dice ahora**, y sale así en pantalla:
+>
+> ```
+> SHOT 4 COMPLETE  ·  offline verifier: no network, no credentials
+> vendor-filter comparison above: 4 authenticated HTTPS calls to Model Armor
+> ```
+>
+> **Ya no hace falta cortar antes del banner.** Y el número de llamadas no está tecleado: se lee
+> de la lista de casos del propio kill-test, así que el día que alguien añada un quinto caso el
+> banner dirá cinco solo.
+>
+> **La causa raíz, porque explica por qué nadie lo vio en todo el día**: la toma 4 era
+> *enteramente* offline cuando se escribió ese banner —el comentario del código todavía lo decía—
+> y dejó de serlo cuando se le añadió la comparación con el filtro del proveedor. **Nada obligaba
+> al banner a enterarse.** Una afirmación absoluta sobrevivió al cambio que la volvió falsa, que
+> es el pecado exacto contra el que argumenta el proyecto entero, cometido en el fotograma que un
+> jurado mira más tiempo que ningún otro.
+>
+> Lo vigila `agente/killtest_banner_honesto.py`: ninguna toma que salga a la red puede terminar
+> afirmando que no la tocó. Corre sin red y sin credenciales, en un instante, y **se probó
+> rompiéndolo a propósito** — tres mutantes, los tres en rojo.
+>
+> **Si no hay credenciales, la mitad de red no corre y el banner vuelve al absoluto** — que ahí
+> sí es cierto, porque no hubo ninguna llamada. Comprobado ejecutando.
 
 **La toma 3 es el vídeo entero.** Esta línea no la puede imprimir un `print()`:
 
