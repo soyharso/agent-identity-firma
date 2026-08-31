@@ -528,7 +528,29 @@ function pedirToken(modo){
         cargar(true);
       }
     },
-    error_callback: () => { /* sin sesión silenciosa: se queda el botón de entrar */ }
+    // DOS NEGATIVAS QUE PARECEN LA MISMA Y NO LO SON, y confundirlas arruinaría la demostración:
+    //
+    //   · «Google no te deja ENTRAR a esta aplicación» — la app pide un permiso sensible
+    //     (firmar con Cloud KMS), así que hasta que Google la verifique solo entran las
+    //     personas dadas de alta. Es una restricción de la PANTALLA DE CONSENTIMIENTO y no
+    //     dice nada sobre claves. Un jurado que la vea y crea que es la frontera, se lleva la
+    //     idea equivocada del producto.
+    //
+    //   · «Google te niega LA CLAVE» — un 403 de Cloud KMS. ESA sí es la frontera, y es lo
+    //     que este producto quiere que se compruebe.
+    //
+    // Por eso la primera se explica aquí, entera, en vez de dejar la pantalla muda como si
+    // algo se hubiera roto.
+    error_callback: (err) => {
+      if(modo === '') return;          // el intento silencioso del arranque no dice nada
+      const e = (err && (err.type || err.message)) || 'unknown';
+      FIRMA.motivo = 'Google did not let this account into the app (' + e + '). '
+        + 'That is the consent screen, not the key: signing with Cloud KMS is a sensitive '
+        + 'permission, so until Google verifies this app only listed accounts can sign in. '
+        + 'It says nothing about who may sign — that boundary is the 403 you would get from '
+        + 'Cloud KMS after signing in, and it is the one worth checking.';
+      identidad();
+    }
   });
   cliente.requestAccessToken();
 }
