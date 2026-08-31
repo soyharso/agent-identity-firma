@@ -256,8 +256,21 @@ def index():
     bandeja ES el producto; `cleveria.co` es la capa de agentes y ahí la bandeja es una pantalla
     entre varias. Quien llega por el subdominio de Qnowa entra directo a firmar.
     """
-    if request.host.split(":")[0].endswith("qnowa.com"):
-        return serve_ui("bandeja")
+    # CADA NOMBRE ABRE LO QUE SU NOMBRE PROMETE. Antes esto decía «si termina en qnowa.com,
+    # la bandeja», y con un solo subdominio funcionaba. Con dos ya no: `demoportal` habría
+    # abierto la bandeja, que es justo lo contrario de lo que anuncia.
+    #
+    # El reparto sale de la marca, no de la comodidad. `qnowa.com` es la cara al cliente, y ahí
+    # cada dirección ES un producto: `sign` es donde se firma, `demoportal` es donde escribe la
+    # clienta. `cleveria.co` es la capa de agentes, y ahí las dos son pantallas de una
+    # demostración, detrás de una portada que las presenta.
+    #
+    # Un nombre de qnowa.com que no esté en esta tabla cae en la portada, que es lo prudente:
+    # enseñar la pantalla equivocada es peor que enseñar el índice.
+    POR_NOMBRE = {"sign.qnowa.com": "bandeja", "demoportal.qnowa.com": "portal"}
+    pantalla = POR_NOMBRE.get(request.host.split(":")[0].lower())
+    if pantalla:
+        return serve_ui(pantalla)
     return _portada()
 
 
