@@ -245,7 +245,24 @@ def api_auditoria_datos():
 
 @app.route("/")
 def index():
-    """La puerta de `demo.cleveria.co`.
+    """La puerta de `demo.cleveria.co` — y, en `sign.qnowa.com`, la bandeja misma.
+
+    DOS NOMBRES, UN SERVICIO, DOS PUERTAS DISTINTAS. Las dos direcciones apuntan al mismo
+    Cloud Run, así que sin esto `sign.qnowa.com` abría este índice: una portada de Cleveria que
+    habla de actos y demostraciones, con la bandeja escondida detrás de un enlace. Y el nombre
+    prometía otra cosa — se llama «sign», no «índice».
+
+    El reparto sale de la marca, no de la comodidad: `qnowa.com` es la cara al cliente y ahí la
+    bandeja ES el producto; `cleveria.co` es la capa de agentes y ahí la bandeja es una pantalla
+    entre varias. Quien llega por el subdominio de Qnowa entra directo a firmar.
+    """
+    if request.host.split(":")[0].endswith("qnowa.com"):
+        return serve_ui("bandeja")
+    return _portada()
+
+
+def _portada():
+    """La portada de Cleveria.
 
     Esta página se ve antes que ninguna otra, y hasta hoy era una lista sin formato con la
     palabra «ACT I» encima. Un jurado que llega por el enlace de la inscripción no sabe qué son
