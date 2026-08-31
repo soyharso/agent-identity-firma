@@ -52,6 +52,39 @@ fi
 
 echo -e "\n${NEGRITA}PREPARAR LA TOMA${FIN} ${GRIS}· $(date '+%H:%M:%S')${FIN}"
 
+paso "0 · El plan — uno solo, y el mismo en las dos máquinas"
+# LA REGLA QUE ESTE BLOQUE VIGILA. `plan_toma.txt` de este repositorio es un ENLACE a
+# `~/SharedPC/toma/plan_toma.txt`, la carpeta que las dos máquinas sincronizan. Así el director
+# de aquí y el apuntador de allá ejecutan el MISMO archivo y un cambio se ve en los dos sin
+# copiar nada. Si alguien copia un archivo encima en vez de editarlo, el enlace se rompe en
+# silencio y vuelven a existir dos versiones — que es el error más caro de este frente.
+PLAN_COMPARTIDO="$HOME/SharedPC/toma/plan_toma.txt"
+if [ -L plan_toma.txt ]; then
+  ok "plan_toma.txt es un enlace a $(readlink plan_toma.txt)"
+else
+  mal "plan_toma.txt YA NO ES UN ENLACE: hay dos versiones del guion. Restaura con:"
+  echo -e "      ${GRIS}mv plan_toma.txt $PLAN_COMPARTIDO && ln -s $PLAN_COMPARTIDO plan_toma.txt${FIN}"
+fi
+if [ -f "$PLAN_COMPARTIDO" ]; then
+  HUELLA=$(md5sum "$PLAN_COMPARTIDO" | cut -c1-12)
+  MOMENTOS=$(grep -cE '^[0-9]+ *\|' "$PLAN_COMPARTIDO")
+  ULTIMO=$(grep -oE '^[0-9]+' "$PLAN_COMPARTIDO" | sort -n | tail -1)
+  ok "$MOMENTOS momentos · termina en el segundo $ULTIMO · huella ${HUELLA}"
+  # La comprobación que de verdad importa: que ALLÁ se esté leyendo lo mismo. No basta con que
+  # la carpeta exista; Syncthing puede estar parado y nadie se entera hasta la toma.
+  REMOTA=$(timeout 12 ssh -o BatchMode=yes -o ConnectTimeout=6 dellqnowa \
+           "md5sum ~/SharedPC/toma/plan_toma.txt 2>/dev/null | cut -c1-12" 2>/dev/null || echo "")
+  if [ -z "$REMOTA" ]; then
+    avisa "no pude preguntarle a dellqnowa (apagado o sin red). El apuntador de allá puede ir con otro plan"
+  elif [ "$REMOTA" = "$HUELLA" ]; then
+    ok "dellqnowa lee EXACTAMENTE el mismo plan"
+  else
+    mal "dellqnowa tiene otra versión del plan (${REMOTA} ≠ ${HUELLA}). Espera a que sincronice"
+  fi
+else
+  mal "no existe $PLAN_COMPARTIDO"
+fi
+
 paso "1 · Google Cloud"
 if gcloud auth print-identity-token >/dev/null 2>&1; then
   ok "identificador de sesión vivo ${GRIS}(dura UNA HORA: si la toma se retrasa, renueva)${FIN}"
