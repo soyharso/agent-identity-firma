@@ -1,6 +1,9 @@
 # RUNBOOK DE GRABACIÓN — CLEVERIA · v3
 
-**Fecha:** 2026-08-30 · **Versión:** 6.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+**Fecha:** 2026-08-30 · **Versión:** 7.0 · **Cierre:** 31-ago 17:00 hora del Pacífico
+*(v7: el banner de la toma 4 **arreglado en el código** y vigilado por una prueba — ya se graba
+entera; el identificador de sesión dura una hora; menos de diez minutos entre ensayo y toma;
+y son dieciséis pruebas, la del ancla no entra)*
 *(v6: la toma 3 dura 13 s y no hay espera; la toma 2 acaba en aviso amarillo; el banner de la 4
 miente a medias; y se retiró el residuo que aún mandaba desconectar el cable)*
 *(v5: NO desconectar la red en la toma 4, la ventana del reloj :01–:11, y el plazo del cofirmante)*
