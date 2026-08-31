@@ -181,11 +181,19 @@ def m_borrar_anclas_y_reanclar(libro, ra, f):
     """El agujero que encontró el juez: borrar el historial de anclas ENTERO y re-anclar el
     libro ya truncado, con la llave legítima.
 
-    Se espera `integro`, y eso NO es un aprobado: es la medición de un FALSO NEGATIVO conocido.
-    Dentro del archivo, un libro truncado con un ancla nueva y válida es indistinguible de un
-    libro corto legítimo recién anclado — que es el mismo problema del día uno, una vuelta más
-    arriba. Lo que lo detecta está FUERA de este código: el historial de git, donde el ancla
-    borrada sigue estando. Se mide y se declara en vez de fingir que el mecanismo lo cubre.
+    Se espera `integro`, y eso NO es un aprobado: es la medición de un agujero conocido. Dentro
+    del archivo, un libro truncado con un ancla nueva y válida es indistinguible de un libro
+    corto legítimo recién anclado — el mismo problema del día uno, una vuelta más arriba. Lo que
+    lo detecta está FUERA de este código: el historial de git, donde el ancla borrada sigue
+    estando.
+
+    HASTA DÓNDE LLEGA DE VERDAD, más estrecho de lo que parece, y lo acotó el operador: esta
+    prueba firma ella misma el ancla nueva, y esa es la licencia que se toma. En el sistema real
+    LA MÁQUINA NO PUEDE DAR ESE PASO. Si trunca y borra el historial, lo que queda es un libro
+    SIN ancla, y eso se caza (`sin_ancla`, fallo cerrado). El agujero solo se consuma cuando
+    DESPUÉS una persona firma un ancla sobre el libro ya mutilado sin darse cuenta — el humano
+    como paso involuntario, que es la familia del diputado confundido. Se mide igual, porque el
+    día que el anclado se automatice este escenario pasa a ser el principal.
     """
     anclar(libro, ra, f)
     lineas = _filas(libro)
