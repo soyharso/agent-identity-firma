@@ -32,6 +32,9 @@ logs/
 plan_toma.txt
 dirigir_grabacion.py
 ensayar_narracion.py
+generar_subtitulos.py
+subtitulos.srt
+bandeja_local.py
 
 # --- Produccion del video y aparato del metodo: NO se comparte con el jurado -------
 # Copia de referencia en cleveria-dominios:
