@@ -1,3 +1,8 @@
+> SUPERSEDED 2026-08-30 por `ARTICULO.en.md` (v2). Razón: esta versión decía «nine kill-tests»
+> cuando ya son dieciséis, y «Four models» cuando son seis — omitía el co-firmante. Además le
+> faltaba todo lo construido el 31: la puerta de escritura, el libro encadenado, el segundo
+> cerco y el ancla. NO se lee como fuente vigente.
+
 # The agent cannot sign as a human. Not "must not" — cannot.
 
 *Our system left an agent no way to close a ticket except by signing as a person. This is the
