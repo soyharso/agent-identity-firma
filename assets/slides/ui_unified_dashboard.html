@@ -291,6 +291,11 @@ async function cargar(){
   for(const c of casos){
     c.nuevo = !primera && !vistos.has(c.id);
     c.cambiado = !primera && !c.nuevo && vistos.get(c.id) !== c.ultimo;
+    // «Reciente» NO es «nuevo». `nuevo` dura un refresco; esto dura 45 s desde que el caso
+    // llegó, y sobrevive a que la cámara tarde en cortar al panel. `recibido_en` llega en
+    // epoch por el portal; si viniera en otro formato, `Number` da NaN y esto queda apagado,
+    // que es la falla segura: nunca late una tarjeta cuya hora no se entiende.
+    c.reciente = (Date.now()/1000 - (Number(c.pet.recibido_en) || 0)) < 45;
   }
   expedientes.innerHTML = casos.length ? casos.map(pinta).join('')
     : '<div class="vacio">The queue is empty.</div>';
@@ -358,7 +363,7 @@ function pinta(c){
   const mas = c.evs.length > 6 ? `<div class="de" style="padding-left:68px">+${c.evs.length-6} earlier</div>` : '';
   const origen = [c.pet.de ? 'from ' + esc(c.pet.de) : '', c.pet.origen ? 'via ' + esc(c.pet.origen) : '',
                   `${c.evs.length} operation(s)`].filter(Boolean).join(' · ');
-  return `<div class="exp ${clase}${c.nuevo ? ' entra' : c.cambiado ? ' cambia' : ''}">
+  return `<div class="exp ${clase}${espera && c.reciente ? ' sinatender' : ''}${c.nuevo ? ' entra' : c.cambiado ? ' cambia' : ''}">
     <div class="cab"><span class="pid">${esc(c.id)}</span><span class="asunto">${asunto}</span>${padre}${etiqueta}</div>
     <div class="de">${origen}</div>
     <div class="hist">${hist || '<span class="vacio">No operation yet — this case is still waiting.</span>'}</div>
