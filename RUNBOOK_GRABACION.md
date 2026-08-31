@@ -81,6 +81,52 @@ miente a medias; y se retiró el residuo que aún mandaba desconectar el cable)*
 > **Tocar el plan y no sincronizar esa copia es la forma silenciosa de perder el guion.** Al
 > terminar cualquier cambio en los archivos de arriba, cópialos allí y comitéalos. Sincronizado
 > por última vez el **2026-08-31**, con la apertura de tres planos y la toma `3a` dentro.
+
+---
+
+## LA ESCALETA — qué pantalla, qué haces y qué se dice, segundo a segundo
+
+**Esta tabla es el vídeo entero.** Sale de `plan_toma.txt`, que es lo que
+`dirigir_grabacion.py` ejecuta: si los dos discrepan, manda el plan, porque es el que corre.
+Se copia aquí porque un runbook que explica cómo grabar y no dice **qué se graba y qué se dice**
+obliga a tener dos archivos abiertos con la cámara encendida.
+
+Los comandos de la tercera columna **se lanzan solos** en su segundo exacto: tú narras y operas
+lo que dice esa columna, nada más. Y donde pone **silencio**, es silencio a propósito.
+
+| Seg | Ventana (escena de OBS) | Qué haces tú · qué se lanza solo | Qué se narra |
+|---|---|---|---|
+| **0:00–0:08** | 1 · Portada | quieto. La tarjeta ya trae el rótulo `preproduction system — not this demo` | *“Some days ago, in our own preproduction system, we counted fifty-eight closures signed 'human'.”* |
+| **0:08–0:16** | 4 · Libro de autoridad | quieto: macro sobre UNA tarjeta `HUMAN SIGNED` | *“A machine closed them. Four said 'dismissed' — where the machine absolves itself.”* |
+| **0:16–0:30** | 3 · Demostración | nada · `bash demo.sh 1 --sin-pausa` | *“Nobody decided this: the function signed 'human' by default, and the console had no flag to say otherwise.”* |
+| **0:30–0:33** | 2 · Portal del cliente | PULSA EL MICRÓFONO (una vez). No hables: la clienta habla sola | *“This is where our customers actually write.”* |
+| **0:33–0:40** | 2 · Portal del cliente | quieto: SE OYE A LA CLIENTA (6,6 s) · `paplay --device=cliente_sim narracion/cliente_simulado.wav` | **silencio** |
+| **0:40–0:50** | 2 · Portal del cliente | PULSA EL MICRÓFONO OTRA VEZ para enviar | *“And many don't write at all. Spoken or typed, this one asks us to take the blame for a broken door frame — and to pay for it.”* |
+| **0:50–0:59** | 2 · Portal del cliente | quieto: deja ver la transcripción y la etiqueta de estado | *“Transcribed, and answered — the customer is told a person will decide.”* |
+| **0:59–1:12** | 4 · Libro de autoridad | quieto: la tarjeta entra arriba, animada, y **sigue latiendo en ámbar** | *“The flow stopped by itself. Not because the model behaved: because a deterministic function lowered the ceiling before the model spoke.”* |
+| **1:12–1:42** | 3 · Demostración | nada · `bash demo.sh 2 --sin-pausa` | *“And this is the agent doing its job. What it can prove, it closes — and signs it with its own key.”* |
+| **1:42–1:55** | 3 · Demostración | nada · `bash demo.sh 3a --sin-pausa` | *“Now it tries to sign a human judgement.”* |
+| **1:55–2:02** | 3 · Demostración | QUIETO Y EN SILENCIO siete segundos, deja el 403 en pantalla | **silencio** |
+| **2:02–2:12** | 3 · Demostración | nada | *“That refusal is not our code. That is Google. For that agent to sign as a person, someone would have to change IAM — outside the agent.”* |
+| **2:12–2:23** | 4 · Libro de autoridad | PULSA REFRESCAR y deja que la animación termine | *“And here is the ledger, live. The attempt you just watched left nothing behind: a refused signature is not an entry. The customer's case is still amber — still waiting for a person.”* |
+| **2:23–2:33** | 8 · Bandeja humana | quieto: deja ver el reloj de espera correr | *“So the case lands here — in a person's tray, with the clock running.”* |
+| **2:33–2:49** | 8 · Bandeja humana | **ABRE EL CASO DE LA CLIENTA** (el del marco de la puerta, el que entró en el 0:30), revisa el contexto y PULSA FIRMAR | *“This is the same screen you saw in the cloud a moment ago. There it could not sign. Here it can — because the key is not in the code or on the disk: it is in who I am to Google right now.”* |
+| **2:49–3:00** | 8 · Bandeja humana | quieto: el caso queda firmado y sale de la bandeja | *“Signed. Not by the service — by a person, on her own machine, with her own credential. The service only verified it.”* |
+| **3:00–3:15** | 5 · Consola de Google Cloud | quieto | *“This is the agent's identity, and this is the key it was never given.”* |
+| **3:15–3:32** | 6 · Arquitectura | quieto | *“Six models take part. One is asked to judge. The rest only apply brakes, never gas. Three identities, three separate keys. And this problem gets worse, not better. The more capable the model, the more we will hand it — and the more it matters who authorised what.”* |
+| **3:32–3:47** | 3 · Demostración | nada · `bash demo.sh 4 --sin-pausa` | *“Do not trust us. This verifier imports no Google libraries. No network, no credentials, no account.”* |
+| **3:47–≈3:57** | 7 · Cierre | quieto. La tarjeta dice lo mismo que la voz | *“It's not that it shouldn't. It's that it can't. Today the key detects. Next, one key per state, and signing what you may not sign stops being refused and becomes impossible to ask.”* |
+
+> **⏰ Queda a unos tres segundos del tope.** Cuatro minutos es el límite duro del concurso y el
+> último momento arranca en el 3:47 con una narración de ~10 s. No alargues ninguna frase sin
+> quitar segundos en otro sitio: pasar de 4:00 significa que **el final no se evalúa**.
+
+> ### Los seis momentos en los que tú haces algo
+>
+> El resto es quedarse quieto y narrar. **0:30** pulsas el micrófono · **0:40** vuelves a
+> pulsarlo para enviar · **1:55** te callas siete segundos · **2:12** pulsas refrescar ·
+> **2:33** abres el caso de la clienta y firmas · y nada más. Los ocho comandos los lanza el
+> director en su segundo exacto.
 >
 > **`VIDEO_SCRIPT.en.md` YA NO ESTÁ EN ESTE REPOSITORIO**: era anterior a las mediciones del 30
 > y 31 de agosto —cinco tomas de terminal, sin el portal ni el libro de autoridad— y se movió a
