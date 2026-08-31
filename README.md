@@ -176,6 +176,36 @@ Lo que se promete de más no vale nada, así que va separado:
 **Quien controla `claves/directorio.json` controla quién es humano.** Por eso vive en el
 repositorio y no en una base de datos: cada cambio queda en el historial, con su autor y su fecha.
 
+### Contra qué amenaza defiende esto de verdad
+
+Decirlo claro vale más que sonar imponente, porque un sistema defendido contra la amenaza
+equivocada no está defendido:
+
+> **Ante la ausencia de malicia, basta con que violar la puerta sea más costoso que realizar
+> correctamente la tarea.**
+
+Ese es el modelo de amenaza honesto, y es el que encaja con el defecto real. Las 58 firmas mal
+puestas no fueron un ataque: nadie falsificó nada. Una función tenía un valor por defecto, una
+consola no tenía la bandera, y el camino más barato hasta un caso cerrado pasaba por firmar
+«humano». La puerta no falló — **no había puerta, y hacerlo mal salía gratis**.
+
+Así que el objetivo del diseño no es una bóveda inviolable: es una **asimetría**. Cerrar un caso
+como es debido cuesta una llamada; producir una firma que valide como humana exige un cambio de
+IAM hecho por otro principal, en otro sistema, y que deja otro rastro. Cuando esa desigualdad se
+sostiene, el camino correcto es además el de menor resistencia — y los sistemas derivan hacia el
+de menor resistencia haya o no mala intención.
+
+Lo que esto enmarca en vez de esconder:
+
+- **Contra alguien de dentro, decidido y con permisos de administración, esto no es un muro.**
+  Quien puede conceder permisos de IAM puede concedérselos sobre la clave humana. No decimos lo
+  contrario. Lo que no puede es hacer que esa concesión sea invisible.
+- **Sí sube el suelo de «gratis» a «un acto deliberado, auditado y atribuible»**, que es
+  exactamente la distancia entre el incidente que tuvimos y uno que exigiría intención.
+- **Donde la malicia sí entra en el alcance**, la respuesta es el camino de crecimiento: llaves de
+  acceso respaldadas por hardware para la clave humana, de modo que ni el administrador pueda
+  suplantar. Va dicho como trabajo pendiente, no como promesa cumplida.
+
 ## Lo que NO está construido, dicho a propósito
 
 Declarar una pieza ausente vale más que fingirla:

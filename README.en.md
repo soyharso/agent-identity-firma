@@ -243,6 +243,35 @@ Over-promising is worth nothing, so it is kept separate:
 **Whoever controls `claves/directorio.json` controls who counts as human.** That is why it lives
 in the repository and not in a database: every change is in the history, with its author and date.
 
+### The threat we are actually defending against
+
+Stating this plainly matters more than sounding impressive, because a system defended against the
+wrong threat is a system defended against nothing:
+
+> **Absent malice, it is enough that breaking the gate costs more than doing the task correctly.**
+
+That is the honest threat model, and it is the one the real defect fits. The fifty-eight
+mis-signed closures were not an attack. Nobody forged anything. A function had a default, a
+console had no flag, and the cheapest path to a closed ticket ran straight through signing
+`human`. The gate did not fail — **there was no gate, and doing it wrong was free**.
+
+So the design target is not an unbreakable vault. It is an **asymmetry**: closing a case honestly
+takes one call; producing a signature that validates as human takes an IAM change made by a
+different principal, in a different system, leaving a different audit trail. Once that inequality
+holds, the correct path is also the path of least resistance — and systems drift toward least
+resistance whether or not anyone intends harm.
+
+What this frames, rather than hides:
+
+- **Against a determined insider with administrative rights, this is not a wall.** Someone who can
+  grant IAM bindings can grant themselves the human key. We do not claim otherwise. What they
+  cannot do is make that grant invisible.
+- **It does raise the floor from "free" to "an audited, deliberate, attributable act."** That is
+  the whole distance between the incident we actually had and one that would require intent.
+- **Where malice is in scope**, the growth path below is the answer, and it is a different
+  posture: hardware-backed passkeys for the human key, so that not even the administrator can
+  impersonate. That is stated as work, not as a claim.
+
 ### "Why isn't least-privilege IAM enough?"
 
 The fair question a cloud architect asks first, and it deserves a straight answer instead of a
