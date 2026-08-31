@@ -1,5 +1,17 @@
 # VEREDICTO DEL JURADO: CONFIRMO
 
+> ## ⚠ EJERCICIO SUPERADO — 2026-08-31. No es fuente vigente.
+>
+> Esto fue un ejercicio de «actuar como jurado» fechado el 28 de agosto, y **sus citas de línea
+> ya no corresponden**: el README se reescribió después (seis modelos, otra tabla), las pruebas
+> pasaron de nueve a dieciséis, y el catálogo de agentes que aquí figura como ausente existe.
+>
+> **Lo que sigue valiendo, y por eso no se borra**: el método —recorrer la entrega con ojos de
+> quien la va a puntuar— y los tiempos de ejecución medidos comando por comando, que se tomaron
+> de corridas reales. Las conclusiones, no.
+>
+> Estado vigente del repositorio: `README.en.md`. Qué se graba: la escaleta en `cleveria-dominios`.
+
 CONFIRMO la afirmación: «no queda ninguna tarea de construcción con retorno positivo antes del cierre».
 El núcleo arquitectónico está blindado, los 9 kill-tests pasan al 100% en verde, la infraestructura en
 Google Cloud (KMS, Cloud Run, Firestore, Scheduler) responde en vivo con los códigos HTTP 200 y 403

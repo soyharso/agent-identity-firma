@@ -333,6 +333,76 @@ Declaring a component absent is honest engineering:
   anchor — an anchor is issued when a human signs, so everything written since the last one
   remains truncatable. Reporting a gap is not closing it.
 
+## The growth path, and why none of it is a change of architecture
+
+This is a foundation, and a foundation is judged by what it makes cheap to build next. Every step
+below reuses the pieces that are already running — same asymmetric keys in Cloud KMS, same IAM
+bindings deciding who may ask for a signature, same canonical envelope, same offline verifier.
+**Nothing here requires a new idea; it requires the same idea at higher resolution.**
+
+### 1. From detection to prevention: one key per state
+
+Today `claves/directorio.json` declares which states each key may sign, and the verifier enforces
+it **after the fact**. That is detection. Cloud KMS cannot prevent it, and the reason is worth
+stating precisely: **KMS is handed a digest, never the content** (`src/firma_kms.py:43`). It signs
+opaque bytes and never sees `estado_destino`. IAM conditions can gate on resource, time or origin
+— not on a payload the service never receives.
+
+So prevention has exactly one shape: **make each state its own key**. The agent holds a signing
+binding on `agent-closed` and simply has none on `human-dismissed`. Authority stops living in the
+content and goes back to living in *which key you are allowed to use* — which is where this
+project argues it belongs.
+
+It is **eight keys**, not an explosion: two states for the working agent, five for the person, one
+for the customer-facing agent. And here is the part that makes it cheap: **`directorio.json`
+already is the source for that.** The same declarative file, reviewed in git history, stops being
+a rule checked late and becomes the thing that *generates* the bindings. The file does not change
+its shape — it changes its destination.
+
+**And detection does not become redundant when prevention arrives.** If someone adds a binding by
+hand and bypasses the file, the verifier still catches it. The two layers answer different
+questions — *could they?* and *did they?* — which is why a serious system wants both.
+
+### 2. One-time scoped mandates
+
+Today there are two positions and nothing between them: the agent acts alone, or it stops and
+waits for a human signature. In a ten-step process where only two steps need judgement, that is
+ten interruptions or a blank cheque. It is the same problem coding agents have today.
+
+The direction: **the person signs once**, with their own key, a mandate that is bound to one
+concrete plan — the **hash of the plan, not a list of verbs** — expires, is consumed once, and is
+recorded like any other signature. The agent still cannot sign *as* the person: it signs as the
+agent, **presenting** the mandate. A power of attorney for one specific transaction.
+
+We have designed it and attacked it before writing a line, and it has two hard limits we will not
+pretend otherwise about: **scope drift** (the person authorises a logical structure, but the agent
+controls the intermediate results and can steer the process) and the fact that **informed consent
+is fiction** if ten steps are signed in two seconds. An honest mandate **bounds the plan, not the
+intent**, and that is exactly how we would ship it.
+
+### 3. Event-driven triggering
+
+The scheduler proves something the thesis needs — nobody launches the agent by hand — but firing
+on arrival is the right pattern, and it closes the gap where the portal queue is not yet wired to
+the agent.
+
+### 4. Anchoring what the verifier trusts
+
+The verifier runs with no credentials, and the public keys ship in this repository. **A public key
+cannot sign anything** — publishing it creates no impersonation risk; it only lets people check.
+The residual question is not the key, it is the source: a reader who wants to remove us from the
+trust path can pull the public key **from Cloud KMS itself** rather than from our copy:
+
+```bash
+gcloud kms keys versions get-public-key 1 --key=clave-humano --keyring=firmas \
+  --location=us-central1 --project=$PROJECT
+```
+
+Same bytes, obtained from Google rather than from us. That is the anchor, it costs one command,
+and it is the honest answer to *"why should I trust the key you handed me?"*
+
+---
+
 ## How it was built
 
 Every decision was attacked by an external model **before** being written, and several found real
