@@ -262,6 +262,16 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 >
 > Para probar solo la pantalla del apuntador, sin director: `--ensayo` en lugar de `--escucha`.
 >
+> **El apuntador va 1,5 s POR DELANTE de la toma, y es a propósito.** La primera versión
+> enseñaba la frase en el segundo en que había que decirla, y se leía tarde: iba un turno por
+> detrás. Ahora la frase aparece antes y se pronuncia a tiempo. El cronómetro de arriba sigue
+> siendo el tiempo real del vídeo. Si lees más rápido o más lento, ajústalo:
+> `--adelanto 2.5`.
+>
+> Debajo de la frase hay una **barra que se vacía** hacia el siguiente cambio: verde, ámbar en
+> los últimos tres segundos, roja en el último y medio. Se ve con el rabillo del ojo sin dejar
+> de mirar la pantalla que se está grabando.
+>
 > La lista larga de abajo se conserva porque explica **por qué** cada paso existe. El script es
 > la versión que se ejecuta; esto es la que se lee.
 
