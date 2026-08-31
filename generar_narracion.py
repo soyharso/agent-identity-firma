@@ -129,6 +129,19 @@ def main():
 
     ms = momentos()
     SALIDA.mkdir(exist_ok=True)
+
+    # LOS HUÉRFANOS, que es el defecto que este bloque existe para matar. Si una frase se mueve
+    # del segundo 125 al 122 —cosa que pasa cada vez que se ajusta el ritmo—, el 0125.mp3 se
+    # queda en el disco diciendo la versión vieja. Nadie lo borra, y un `for f in *.mp3` al
+    # montar lo mete en la mezcla: dos voces solapadas contando cosas distintas, y la que sobra
+    # dice justo la frase que se descartó por no caber. Pasó ya una vez, hoy.
+    vigentes = {f"{seg:04d}.mp3" for seg, _, _ in ms}
+    huerfanos = [p for p in SALIDA.glob("[0-9]*.mp3") if p.name not in vigentes]
+    for p in huerfanos:
+        p.unlink()
+        print(f"  {AMARILLO}✂ huérfano borrado: {p.name}{FIN}  {GRIS}ese segundo ya no está "
+              f"en el plan{FIN}")
+
     print(f"\n{NEGRITA}PISTA DE NARRACIÓN{FIN}  {GRIS}{len(ms)} momentos · voz {a.voz}{FIN}\n")
     apretados, comandos = [], []
     for seg, hueco, frase in ms:
