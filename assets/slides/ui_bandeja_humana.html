@@ -444,26 +444,8 @@ async function sondear(){
   }
   FIRMA.consultado = true;
 
-  sitio.className = 'sitio ' + (FIRMA.puede ? 'local' : 'nube');
-  // QUIÉN puede firmar aquí, y hasta dónde se puede decir sin ponerlo en cámara.
-  //
-  // El jurado ve una pantalla que firma y la pregunta obvia es quién la sostiene. Se contesta
-  // con la sesión que YA existe —la de Google, la misma que Cloud KMS acepta o rechaza—, no con
-  // un login nuestro: esta pantalla no autentica a nadie, solo enseña a quien la infraestructura
-  // ya reconoce. Un inicio de sesión escrito por nosotros sería el control blando que este
-  // proyecto rechaza, y sería el primero que un jurado sabría saltarse.
-  //
-  // Y se enseña el DOMINIO, nunca el correo: el vídeo es público y lo que importa aquí no es
-  // quién es la persona, sino que hay UNA PERSONA y que la nube pudo comprobarlo. Es la misma
-  // regla que aplica el servicio al responder («a person at …»), y por el mismo motivo.
-  // En la nube no hay ruta que preguntar, así que tampoco hay sesión humana que enseñar: eso
-  // se dice, no se disimula.
-  sitio.textContent = FIRMA.puede
-    ? (FIRMA.dominio ? `a person at ${FIRMA.dominio} · this session can sign`
-                     // Sin dominio no se fabrica uno: se dice que la sesión no se pudo leer,
-                     // aunque la clave sí responda.
-                     : 'signing session identity unavailable · this machine can still sign')
-    : 'no human session here · cannot sign';
+  pintaChipDeSitio();
+
   if(FIRMA.puede){
     explica.innerHTML = 'This page is being served <b>from the person’s own machine</b>, with '
       + 'their own credential — so here, and only here, the signature can actually be produced. '
@@ -694,6 +676,36 @@ function etiquetaPlana(v){
   return t ? `${t}  ·  ${v}` : String(v);
 }
 
+// ─── EL CHIP DE LA CABECERA ────────────────────────────────────────────────────────────────
+// SE PINTABA UNA SOLA VEZ, al arrancar, y ahí estaba el defecto: la sonda inicial falla en la
+// nube —correcto, ese servidor no ofrece firma— así que el chip se quedaba en ámbar diciendo
+// «no human session here» PARA SIEMPRE. Luego la persona entraba con Google, la banda de abajo
+// se ponía verde, y arriba seguía la contraria. Dos afirmaciones opuestas en la misma pantalla,
+// y la de arriba es la que se lee primero.
+// Ahora es una función y la llama todo lo que cambia el estado.
+//
+// QUIÉN puede firmar aquí, y hasta dónde se puede decir sin ponerlo en cámara. El jurado ve una
+// pantalla que firma y la pregunta obvia es quién la sostiene. Se contesta con la sesión que YA
+// existe —la de Google, la misma que Cloud KMS acepta o rechaza—, no con un login nuestro: esta
+// pantalla no autentica a nadie, solo enseña a quien la infraestructura ya reconoce. Un inicio
+// de sesión escrito por nosotros sería el control blando que este proyecto rechaza, y sería el
+// primero que un jurado sabría saltarse.
+//
+// Y se enseña el DOMINIO, nunca el correo: el vídeo es público y lo que importa no es quién es
+// la persona, sino que hay UNA PERSONA y que Google pudo comprobarlo.
+function pintaChipDeSitio(){
+  const el = document.getElementById('sitio');
+  if(!el) return;
+  el.className = 'sitio ' + (FIRMA.puede ? 'local' : 'nube');
+  el.textContent = FIRMA.puede
+    ? (FIRMA.dominio ? `a person at ${FIRMA.dominio} · this session can sign`
+                     // Sin dominio no se fabrica uno: se dice que la sesión no se pudo leer,
+                     // aunque la clave sí responda.
+                     : 'signed in · this session can sign')
+    : (GOOGLE.dentro ? 'signed in · not allowed to sign'
+                     : 'no human session here · cannot sign');
+}
+
 // ─── QUIÉN ESTÁ FIRMANDO ───────────────────────────────────────────────────────────────────
 // LO QUE ESTA BANDA NO ES: un formulario de acceso. No hay campo de contraseña y no lo habrá —
 // esta pantalla nunca ve una credencial. Lo que hace es DECIR quién es la sesión que la
@@ -707,6 +719,9 @@ function etiquetaPlana(v){
 // El dominio, nunca el correo: el vídeo es público, y lo que importa no es quién es la persona
 // sino que HAY una y que Google pudo comprobarlo.
 function identidad(){
+  // El chip de arriba y esta banda cuentan lo MISMO. Si uno se repinta y el otro no, la pantalla
+  // se contradice a sí misma, así que van juntos y no por separado.
+  pintaChipDeSitio();
   const el = document.getElementById('identidad');
   if(!el) return;
   el.hidden = false;
