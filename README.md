@@ -1,8 +1,14 @@
 # El candado de firma
 
+> ### 🇬🇧 **[Read this in English → README.en.md](README.en.md)**
+> Full documentation, architecture diagram, measurements and the break-test results.
+> *This page is the Spanish original.*
+
 **Un agente que cierra tareas y no puede firmar como una persona.** No porque no deba: porque no
 puede. La clave que autoriza los juicios humanos está fuera de su alcance, y cuando lo intenta, la
 nube le dice que no.
+
+![Arquitectura de Cleveria](ARCHITECTURE.png)
 
 ## El defecto real del que sale
 
@@ -178,6 +184,12 @@ Declarar una pieza ausente vale más que fingirla:
 - **Memoria de largo plazo** — no está, y no es el relato de esto.
 - **Llaves de acceso del navegador** para la clave humana — sería mejor que la clave gestionada,
   porque ni el administrador podría suplantar. Es trabajo de días y queda fuera.
+- **El ancla del libro está instalada y probada, y todavía no protege nada.** El mecanismo
+  existe (`src/ancla.py`) y pasa sus catorce casos adversariales contra copias del libro. Pero
+  un ancla solo empieza a custodiar un libro cuando una persona firma la primera, y al escribir
+  esto nadie lo había hecho: **catorce casos en verde y cero anclas reales son dos frases
+  distintas, y no se mezclan.** Además, un ancla solo se emite cuando hay una firma humana, así
+  que todo lo escrito desde la última sigue siendo truncable — reportar un hueco no es cerrarlo.
 
 ## Cómo se construyó
 

@@ -266,6 +266,13 @@ Declaring a component absent is honest engineering:
 - **Agent Gateway as a separate proxy product**: Not built; replaced by direct cryptographic scope verification.
 - **Conversational Memory Bank / Vector DB**: Not built; workflow continuity relies on durable domain facts in Firestore, not probabilistic memory.
 - **Passkeys for human authentication**: Planned; currently signed via operator workstation key.
+- **The ledger anchor is installed and tested, and it is not yet protecting anything.** The
+  mechanism exists (`src/ancla.py`) and passes fourteen adversarial cases against copies of the
+  ledger. But an anchor only starts guarding a ledger once a person signs the first one, and at
+  the time of writing nobody had: **fourteen passing cases and zero real anchors are two
+  different sentences, and we do not blur them.** It also closes only what precedes the last
+  anchor — an anchor is issued when a human signs, so everything written since the last one
+  remains truncatable. Reporting a gap is not closing it.
 
 ## How it was built
 

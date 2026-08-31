@@ -111,8 +111,20 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
    **Tres de las dieciséis llaman a la nube de verdad**: `co-signer`, `double-fence` y
    `write-gate`. Si no hay red, salen rojas y el resumen no sirve para grabar. El resumen avisa
    solo si la corrida tiene más de una hora — córrela justo antes, no por la mañana.
+
+   > **SON DIECISÉIS, Y LA DEL ANCLA NO ENTRA. No la metas a última hora creyendo que ayuda.**
+   > Existe una prueba diecisiete, `agente/killtest_ancla_truncada.py`, que cierra el
+   > truncamiento del libro y pasa sus catorce casos. Se dejó **deliberadamente fuera** de
+   > `pruebas_de_ruptura.sh`: el guion, este runbook y la presentación dicen «dieciséis pruebas,
+   > 204 segundos», y meterla cambia el número que la cámara enseña el día de la entrega. Corre
+   > sola, en una centésima de segundo, y ahí se queda hasta que el operador decida instalarla
+   > **después** de entregar. Si te la encuentras y te parece que falta: no falta, se decidió.
 3. **Siembra la cola**: `python3 sembrar_demo.py --borrar && python3 sembrar_demo.py`.
 4. **Ensayo en frío de la toma 3**, que es la que no se puede repetir mal.
+   **El identificador de sesión de la nube vive UNA HORA.** El ensayo del 30 de agosto arrancó
+   con el identificador vencido y `demo.sh` se negó a correr la toma —hizo lo correcto—, pero si
+   eso pasa con la cámara encendida, se pierde la toma. Renuévalo justo antes de grabar, no al
+   empezar la sesión de trabajo.
 5. **Modo no molestar**, sin notificaciones ni segundas ventanas.
 6. **Fuente grande, contraste alto**, y **sin rutas de tu disco, usuarios ni clientes en pantalla**.
 
