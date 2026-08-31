@@ -512,6 +512,13 @@ async function prepararGoogle(){
     GOOGLE.clave    = c.clave_humano || '';
     GOOGLE.entrar   = c.alcance_entrar || 'openid email profile';
     GOOGLE.firmar   = c.alcance_firmar || c.alcance_oauth || '';
+    // EL ALCANCE DE LA CLAVE NO DEPENDE DE DÓNDE SE SIRVA LA PÁGINA. En la máquina de la
+    // persona lo contesta `/api/puede_firmar`; en la nube esa ruta no existe —correcto, ahí no
+    // hay credencial humana que sondear— y la pantalla se quedaba diciendo «may sign 0 states»,
+    // que es falso. Se toma de aquí cuando la sonda no lo trajo.
+    if(!FIRMA.decisiones.length && Array.isArray(c.decisiones)) FIRMA.decisiones = c.decisiones;
+    if(FIRMA.aceptadas === null && c.aceptadas_por_el_servicio !== undefined)
+      FIRMA.aceptadas = c.aceptadas_por_el_servicio;
     if(!GOOGLE.clientId) return;            // sin cliente configurado, la página no cambia
     await new Promise((ok, mal) => {
       const s = document.createElement('script');

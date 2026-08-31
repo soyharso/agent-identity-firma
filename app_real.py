@@ -325,6 +325,45 @@ a.puerta:hover,a.puerta:focus-visible{border-color:var(--cyan);transform:transla
 # rechazaría: nadie tiene que fiarse de esta ruta.
 
 
+def _decisiones_de_la_persona():
+    """Los estados que la clave de la persona tiene en alcance. Del directorio, no del código."""
+    try:
+        base = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(base, "claves", "directorio.json"), encoding="utf-8") as f:
+            d = json.load(f)
+        return list(d["claves"]["persona-operador"]["alcance_permitido"])
+    except Exception:                                             # noqa: BLE001
+        return []
+
+
+def _aceptadas_por_la_puerta():
+    """Lo que la puerta desplegada admite de verdad, leído del ÁRBOL de `servicio/main.py`.
+
+    NO es lo mismo que el alcance de la clave: el directorio permite cinco estados y la puerta
+    solo admite algunos. Ofrecer en el selector uno que el servicio va a rechazar es preparar un
+    error delante de la cámara. Se lee del archivo que se despliega en vez de teclear la lista
+    otra vez, porque dos copias de una lista son dos formas de equivocarse — y la que se vería
+    en pantalla sería la falsa. Si el archivo cambia de forma y no se reconoce, devuelve None y
+    la pantalla lo dice: no se adivina.
+    """
+    import ast
+    try:
+        base = os.path.dirname(os.path.abspath(__file__))
+        arbol = ast.parse(open(os.path.join(base, "servicio", "main.py"), encoding="utf-8").read())
+    except Exception:                                             # noqa: BLE001
+        return None
+    for nodo in ast.walk(arbol):
+        if isinstance(nodo, ast.Assign):
+            for d in nodo.targets:
+                if isinstance(d, ast.Name) and d.id in ("ESTADOS_ACEPTADOS", "ACEPTADAS",
+                                                        "DECISIONES_VALIDAS"):
+                    try:
+                        return list(ast.literal_eval(nodo.value))
+                    except Exception:                             # noqa: BLE001
+                        return None
+    return None
+
+
 @app.route("/api/config", methods=["GET"])
 def api_config():
     """Lo que el navegador necesita para entrar con Google. Sin secretos.
@@ -353,6 +392,14 @@ def api_config():
         # NO pueda firmar es exactamente lo que este producto sostiene. Si un juez consiguiera
         # firmar un cierre humano desde su navegador, no habríamos demostrado el producto:
         # lo habríamos refutado.
+        # QUÉ PUEDE FIRMAR LA CLAVE HUMANA, y por qué viaja por aquí. En la máquina de la
+        # persona esto lo contesta `/api/puede_firmar`, que la nube NO ofrece —ahí no hay
+        # credencial humana que sondear—. Sin este dato la pantalla entraba con la sesión buena
+        # y decía «may sign 0 states», que es falso: los estados no dependen de dónde se sirva
+        # la página, dependen del directorio de claves. Sale de la MISMA fuente que usa el
+        # verificador, `claves/directorio.json`, y no de una lista tecleada aquí.
+        "decisiones": _decisiones_de_la_persona(),
+        "aceptadas_por_el_servicio": _aceptadas_por_la_puerta(),
         "alcance_entrar": "openid email profile",
         "alcance_firmar": "https://www.googleapis.com/auth/cloudkms",
         # Compatibilidad con la primera versión de esta ruta, que solo devolvía uno.
