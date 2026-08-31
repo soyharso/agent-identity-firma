@@ -42,6 +42,37 @@ ends up where the same words typed would — with a person. The modality changes
 
 ---
 
+## Three names you will see, and what each one is
+
+Three names appear in this repository, in the demo and in the video. They are not three products
+competing for your attention — they are **a company, the system it already runs, and the layer
+this submission adds.** Here is the whole map, so nothing you meet later is ambiguous.
+
+| Name | What it is | Where you will see it |
+|---|---|---|
+| **Softronica S.A.S.** | **The company.** Colombian, founded in **2011**. It is the entrant, and it employs the people who built this | The submission is filed under this name |
+| **Qnowa** | Softronica's **queue and turn management platform** — a product in production for years with banks, clinics, government offices and service centres, managing the lines real customers wait in | The demo tray is branded Qnowa, and `sign.qnowa.com` opens it. That queue is what a Qnowa operator sees |
+| **Cleveria** | The **reasoning and identity layer** — this submission. It sits on top of an operational system and answers *who decided this* when a machine, not a person, closes a case | The architecture diagram, this repository, `demo.cleveria.co` |
+
+### Why this matters for judging, and it is the honest reason
+
+**We did not invent a scenario in order to have something to demo.** Softronica already runs the
+queues. Qnowa is where customer complaints, refunds and service tickets actually get closed —
+every day, by people.
+
+**The 58 mis-attributed closures at the centre of this submission came from there.** Not from a
+synthetic dataset: from our own preproduction records, in the system we operate. When agents
+began closing cases next to people, the schema had no state meaning *"a machine closed this"* — so
+it recorded that a human did. We found it, counted it, and built the boundary that makes it
+impossible.
+
+So the division of labour is simple: **Qnowa is the operation, Cleveria is the authority over it,
+and Softronica is the house that answers for both.** When you open the demo and the tray says
+Qnowa, you are looking at the operational layer. When Cloud KMS refuses a signature, that is
+Cleveria's boundary doing its job.
+
+---
+
 ## ⚡ Quick Judge Path (Run in 60 Seconds)
 
 ```bash

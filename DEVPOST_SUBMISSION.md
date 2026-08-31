@@ -14,6 +14,24 @@ Cleveria provides a deterministic identity and cryptographic authority harness f
 
 ---
 
+## Three names, and what each one is
+
+You will meet three names across this submission, the repository, the demo and the video. They are
+**a company, the system it already runs, and the layer this submission adds** — not three products.
+
+| Name | What it is | Where you will see it |
+|---|---|---|
+| **Softronica S.A.S.** | **The company.** Colombian, founded in **2011**. The entrant | This submission is filed under this name |
+| **Qnowa** | Softronica's **queue and turn management platform**, in production for years with banks, clinics, government offices and service centres — it manages the lines real customers wait in | The demo tray is branded Qnowa; `sign.qnowa.com` opens it |
+| **Cleveria** | The **reasoning and identity layer** — what this submission is. It answers *who decided this* when a machine, not a person, closes a case | This repository, the architecture diagram, `demo.cleveria.co` |
+
+**Why this matters when you score it:** we did not invent a scenario to have something to demo.
+**The 58 mis-attributed closures at the centre of this submission came out of Qnowa's own
+preproduction records** — the system this company operates for real customers. Qnowa is the
+operation, Cleveria is the authority over it, and Softronica answers for both.
+
+---
+
 ## The "Unlikely Hero": The Hispanic Operations Supervisor
 
 *Built for the Hispanic operations supervisor who runs real customer-attention queues in a LatAm BPO — not for a generic 'enterprise admin'.*

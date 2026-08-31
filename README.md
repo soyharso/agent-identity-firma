@@ -10,6 +10,27 @@ nube le dice que no.
 
 ![Arquitectura de Cleveria](ARCHITECTURE.png)
 
+## Tres nombres, y qué es cada uno
+
+En este repositorio, en la demostración y en el vídeo aparecen tres nombres. No son tres productos
+compitiendo por la atención: son **una empresa, el sistema que ya opera, y la capa que añade esta
+entrega.**
+
+| Nombre | Qué es | Dónde se ve |
+|---|---|---|
+| **Softrónica S.A.S.** | **La empresa.** Colombiana, fundada en **2011**. Es quien se presenta al concurso y quien emplea a las personas que construyeron esto | La inscripción va a su nombre |
+| **Qnowa** | Su **plataforma de gestión de filas y turnos** — un producto en producción desde hace años con bancos, clínicas, oficinas públicas y centros de servicio, que gestiona las colas en las que esperan clientes reales | La bandeja de la demostración lleva su marca, y `sign.qnowa.com` la abre. Esa cola es lo que ve un operador de Qnowa |
+| **Cleveria** | La **capa de razonamiento e identidad** — esta entrega. Se pone encima de un sistema operativo y responde *quién decidió esto* cuando quien cierra un caso es una máquina y no una persona | El diagrama de arquitectura, este repositorio, `demo.cleveria.co` |
+
+**Y esto importa por una razón honesta: no se inventó un escenario para tener algo que enseñar.**
+Softrónica ya opera las colas. Qnowa es donde de verdad se cierran las quejas, las devoluciones y
+los tiques de servicio, todos los días, por personas. **Los 58 registros mal atribuidos que están
+en el centro de esta entrega salieron de ahí** — no de un conjunto de datos sintético, sino de los
+propios registros de preproducción, en el sistema que la casa opera.
+
+En una línea: **Qnowa es la operación, Cleveria es la autoridad sobre ella, y Softrónica es la casa
+que responde por las dos.**
+
 ## El defecto real del que sale
 
 Esto no es un ejercicio. El 26 de agosto de 2026, en el sistema con el que trabaja el propio
