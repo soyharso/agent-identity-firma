@@ -1,5 +1,17 @@
 # Video script — 4 minutes, in English
 
+> ## ⚠ NOT THE SHOOTING SCRIPT ANY MORE — read this before recording
+>
+> This file predates the measurements of 30–31 August. It is five terminal shots and it does
+> **not** use the customer portal or the authority ledger, which are the two screens the video
+> now shows. It is kept because its wording is still the source for several lines.
+>
+> **The script that gets recorded** is `2026-08-31_ESCALETA_corregida_contra_lo_medido.md`, in
+> the `cleveria-dominios` repository, under `docs/strategy/metodo/ganar-hackathon/`. The
+> executable version of it is `plan_toma.txt`, next to this file, and `RUNBOOK_GRABACION.md`
+> (v7) says how to record it.
+
+
 The rules require it: *"It must be in English or include English subtitles"*, and it *"must
 demonstrate the backend is running on Google Cloud"*. This script is written to be read aloud.
 

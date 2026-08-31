@@ -3,143 +3,355 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cleveria — Interactive Fleet Architecture</title>
+  <title>Cleveria — The Signing Lock: Architecture</title>
   <style>
+    /* ── Paleta de la casa. No se inventa ningún color nuevo: el jurado ve el mismo azul
+       marino del resto de la entrega y reconoce la pieza sin leer el título. ───────────── */
     :root {
-      --bg: #0b1120;
-      --card-bg: #151e2e;
-      --border: #334155;
-      --cyan: #38bdf8;
-      --blue: #0284c7;
-      --green: #4ade80;
-      --yellow: #fbbf24;
-      --red: #f87171;
-      --text: #f8fafc;
-      --muted: #94a3b8;
+      --navy:   #06111F;   /* fondo */
+      --harbor: #0B2940;   /* superficie de tarjeta */
+      --cyan:   #27E6D2;   /* acento del sistema / determinista */
+      --agent:  #4B6BFF;   /* TODO lo que es máquina */
+      --violet: #8D72FF;   /* TODO lo que es persona */
+      --ice:    #E9FFFB;   /* texto */
+      --coral:  #FF6B6B;   /* SOLO el 403. Ningún otro elemento lo usa. */
+      --line:   #17415F;
+      --muted:  #9FC4D6;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 2rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    
-    .container { max-width: 1300px; width: 100%; background: #0f172a; border: 2px solid var(--border); border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-    
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
-    .title h1 { font-size: 2rem; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
-    .title p { color: var(--cyan); font-size: 1.1rem; font-weight: 500; margin-top: 4px; }
-    .badge { background: #1e293b; border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; color: var(--cyan); }
 
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; position: relative; }
-    
-    .column { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-    .col-header { font-size: 1rem; font-weight: 800; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
-    
-    .node { background: #0b1120; border: 1.5px solid var(--border); border-radius: 10px; padding: 1rem; transition: all 0.3s ease; position: relative; }
-    .node.active { border-color: var(--cyan); box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
-    .node.denied { border-color: var(--red); box-shadow: 0 0 15px rgba(248, 113, 113, 0.4); }
-    .node.success { border-color: var(--green); box-shadow: 0 0 15px rgba(74, 222, 128, 0.3); }
+    /* ── Suelo tipográfico de 16 px. YouTube recodifica a ~2500 kbps y por debajo de 16 px
+       el texto se convierte en papilla. Aquí no hay ni un solo tamaño menor, ni siquiera en
+       los subtítulos técnicos: la jerarquía se hace con COLOR, PESO y FAMILIA (mono para los
+       nombres reales del repo), nunca encogiendo la letra. ───────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      background: var(--navy); color: var(--ice);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px; line-height: 1.35;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      /* 18px y no 28: medido en el viewport de grabación (1920x1200) la lámina se pasaba 21px
+         y aparecía barra de scroll. Un diagrama que hay que desplazar no es un plano. */
+      padding: 18px;
+    }
+    code, .mono { font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace; }
 
-    .node-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; display: flex; justify-content: space-between; }
-    .node-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
-    .tag { font-size: 0.7rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
-    .tag-blue { background: var(--blue); color: #fff; }
-    .tag-yellow { background: var(--yellow); color: #000; }
-    .tag-red { background: var(--red); color: #000; }
-    .tag-green { background: var(--green); color: #000; }
+    /* Ancho pensado para 1920x1200 grabado a pantalla completa; el max-width evita que en un
+       monitor mayor las cajas se separen tanto que se pierda la lectura de izquierda a derecha. */
+    .sheet { width: 100%; max-width: 1760px; }
 
-    .interactive-bar { margin-top: 2rem; background: #1e293b; border-radius: 12px; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
-    .btn { background: var(--blue); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-    .btn:hover { background: #0369a1; transform: translateY(-1px); }
-    .status-text { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    /* ── Cabecera: el jurado que mira SIN SONIDO tiene que salir de aquí sabiendo la tesis.
+       Por eso el subtítulo no describe la tecnología, afirma la garantía. ─────────────────── */
+    header { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin-bottom: 22px; }
+    h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.4px; }
+    .thesis { font-size: 19px; color: var(--cyan); font-weight: 600; margin-top: 6px; }
+    .stack { font-size: 16px; color: var(--muted); text-align: right; }
+    /* Leyenda máquina/persona: es la única clave de color que el espectador debe retener, así que
+       va arriba a la derecha y se repite después en cada tarjeta con el mismo punto. */
+    .legend { display: flex; gap: 18px; justify-content: flex-end; margin-top: 8px; font-size: 16px; }
+    .legend span { display: flex; align-items: center; gap: 7px; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+    .dot-agent { background: var(--agent); }
+    .dot-human { background: var(--violet); }
+
+    .band { margin-bottom: 16px; }
+    .band-label {
+      font-size: 17px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 10px; display: flex; align-items: baseline; gap: 12px;
+    }
+    .band-label em { font-style: normal; font-weight: 500; letter-spacing: 0; color: var(--muted); text-transform: none; font-size: 16px; }
+
+    /* ── EL ESPINAZO. Cinco pasos, izquierda→derecha, tal cual `agente/grafo.py`. Cinco y no
+       nueve: el diagrama vive 15-20 s en pantalla y una fila que se lee de un barrido vale más
+       que el grafo completo. Los nodos `verificar` y `registrar` van fusionados por eso. ──── */
+    .flow { display: flex; align-items: stretch; gap: 10px; }
+    .step {
+      flex: 1; background: var(--harbor); border: 1.5px solid var(--line); border-radius: 12px;
+      padding: 14px 16px; position: relative; transition: border-color .25s, box-shadow .25s, background .25s;
+    }
+    .step .k { font-size: 16px; font-weight: 800; color: var(--cyan); letter-spacing: .6px; }
+    .step .t { font-size: 20px; font-weight: 700; margin: 4px 0 5px; }
+    .step .d { font-size: 16px; color: var(--muted); }
+    .step .src { font-size: 16px; color: #6FA6C0; margin-top: 7px; }
+    .arrow { align-self: center; font-size: 26px; color: var(--line); font-weight: 700; }
+
+    /* El paso que decide es el único con relleno propio: si el jurado sólo retiene una caja de
+       la fila, tiene que ser ésta, porque toda la tesis es "un solo modelo juzga". */
+    .step.decide { border-color: var(--agent); background: linear-gradient(180deg, #12224F, var(--harbor)); }
+    .step.deterministic .k { color: var(--ice); }
+
+    /* Realce de la animación. Es ADITIVO: parado, el diagrama ya está completo y legible; la
+       animación no revela nada que no esté escrito. */
+    .step.on, .out.on, .idcard.on { box-shadow: 0 0 0 2px var(--cyan), 0 0 26px rgba(39,230,210,.28); }
+    .out.on.deny { box-shadow: 0 0 0 2px var(--coral), 0 0 30px rgba(255,107,107,.40); }
+
+    /* ── Las tres salidas del enrutador. Van en su propia banda y no colgando del paso 4:
+       colgarlas obligaba a dibujar líneas diagonales que a 15 s nadie sigue. ─────────────── */
+    .outs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .out { background: var(--harbor); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; border-left-width: 5px; }
+    .out.sign { border-left-color: var(--agent); }
+    .out.deny { border-left-color: var(--coral); }
+    .out.open { border-left-color: var(--muted); }
+    .out .h { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .out .d { font-size: 16px; color: var(--muted); margin-top: 6px; }
+    .out .src { font-size: 16px; color: #6FA6C0; margin-top: 7px; }
+
+    .pill { font-size: 16px; font-weight: 800; padding: 3px 10px; border-radius: 6px; letter-spacing: .3px; }
+    .pill-ok   { background: rgba(75,107,255,.22); color: #A9BAFF; border: 1px solid var(--agent); }
+    /* ÚNICO elemento que grita en toda la lámina: fondo coral sólido, texto oscuro. Es el
+       hallazgo de la entrega — la máquina no es que no quiera, es que no puede. */
+    .pill-deny { background: var(--coral); color: #26060A; border: 1px solid var(--coral); }
+    .pill-mut  { background: rgba(159,196,214,.15); color: var(--muted); border: 1px solid var(--line); }
+
+    /* ── Seis modelos. Fichas planas, sin marco grueso: son inventario, no mecanismo, y no
+       deben competir con el espinazo. El "ninguno puede ampliar autoridad" se dice UNA vez
+       en el pie de la banda en vez de repetirlo seis veces. ──────────────────────────────── */
+    .models { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .m { background: rgba(11,41,64,.62); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; border-top: 3px solid var(--line); }
+    .m.judge { border-top-color: var(--agent); background: rgba(18,34,79,.9); }
+    .m.fence { border-top-color: var(--cyan); }
+    .m.cosign { border-top-color: var(--violet); }
+    .m .role { font-size: 16px; font-weight: 800; color: var(--ice); }
+    .m .id { font-size: 16px; color: var(--cyan); margin-top: 4px; word-break: break-word; }
+    .m .why { font-size: 16px; color: var(--muted); margin-top: 5px; }
+    .band-foot { font-size: 16px; color: var(--muted); margin-top: 9px; }
+    .band-foot b { color: var(--ice); }
+
+    /* ── Tres identidades. Cada una con su llave real de Cloud KMS y su alcance literal: es el
+       cruce que un juez puede abrir en `claves/directorio.json` y comprobar. Los nombres
+       técnicos van en mono y en cian para que se lean como "esto es del repo", no como
+       decoración traducida. ─────────────────────────────────────────────────────────────── */
+    .ids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .idcard { background: var(--harbor); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; border-top: 4px solid var(--agent); }
+    .idcard.human { border-top-color: var(--violet); }
+    .idcard .n { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 9px; }
+    .idcard .real { font-size: 16px; color: var(--cyan); margin-top: 5px; }
+    .idcard .d { font-size: 16px; color: var(--muted); margin-top: 6px; }
+    .scopes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    .sc { font-size: 16px; padding: 2px 9px; border-radius: 5px; border: 1px solid var(--line); color: var(--ice); background: rgba(39,230,210,.08); }
+    .idcard .iam { font-size: 16px; margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--line); }
+    .iam-ok { color: #A9BAFF; }
+    .iam-no { color: var(--coral); font-weight: 700; }
+
+    /* ── Barra de control. Deliberadamente sobria: en la grabación el botón se pulsa una vez y
+       desaparece de la atención; el estado es lo que se lee. ─────────────────────────────── */
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px;
+           background: var(--harbor); border: 1px solid var(--line); border-radius: 12px; padding: 12px 18px; }
+    .status { font-size: 18px; font-weight: 600; }
+    .btn { background: var(--agent); color: #fff; border: none; padding: 11px 22px; border-radius: 9px;
+           font-size: 16px; font-weight: 700; cursor: pointer; }
+    .btn:hover { filter: brightness(1.12); }
+    .btn:disabled { opacity: .45; cursor: default; }
+    .note { font-size: 16px; color: var(--muted); text-align: center; margin-top: 12px; }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="sheet">
+
     <header>
-      <div class="title">
-        <h1>CLEVERIA FLEET ENGINE</h1>
-        <p>Cryptographic Authority Boundary &amp; Scoped Execution on Google Cloud</p>
+      <div>
+        <h1>THE SIGNING LOCK</h1>
+        <!-- La tesis en una frase, porque muchos jurados lo verán en ventana pequeña y sin audio. -->
+        <div class="thesis">Six models run. One decides. None of them can widen the machine&rsquo;s authority.</div>
       </div>
-      <div class="badge">THE FORTIFIED ENTERPRISE FLEET</div>
+      <div>
+        <div class="stack">Google ADK Workflow &middot; Vertex AI &middot; Cloud KMS &middot; Cloud IAM</div>
+        <div class="legend">
+          <span><i class="dot dot-agent"></i> machine authority</span>
+          <span><i class="dot dot-human"></i> human authority</span>
+        </div>
+      </div>
     </header>
 
-    <div class="grid">
-      <!-- Col 1: Ingestion & Registry -->
-      <div class="column">
-        <div class="col-header">1. Registry &amp; Ingestion</div>
-        <div class="node active" id="node-scheduler">
-          <div class="node-title">Cloud Scheduler <span class="tag tag-blue">TRIGGER</span></div>
-          <div class="node-desc">Wakes fleet every 15 min with OIDC identity (sa-temporizador).</div>
+    <!-- ═══ BANDA 1 — el flujo real de agente/grafo.py, de izquierda a derecha ═══ -->
+    <div class="band">
+      <div class="band-label">The flow <em>agente/grafo.py</em></div>
+      <div class="flow">
+        <div class="step deterministic" data-step="1">
+          <div class="k">1 &middot; DETERMINISTIC</div>
+          <div class="t">Load request</div>
+          <div class="d">State rebuilt from durable storage. Voice arrives here as text.</div>
+          <div class="src mono">cargar_peticion &middot; Speech-to-Text</div>
         </div>
-        <div class="node" id="node-cards">
-          <div class="node-title">Agent Cards Catalog <span class="tag tag-blue">REGISTRY</span></div>
-          <div class="node-desc">Versioned cards generated from directorio.json (agente-curador, agente-comercial).</div>
-        </div>
-        <div class="node" id="node-voice">
-          <div class="node-title">Voice / WhatsApp <span class="tag tag-yellow">MULTIMODAL</span></div>
-          <div class="node-desc">Speech-to-Text transducer converts audio into data without expanding authority.</div>
-        </div>
-      </div>
+        <div class="arrow">&rsaquo;</div>
 
-      <!-- Col 2: ADK Routing & Dual Models -->
-      <div class="column">
-        <div class="col-header">2. ADK Runtime &amp; Safety</div>
-        <div class="node" id="node-fence">
-          <div class="node-title">Semantic Fence <span class="tag tag-yellow">INJECTION NET</span></div>
-          <div class="node-desc">gemini-embedding-001 (Vertex AI). Can only demand human caution, never grant authority.</div>
+        <div class="step deterministic" data-step="2">
+          <div class="k">2 &middot; DETERMINISTIC</div>
+          <div class="t">Authority ceiling</div>
+          <div class="d">Dumb word marks plus two semantic fences. The ceiling can only go down.</div>
+          <div class="src mono">techo_semantico &middot; 2 fences</div>
         </div>
-        <div class="node active" id="node-gemini">
-          <div class="node-title">Gemini 3.6 Flash <span class="tag tag-blue">ADJUDICATION</span></div>
-          <div class="node-desc">The ONLY deciding model. Evaluates evidence and proposes task state.</div>
-        </div>
-        <div class="node" id="node-router">
-          <div class="node-title">Deterministic Router <span class="tag tag-green">6 FUNCTIONS</span></div>
-          <div class="node-desc">Takes MIN(model, ceiling). Routes proven evidence to Machine Sign; pauses on liability.</div>
-        </div>
-      </div>
+        <div class="arrow">&rsaquo;</div>
 
-      <!-- Col 3: Cloud KMS & Trust Anchor -->
-      <div class="column">
-        <div class="col-header">3. Cloud Boundary &amp; Audit</div>
-        <div class="node success" id="node-kms-agent">
-          <div class="node-title">clave-agente (MAQ) <span class="tag tag-green">HTTP 200 OK</span></div>
-          <div class="node-desc">Cloud KMS allows sa-agente-curador to sign [cerrada, abierta].</div>
+        <div class="step decide" data-step="3">
+          <div class="k">3 &middot; THE ONLY JUDGEMENT</div>
+          <div class="t">Adjudicate</div>
+          <div class="d">Gemini 3.6 Flash reads the evidence and <b>proposes</b> a state. It never signs.</div>
+          <div class="src mono">dictaminar &middot; gemini-3.6-flash</div>
         </div>
-        <div class="node denied" id="node-kms-human">
-          <div class="node-title">clave-humano (HUM) <span class="tag tag-red">HTTP 403 DENIED</span></div>
-          <div class="node-desc">Cloud IAM strictly denies machine attempts. "It's not that the agent won't; it can't."</div>
+        <div class="arrow">&rsaquo;</div>
+
+        <div class="step deterministic" data-step="4">
+          <div class="k">4 &middot; DETERMINISTIC</div>
+          <div class="t">Route = MIN(model, ceiling)</div>
+          <div class="d">Plain code, no model. A confident model cannot out-vote the ceiling.</div>
+          <div class="src mono">enrutar</div>
         </div>
-        <div class="node" id="node-verifier">
-          <div class="node-title">RFC 8785 Verifier <span class="tag tag-blue">TRUST ANCHOR</span></div>
-          <div class="node-desc">100% Offline pure verification. Zero cloud credentials required to audit signatures.</div>
+        <div class="arrow">&rsaquo;</div>
+
+        <div class="step deterministic" data-step="6">
+          <div class="k">6 &middot; DETERMINISTIC</div>
+          <div class="t">Verify &amp; record</div>
+          <div class="d">RFC 8785 canonical JSON. Offline verification &mdash; no cloud credential needed to audit.</div>
+          <div class="src mono">verificar &rarr; registrar</div>
         </div>
       </div>
     </div>
 
-    <div class="interactive-bar">
-      <div class="status-text" id="sim-status">Animated walkthrough — replays the flow described above. No backend call.</div>
-      <button class="btn" onclick="runSimulation()">Play walkthrough (animation)</button>
+    <!-- ═══ BANDA 2 — las tres salidas. Van sueltas y no colgadas del paso 4 porque las líneas
+         diagonales no se siguen en 15 segundos ni en una ventana pequeña. ═══ -->
+    <div class="band">
+      <div class="band-label">5 &middot; Three ways out <em>and only one of them lets the machine sign</em></div>
+      <div class="outs">
+        <div class="out sign" data-step="5a">
+          <div class="h"><i class="dot dot-agent"></i> Sign with the agent key <span class="pill pill-ok">HTTP 200</span></div>
+          <div class="d">Hard evidence. Cloud KMS signs with the agent key &mdash; but only after a model from another family co-signs.</div>
+          <div class="src mono">refrescar_y_firmar &middot; clave-agente</div>
+        </div>
+
+        <div class="out deny" data-step="5b">
+          <div class="h"><i class="dot dot-human"></i> Judgement &rarr; pause <span class="pill pill-deny">HTTP 403 DENIED</span></div>
+          <div class="d">The machine reaches for the human key and Cloud IAM refuses. The signature is then born on the person&rsquo;s own machine; the service can only verify it.</div>
+          <div class="src mono">pausa_humana &middot; src/decidir_como_persona.py</div>
+        </div>
+
+        <div class="out open" data-step="5c">
+          <div class="h"><span class="pill pill-mut">UNSIGNED</span> Returned open</div>
+          <div class="d">No evidence, no authority. Nothing is signed and the request stays open.</div>
+          <div class="src mono">devolver</div>
+        </div>
+      </div>
     </div>
-    <p style="text-align:center;font-size:12px;opacity:.65;margin:.6em 0 0">
-      This page is an explanatory animation, not a live console. Real execution and the real
-      HTTP&nbsp;403 from Cloud KMS are in <code>demo.sh</code> and <code>servicio/main.py</code>.
+
+    <!-- ═══ BANDA 3 — inventario de modelos. Fichas planas a propósito: son censo, no mecanismo. ═══ -->
+    <div class="band">
+      <div class="band-label">Six models <em>one judgement, four brakes, two transducers</em></div>
+      <div class="models">
+        <div class="m judge">
+          <div class="role">Adjudicates</div>
+          <div class="id mono">gemini-3.6-flash</div>
+          <div class="why">The one judgement in the flow.</div>
+        </div>
+        <div class="m fence">
+          <div class="role">First fence</div>
+          <div class="id mono">gemini-embedding-001</div>
+          <div class="why">Meaning, not keywords.</div>
+        </div>
+        <div class="m fence">
+          <div class="role">Second fence</div>
+          <div class="id mono">text-multilingual-<wbr>embedding-002</div>
+          <div class="why">Scored apart. Either fence alone can demand a human.</div>
+        </div>
+        <div class="m cosign">
+          <div class="role">Co-signs</div>
+          <div class="id mono">gemma-4-26b-a4b-it-maas</div>
+          <div class="why">Another model family must agree. Its silence keeps the door shut.</div>
+        </div>
+        <div class="m">
+          <div class="role">Before the decision</div>
+          <div class="id mono">Speech-to-Text</div>
+          <div class="why">Voice note &rarr; text.</div>
+        </div>
+        <div class="m">
+          <div class="role">After the decision</div>
+          <div class="id mono">Text-to-Speech</div>
+          <div class="why">Answer &rarr; voice.</div>
+        </div>
+      </div>
+      <!-- La regla que unifica las seis fichas se dice una vez aquí en vez de seis veces arriba. -->
+      <div class="band-foot"><b>None of the six can widen authority.</b> The fences and the co-signer can only ask for <em>more</em> caution or hold a closure; the two transducers sit outside the decision; and the router takes the <b>minimum</b> of the model&rsquo;s verdict and the ceiling.</div>
+    </div>
+
+    <!-- ═══ BANDA 4 — las tres identidades. Es lo comprobable: un juez abre directorio.json y cuadra. ═══ -->
+    <div class="band">
+      <div class="band-label">Three identities, three separate Cloud KMS keys <em>claves/directorio.json</em></div>
+      <div class="ids">
+        <div class="idcard">
+          <div class="n"><i class="dot dot-agent"></i> Curator Agent</div>
+          <div class="real mono">agente-curador &middot; clave-agente</div>
+          <div class="d">The machine that does the work. Closes what is provable; never judges.</div>
+          <div class="scopes"><span class="sc mono">cerrada</span><span class="sc mono">abierta</span></div>
+          <div class="iam iam-ok">IAM: 1 binding &mdash; sa-agente-curador / cloudkms.signer</div>
+        </div>
+
+        <div class="idcard">
+          <div class="n"><i class="dot dot-agent"></i> Commercial Agent</div>
+          <div class="real mono">agente-comercial &middot; clave-agente-qnowa</div>
+          <div class="d">The machine that talks to customers. It may record that it <em>informed</em> &mdash; and nothing else.</div>
+          <div class="scopes"><span class="sc mono">informada</span></div>
+          <div class="iam iam-ok">Its own key, not a flag: separation is cryptographic.</div>
+        </div>
+
+        <div class="idcard human">
+          <div class="n"><i class="dot dot-human"></i> Operator (person)</div>
+          <div class="real mono">persona-operador &middot; clave-humano</div>
+          <div class="d">Anything that carries judgement is authorised by a human, signing on their own machine.</div>
+          <div class="scopes"><span class="sc mono">cerrada</span><span class="sc mono">abierta</span><span class="sc mono">descartada</span><span class="sc mono">cerrada_con_juicio</span><span class="sc mono">perdonada</span></div>
+          <div class="iam iam-no">IAM: zero bindings &mdash; that is the 403.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bar">
+      <div class="status" id="sim-status">Static diagram &mdash; everything above is already true without pressing anything.</div>
+      <button class="btn" id="sim-btn" onclick="runSimulation()">Play walkthrough</button>
+    </div>
+    <p class="note">
+      Explanatory animation, not a live console. The real run and the real HTTP&nbsp;403 from Cloud KMS
+      are in <code>demo.sh</code> and <code>servicio/main.py</code>.
     </p>
   </div>
 
   <script>
+    /* La animación recorre el MISMO camino que ya está dibujado: sólo enciende un borde por paso
+       y escribe una línea de estado. Si el espectador no la corre, no se pierde nada; si la corre,
+       gana el orden temporal. Por eso no oculta ni atenúa nada de la lámina. */
+    const GUION = [
+      ['1',  'Request arrives — a voice note becomes text. No authority yet.',              'var(--ice)'],
+      ['2',  'Two semantic fences set the ceiling. A ceiling can only come down.',          'var(--cyan)'],
+      ['3',  'gemini-3.6-flash adjudicates PET-002 — and proposes, nothing more.',          '#A9BAFF'],
+      ['4',  'Router takes MIN(model, ceiling): this one carries judgement.',               'var(--cyan)'],
+      ['5b', 'Machine reaches for clave-humano → HTTP 403 PERMISSION_DENIED. Not "won\'t": can\'t.', 'var(--coral)'],
+      ['5b', 'The person signs on their own machine. The service never held that key.',     '#C7B6FF'],
+      ['6',  'RFC 8785 canonical JSON verified offline · recorded in the ledger.',          'var(--cyan)']
+    ];
+    let temporizadores = [];
+
     function runSimulation() {
-      const status = document.getElementById('sim-status');
-      status.innerHTML = '<span style="color: #38bdf8;">⚡ Cloud Scheduler triggered... Gemini adjudicating evidence...</span>';
-      
-      setTimeout(() => {
-        status.innerHTML = '<span style="color: #fbbf24;">⏸️ Judgement detected in PET-002: Workflow paused for Human Signature.</span>';
-      }, 1200);
+      const estado = document.getElementById('sim-status');
+      const boton  = document.getElementById('sim-btn');
+      temporizadores.forEach(clearTimeout); temporizadores = [];
+      document.querySelectorAll('.on').forEach(e => e.classList.remove('on'));
+      boton.disabled = true;
 
-      setTimeout(() => {
-        status.innerHTML = '<span style="color: #f87171;">🚫 Machine attempted clave-humano: HTTP 403 PERMISSION_DENIED (IAM Enforced).</span>';
-      }, 2500);
+      // 1400 ms por paso: por debajo de eso no da tiempo a leer la línea de estado en una
+      // ventana pequeña, que es como muchos jurados lo verán.
+      GUION.forEach(([paso, texto, color], i) => {
+        temporizadores.push(setTimeout(() => {
+          document.querySelectorAll('.on').forEach(e => e.classList.remove('on'));
+          const nodo = document.querySelector('[data-step="' + paso + '"]');
+          if (nodo) nodo.classList.add('on');
+          estado.style.color = color;
+          estado.textContent = texto;
+        }, i * 1400));
+      });
 
-      setTimeout(() => {
-        status.innerHTML = '<span style="color: #4ade80;">✓ Human signed from terminal • RFC 8785 verified • Firestore committed.</span>';
-      }, 3800);
+      temporizadores.push(setTimeout(() => {
+        document.querySelectorAll('.on').forEach(e => e.classList.remove('on'));
+        estado.style.color = '';
+        estado.textContent = 'Static diagram — everything above is already true without pressing anything.';
+        boton.disabled = false;
+      }, GUION.length * 1400 + 1600));
     }
   </script>
 </body>

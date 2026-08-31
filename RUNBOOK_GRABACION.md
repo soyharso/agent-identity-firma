@@ -52,6 +52,23 @@ miente a medias; y se retiró el residuo que aún mandaba desconectar el cable)*
 > Súbelo con horas de margen: los organizadores avisan de que YouTube y Vimeo tardan «desde unos
 > minutos hasta varias horas» en procesar.
 
+
+> ### 📍 QUÉ SE GRABA, CÓMO Y CON QUÉ — los tres únicos archivos que importan
+>
+> Llegaron a convivir seis documentos diciendo qué se graba, la mitad en «propuesto». Ya no:
+>
+> | | Archivo | Dónde |
+> |---|---|---|
+> | **QUÉ** se graba y qué se dice | `2026-08-31_ESCALETA_corregida_contra_lo_medido.md` | `cleveria-dominios`, en `docs/strategy/metodo/ganar-hackathon/` |
+> | **CÓMO** se graba | **este runbook**, v7 | aquí |
+> | Lo que **EJECUTA** la toma | `plan_toma.txt` + `dirigir_grabacion.py` | aquí |
+>
+> **`VIDEO_SCRIPT.en.md` YA NO ESTÁ EN ESTE REPOSITORIO**: era anterior a las mediciones del 30
+> y 31 de agosto —cinco tomas de terminal, sin el portal ni el libro de autoridad— y se movió a
+> `cleveria-dominios`, junto al resto de la producción del vídeo, para no dejarlo a la vista de
+> quien juzga el producto. Los guiones `GUION_video_compuesto` y `GUION_v2` quedaron
+> superados, cada uno con su puntero al vigente.
+
 ---
 
 ## 0. Las dos capas

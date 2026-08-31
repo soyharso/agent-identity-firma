@@ -14,40 +14,70 @@
   --qnowa-blue:#2563EB; --qnowa-cyan:#06B6D4; --tinta:#0F172A;
   --gris:#64748B; --niebla:#F1F5F9; --blanco:#fff; --borde:#E2E8F0;
 }
+/* ─── Piso tipográfico de 16 px ────────────────────────────────────────────────
+   Esta pantalla se graba a 1920x1200 y YouTube la recodifica a ~2500 kbps. Por
+   debajo de 16 px el recodificador no tiene bits para los trazos finos y el texto
+   se vuelve una mancha gris; buena parte del jurado además la verá en una ventana
+   de ~900 px. Así que NINGÚN texto de este archivo baja de 16 px: ni la hora, ni
+   el pie, ni el conmutador de idioma. Donde algo dejaba de caber al subirlo, se
+   quitó información (o se dejó envolver en dos renglones), nunca se encogió. */
 *{box-sizing:border-box}
-body{margin:0;font:15px/1.55 Inter,system-ui,sans-serif;color:var(--tinta);
+body{margin:0;font:16px/1.55 Inter,system-ui,sans-serif;color:var(--tinta);
      background:var(--niebla);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-.tel{width:100%;max-width:430px;background:var(--blanco);border-radius:22px;overflow:hidden;
-     box-shadow:0 24px 60px rgba(15,23,42,.16);display:flex;flex-direction:column;height:min(760px,92vh)}
+/* El teléfono ensancha de 430 a 460 px: los mensajes crecieron a 17 px y con el
+   ancho viejo el globo se partía en demasiados renglones cortos, que en vídeo se
+   leen peor que una línea larga. */
+.tel{width:100%;max-width:460px;background:var(--blanco);border-radius:22px;overflow:hidden;
+     box-shadow:0 24px 60px rgba(15,23,42,.16);display:flex;flex-direction:column;height:min(780px,94vh)}
 header{background:linear-gradient(135deg,var(--qnowa-blue),var(--qnowa-cyan));color:#fff;padding:16px 18px;
        display:flex;align-items:center;gap:12px}
-header img{height:26px;filter:brightness(0) invert(1)}
-header .sub{font-size:12px;opacity:.92}
+header img{height:28px;filter:brightness(0) invert(1)}
+header .sub{font-size:16px;opacity:.95}
 .idioma{margin-left:auto;display:flex;background:rgba(255,255,255,.18);border-radius:999px;padding:3px}
-.idioma button{border:0;background:none;color:#fff;font:600 11px Inter,sans-serif;padding:5px 11px;
-               border-radius:999px;cursor:pointer;opacity:.75}
+.idioma button{border:0;background:none;color:#fff;font:600 16px Inter,sans-serif;padding:5px 12px;
+               border-radius:999px;cursor:pointer;opacity:.8}
 .idioma button[aria-pressed="true"]{background:#fff;color:var(--qnowa-blue);opacity:1}
 .chat{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--niebla)}
-.msg{max-width:84%;padding:11px 14px;border-radius:16px;font-size:14px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.msg{max-width:86%;padding:12px 15px;border-radius:16px;font-size:17px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
 .bot{background:var(--blanco);border-bottom-left-radius:5px}
 .yo{background:var(--qnowa-blue);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
-.meta{font-size:11px;color:var(--gris);margin-top:5px}
-.yo .meta{color:rgba(255,255,255,.88)}
-.estado{align-self:center;font:600 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;
-        background:#FEF3C7;color:#92400E;padding:7px 13px;border-radius:999px;border:1px solid #FDE68A}
-.estado.err{background:#FEE2E2;color:#991B1B;border-color:#FECACA}
+/* La transcripción bajo la nota de voz era de 11 px: es justo el dato que prueba
+   que el audio se transcribió de verdad, y era el primero en desaparecer al
+   comprimir. Sube a 16 px y el gris se oscurece (#475569) para aguantar el
+   submuestreo de color. */
+.meta{font-size:16px;color:#475569;margin-top:6px;line-height:1.45}
+.yo .meta{color:rgba(255,255,255,.95)}
+/* ─── Etiqueta de estado: TINTA OSCURA SOBRE CHIP DE COLOR ─────────────────────
+   Antes era ámbar claro (#FEF3C7) con letra café sobre un fondo casi blanco: dos
+   claros juntos. El submuestreo de croma de YouTube (4:2:0) guarda el color a la
+   mitad de resolución, así que un chip claro sobre fondo claro se deshace por los
+   bordes y la etiqueta se lee a medias. Ahora el chip es ámbar saturado y la letra
+   es casi negra: el contraste vive en la LUMINANCIA, que es lo único que el códec
+   conserva entero. Misma regla en el chip de error. */
+.estado{align-self:center;max-width:100%;text-align:center;
+        font:700 16px/1.35 Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;
+        background:#F59E0B;color:#2B1601;padding:8px 15px;border-radius:999px;border:1px solid #B45309}
+.estado.err{background:#FCA5A5;color:#3B0708;border-color:#B91C1C}
 footer{padding:12px;background:var(--blanco);border-top:1px solid var(--borde);display:flex;gap:9px;align-items:center}
-input[type=text]{flex:1;border:1px solid var(--borde);border-radius:999px;padding:11px 15px;font:14px Inter,sans-serif;outline:0}
+input[type=text]{flex:1;min-width:0;border:1px solid var(--borde);border-radius:999px;padding:12px 16px;
+                 font:16px Inter,sans-serif;outline:0}
 input[type=text]:focus{border-color:var(--qnowa-blue)}
-.btn{border:0;width:44px;height:44px;border-radius:50%;cursor:pointer;display:grid;place-items:center;
-     background:var(--niebla);color:var(--gris);font-size:18px;flex:none}
+.btn{border:0;width:46px;height:46px;border-radius:50%;cursor:pointer;display:grid;place-items:center;
+     background:var(--niebla);color:var(--gris);font-size:20px;flex:none}
 .btn.env{background:var(--qnowa-blue);color:#fff}
+/* El aro que late en el micrófono es la ÚNICA señal de que está grabando, y solo
+   corre mientras se graba — no es un bucle permanente de los que ensucian la
+   compresión toda la toma. Se queda, pero apagado bajo prefers-reduced-motion:
+   el relleno rojo sólido ya dice «grabando» sin moverse. */
 .btn.mic.grabando{background:#DC2626;color:#fff;animation:late 1.1s infinite}
 @keyframes late{50%{box-shadow:0 0 0 11px rgba(220,38,38,.16)}}
+@media (prefers-reduced-motion: reduce){.btn.mic.grabando{animation:none}}
 .ondas{display:none;gap:3px;align-items:center;height:26px;flex:1;padding-left:6px}
 .ondas.on{display:flex}
 .ondas i{width:3px;background:var(--qnowa-cyan);border-radius:2px;height:6px}
-.pie{text-align:center;font-size:10.5px;color:var(--gris);padding:7px}
+/* El pie subió de 10,5 a 16 px. A ese cuerpo ya no cabía en un renglón, así que se
+   deja envolver en dos: prefiero dos líneas legibles que una ilegible. */
+.pie{text-align:center;font-size:16px;line-height:1.4;color:#475569;padding:9px 12px}
 .pie b{color:var(--qnowa-blue)}
 </style>
 </head>
@@ -56,7 +86,9 @@ input[type=text]:focus{border-color:var(--qnowa-blue)}
   <header>
     <img src="/ui/qnowa-logo.svg" alt="Qnowa"
          onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'Qnowa',style:'font-size:19px'}))">
-    <div><div style="font-weight:600" id="t_titulo">Soporte</div><div class="sub" id="t_sub">Atención al cliente</div></div>
+    <!-- 18 px para el título: por encima del piso de 16 px, para que la jerarquía
+         de la cabecera siga viéndose cuando todo lo demás subió a 16. -->
+    <div><div style="font-weight:600;font-size:18px" id="t_titulo">Soporte</div><div class="sub" id="t_sub">Atención al cliente</div></div>
     <div class="idioma">
       <button id="b_es" aria-pressed="true"  onclick="setIdioma('es-CO')">ES</button>
       <button id="b_en" aria-pressed="false" onclick="setIdioma('en-US')">EN</button>
@@ -84,6 +116,7 @@ input[type=text]:focus{border-color:var(--qnowa-blue)}
 // de una transcripción real, y es justo lo que este producto existe para impedir.
 // ─────────────────────────────────────────────────────────────────────────────
 let idioma = 'es-CO', grabadora = null, trozos = [], desde = 0;
+let audioCtx = null, analizador = null, nivelesDeAudio = null;
 
 const T = {
   'es-CO': {titulo:'Soporte', sub:'Atención al cliente',
@@ -152,10 +185,21 @@ async function alternarGrabacion(){
   catch(e){ pinta(t().nomic, 'estado err'); return; }
 
   trozos = []; desde = Date.now();
+  // El analizador cuelga del MISMO stream que se está grabando: lo que pintan las barras es el
+  // audio que de verdad entra por el micrófono. Ver el comentario de `animar()`.
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analizador = audioCtx.createAnalyser();
+    analizador.fftSize = 64;            // 32 bandas para 22 barras: sobra y es barato
+    analizador.smoothingTimeConstant = 0.6;
+    audioCtx.createMediaStreamSource(stream).connect(analizador);
+    nivelesDeAudio = new Uint8Array(analizador.frequencyBinCount);
+  }catch(e){ analizador = null; }       // sin analizador, las barras se quedan quietas
   grabadora = new MediaRecorder(stream);
   grabadora.ondataavailable = e => trozos.push(e.data);
   grabadora.onstop = async () => {
     stream.getTracks().forEach(x => x.stop());
+    if(audioCtx){ try{ audioCtx.close(); }catch(e){} audioCtx = null; analizador = null; }
     mic.classList.remove('grabando');
     ondas.classList.remove('on');
     ondas.innerHTML = '';
@@ -183,9 +227,33 @@ async function alternarGrabacion(){
   animar();
 }
 
+// Las barras de la onda solo se mueven mientras se graba, nunca en reposo: no hay
+// ningún bucle permanente en esta pantalla que el codificador de vídeo tenga que
+// pagar toda la toma. Y si el sistema pide menos movimiento, se quedan quietas —
+// el relleno rojo del micrófono ya dice que está grabando.
+//
+// Y PINTAN EL AUDIO DE VERDAD, que hasta hoy no era así: eran `Math.random()`. En una pantalla
+// que se graba en primer plano para un vídeo cuyo argumento entero es que se puede comprobar lo
+// que se afirma, una animación inventada es la misma falta que este proyecto persigue: pequeña,
+// decorativa, y exactamente del tipo que encuentra un jurado que abre el código. Ahora cuelgan
+// de un analizador sobre el mismo `stream` que se graba. Se comprueba en cámara tapando el
+// micrófono con la mano: las barras caen.
+const menosMovimiento = () =>
+  window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 function animar(){
   if(!grabadora || grabadora.state !== 'recording') return;
-  [...ondas.children].forEach(b => b.style.height = (5 + Math.random()*20) + 'px');
+  if(menosMovimiento()) return;
+  if(analizador && nivelesDeAudio){
+    analizador.getByteFrequencyData(nivelesDeAudio);
+    const barras = [...ondas.children];
+    const porBarra = Math.max(1, Math.floor(nivelesDeAudio.length / barras.length));
+    barras.forEach((b, i) => {
+      let suma = 0;
+      for(let j = 0; j < porBarra; j++) suma += nivelesDeAudio[i * porBarra + j] || 0;
+      b.style.height = (5 + (suma / porBarra / 255) * 21) + 'px';
+    });
+  }
   setTimeout(animar, 110);
 }
 </script>

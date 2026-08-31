@@ -23,3 +23,12 @@ agente/.adk/
 # de éste.
 .claude/
 logs/
+
+# --- Producción del vídeo: NO se comparte con el jurado ---------------------------
+# Estas tres son las herramientas con las que se graba, y viven aquí porque es donde se usan.
+# No entran en el repositorio: quien juzga el producto no tiene por qué leer el plan de rodaje
+# ni el apuntador. La copia de referencia está en cleveria-dominios, bajo
+# docs/strategy/metodo/ganar-hackathon/produccion-entregable/.
+plan_toma.txt
+dirigir_grabacion.py
+ensayar_narracion.py
