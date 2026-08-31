@@ -339,6 +339,23 @@ def api_config():
             "CLAVE_HUMANO_RUTA",
             "projects/ai-transf-lab-0827/locations/us-central1/keyRings/firmas/"
             "cryptoKeys/clave-humano/cryptoKeyVersions/1"),
+        # DOS PERMISOS, Y LA DIFERENCIA ENTRE ELLOS ES TODO EL DISEÑO DE ESTA PANTALLA.
+        #
+        # `alcance_entrar` son los permisos básicos: quién eres. Google NO los considera
+        # sensibles, así que esta aplicación puede publicarse hoy y CUALQUIERA entra —un juez,
+        # un curioso, alguien que llegó por el vídeo—. Nadie necesita permiso de nadie.
+        #
+        # `alcance_firmar` es el permiso de firmar con Cloud KMS, y Google SÍ lo considera
+        # sensible: su documentación dice que los permisos sensibles «no se pueden usar en
+        # aplicaciones en producción sin revisión». La revisión son semanas.
+        #
+        # PARECE UNA LIMITACIÓN Y ES EL ARGUMENTO. Que un visitante cualquiera pueda entrar y
+        # NO pueda firmar es exactamente lo que este producto sostiene. Si un juez consiguiera
+        # firmar un cierre humano desde su navegador, no habríamos demostrado el producto:
+        # lo habríamos refutado.
+        "alcance_entrar": "openid email profile",
+        "alcance_firmar": "https://www.googleapis.com/auth/cloudkms",
+        # Compatibilidad con la primera versión de esta ruta, que solo devolvía uno.
         "alcance_oauth": "https://www.googleapis.com/auth/cloudkms",
     }), 200
 
@@ -416,6 +433,39 @@ def api_aplicar():
                     headers={"Authorization": f"Bearer {token}"},
                     json={k: cuerpo[k] for k in ("peticion_id", "decision", "sobre", "firma")},
                     timeout=60)
+        return (r.text, r.status_code, {"Content-Type": "application/json"})
+    except Exception as e:                                            # noqa: BLE001
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/intentar", methods=["POST"])
+def api_intentar():
+    """Que el agente desplegado INTENTE firmar como persona, delante de quien pulse.
+
+    POR QUÉ EXISTE. Un visitante no puede pedirle a Cloud KMS que le niegue la clave a él
+    mismo: pedir eso requiere un permiso que Google solo concede a aplicaciones revisadas. Pero
+    sí puede provocar, con su propio clic y en el momento, que el AGENTE lo intente — y leer lo
+    que Google contesta, en crudo, sin que nosotros lo redactemos.
+
+    No es un sucedáneo: es la misma frontera. La identidad del agente pide firmar con la clave
+    de la persona y Cloud KMS responde 403 nombrando el recurso denegado. Ese texto lo escribe
+    Google. Y si algún día contestara 200, esta ruta lo enseñaría igual — que es la única forma
+    de que una demostración valga algo.
+
+    Esto es un cartero otra vez: el servicio que hace la llamada está cerrado al público, y este
+    solo transporta la pregunta y devuelve la respuesta tal cual.
+    """
+    try:
+        import google.auth.transport.requests
+        import google.oauth2.id_token
+        import requests as rq
+
+        destino = os.environ.get("SERVICIO_FIRMA",
+                                 "https://candado-firma-mzr5fvtnka-uc.a.run.app")
+        pet = google.auth.transport.requests.Request()
+        token = google.oauth2.id_token.fetch_id_token(pet, destino)
+        r = rq.post(f"{destino}/intentar-suplantar",
+                    headers={"Authorization": f"Bearer {token}"}, timeout=60)
         return (r.text, r.status_code, {"Content-Type": "application/json"})
     except Exception as e:                                            # noqa: BLE001
         return jsonify({"error": str(e)}), 500

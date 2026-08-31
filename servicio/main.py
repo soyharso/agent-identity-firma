@@ -28,6 +28,9 @@ app = Flask(__name__)
 # Quién puede hacer qué. Se lee del entorno para no tener correos en el código.
 IDENTIDAD_HUMANA = os.environ.get("IDENTIDAD_HUMANA", "")
 IDENTIDAD_TEMPORIZADOR = os.environ.get("IDENTIDAD_TEMPORIZADOR", "")
+# La identidad de la demostración pública. Solo se admite en `/intentar-suplantar`, que es la
+# única ruta cuyo resultado útil es que Cloud KMS diga que NO. No abre ninguna otra puerta.
+IDENTIDAD_DEMO = os.environ.get("IDENTIDAD_DEMO", "")
 TOPE_POR_DESPERTAR = int(os.environ.get("TOPE_POR_DESPERTAR", "5"))
 
 
@@ -104,8 +107,21 @@ def intentar_suplantar():
     clave de la persona, y se devuelve lo que la nube conteste. Si algún día contestara 200,
     querría decir que la garantía se rompió, y esta ruta lo enseñaría igual.
     """
+    # QUIÉN PUEDE PEDIR ESTA DEMOSTRACIÓN, y por qué la lista es más ancha aquí que en el resto
+    # del servicio. Esta ruta no cierra nada, no escribe nada y no concede nada: pide dos firmas
+    # y devuelve lo que Cloud KMS conteste. Su resultado ÚTIL es el 403, o sea Google negándose.
+    #
+    # Se admite la identidad de la demostración pública para que CUALQUIERA —un jurado que llegó
+    # por el vídeo, alguien a quien no conocemos— pueda provocar ese 403 con su propio clic y
+    # leerlo en crudo, en vez de tener que creerse una captura nuestra. Que un desconocido pueda
+    # disparar esto no le da ningún poder: lo único que consigue es ver a Google decir que no.
+    #
+    # La firma con la clave del AGENTE sí devuelve 200, y también se enseña: es la mitad que
+    # hace legible la otra. Va sobre un sobre de demostración fijo (`peticion_id: DEMO`) que no
+    # corresponde a ninguna petición real, así que esa firma no cierra nada.
     quien = quien_llama()
-    if IDENTIDAD_HUMANA and quien not in (IDENTIDAD_HUMANA, IDENTIDAD_TEMPORIZADOR):
+    permitidos = tuple(x for x in (IDENTIDAD_HUMANA, IDENTIDAD_TEMPORIZADOR, IDENTIDAD_DEMO) if x)
+    if IDENTIDAD_HUMANA and quien not in permitidos:
         return _negar(IDENTIDAD_HUMANA, quien)
 
     from src.firma_kms import CLAVE_AGENTE, CLAVE_HUMANO, firmar

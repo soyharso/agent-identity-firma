@@ -258,6 +258,11 @@ button.firmar:disabled{opacity:.45;cursor:not-allowed}
      font:600 17px/1.4 JetBrains Mono,monospace;color:#DCE7E4;overflow-x:auto;white-space:nowrap}
 .cmd .arg{color:#7FD1C8}
 .cmd .pend{color:#9AA6A2;font-style:italic}
+/* La respuesta CRUDA de Google, sin retocar. Va en oscuro y en mono porque eso es lo que es —la
+   salida de una llamada— y porque un bloque que parece una terminal se lee como evidencia,
+   mientras que el mismo texto dentro de un párrafo se lee como una afirmación nuestra. */
+.salida{background:var(--tinta);color:#E6EFEC;border-radius:10px;padding:14px 16px;margin:10px 0;
+        font:400 15px/1.5 JetBrains Mono,monospace;overflow-x:auto;max-height:340px}
 /* La respuesta del servicio, literal. No se resume ni se traduce a un «listo»: lo que contestó
    la nube ES el resultado, y si contestó un error, el error es lo que se ve. */
 .res{margin-top:11px;border-radius:9px;padding:11px 14px;white-space:pre-wrap;
@@ -489,7 +494,14 @@ async function sondear(){
 // cuenta de Google y pulsar el botón. Google le contestará 403, porque su cuenta no tiene
 // permiso sobre esa clave. La frontera deja de ser una afirmación nuestra y pasa a ser algo
 // que comprueba desde su navegador, con su identidad, sin creernos nada.
-const GOOGLE = {clientId:'', clave:'', alcance:'', token:null, correo:null, listo:false};
+// DOS PERMISOS DISTINTOS, y la diferencia entre ellos es el producto entero:
+//   · ENTRAR   — permisos básicos, no sensibles. CUALQUIERA puede: un juez, un curioso.
+//   · FIRMAR   — Cloud KMS, que Google clasifica como sensible y no concede a aplicaciones sin
+//                revisar. Semanas de trámite.
+// Que se pueda entrar y no se pueda firmar NO es una carencia de esta pantalla: es la tesis.
+// Si un visitante cualquiera lograra firmar un cierre humano, este producto quedaría refutado.
+const GOOGLE = {clientId:'', clave:'', entrar:'', firmar:'',
+                token:null, correo:null, listo:false, dentro:false};
 
 async function prepararGoogle(){
   try{
@@ -498,7 +510,8 @@ async function prepararGoogle(){
     const c = await r.json();
     GOOGLE.clientId = c.google_client_id || '';
     GOOGLE.clave    = c.clave_humano || '';
-    GOOGLE.alcance  = c.alcance_oauth || '';
+    GOOGLE.entrar   = c.alcance_entrar || 'openid email profile';
+    GOOGLE.firmar   = c.alcance_firmar || c.alcance_oauth || '';
     if(!GOOGLE.clientId) return;            // sin cliente configurado, la página no cambia
     await new Promise((ok, mal) => {
       const s = document.createElement('script');
@@ -506,9 +519,10 @@ async function prepararGoogle(){
       s.onload = ok; s.onerror = mal; document.head.appendChild(s);
     });
     GOOGLE.listo = true;
-    // SIN VENTANA EMERGENTE SI YA HAY SESIÓN. `prompt:''` reutiliza la sesión que el navegador
-    // ya tiene: si la persona está entrada en Google y ya dio el permiso una vez, el token
-    // llega solo y el botón de firmar aparece sin que nadie pulse nada. Si no, se pide.
+    // SIN VENTANA EMERGENTE SI YA HAY SESIÓN. Se intenta en silencio el permiso de FIRMA: si
+    // la persona ya lo concedió alguna vez —el operador—, el token llega solo y el botón
+    // aparece sin que nadie pulse nada. Si no llega, la banda ofrece entrar, y entrar con los
+    // permisos básicos funciona para cualquiera.
     pedirToken('');
   }catch(e){ /* la página funciona igual: enseña la cola y no ofrece firmar */ }
 }
@@ -517,16 +531,31 @@ function pedirToken(modo){
   if(!GOOGLE.listo) return;
   const cliente = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE.clientId,
-    scope: GOOGLE.alcance,
+    scope: modo === 'entrar' ? GOOGLE.entrar : GOOGLE.firmar,
     prompt: modo,
-    callback: (resp) => {
-      if(resp && resp.access_token){
-        GOOGLE.token = resp.access_token;
-        FIRMA.puede = true;
-        FIRMA.motivo = '';
+    callback: async (resp) => {
+      if(!resp || !resp.access_token) return;
+      if(modo === 'entrar'){
+        // ENTRAR SOLO DICE QUIÉN ERES. No habilita el botón de firmar, y es correcto: el
+        // permiso de firma es otro y Google no lo da a aplicaciones sin revisar.
+        GOOGLE.dentro = true;
+        try{
+          const u = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+                                {headers:{'Authorization':'Bearer ' + resp.access_token}});
+          const d = await u.json();
+          // El DOMINIO, no el correo entero: esta pantalla sale en un vídeo público.
+          GOOGLE.correo = d.email ? ('a person at ' + String(d.email).split('@').pop()) : null;
+        }catch(e){ GOOGLE.correo = null; }
         identidad();
-        cargar(true);
+        // Y se prueba a pedir el de firma: si esta persona SÍ lo tiene, aparece el botón.
+        pedirToken('firmar');
+        return;
       }
+      GOOGLE.token = resp.access_token;
+      FIRMA.puede = true;
+      FIRMA.motivo = '';
+      identidad();
+      cargar(true);
     },
     // DOS NEGATIVAS QUE PARECEN LA MISMA Y NO LO SON, y confundirlas arruinaría la demostración:
     //
@@ -553,6 +582,29 @@ function pedirToken(modo){
     }
   });
   cliente.requestAccessToken();
+}
+
+// EL INTENTO EN VIVO. Lo que un visitante SÍ puede provocar con su propio clic: que la
+// identidad del agente le pida a Cloud KMS firmar con la clave de la persona, y leer la
+// respuesta de Google en crudo. No lo redactamos nosotros: se enseña el JSON tal cual llega.
+async function intentarSuplantar(){
+  ultimo.hidden = false;
+  ultimo.innerHTML = '<div class="res">Asking Google Cloud KMS, live…</div>';
+  try{
+    const r = await fetch('/api/intentar', {method:'POST'});
+    const t = await r.text();
+    let j; try{ j = JSON.stringify(JSON.parse(t), null, 2); }catch(e){ j = t; }
+    ultimo.innerHTML =
+      `<p class="ayuda"><b>The agent just asked Cloud KMS to sign with the human key.</b>
+        This is Google's raw answer, fetched by your click — not a recording, not our wording.</p>
+       <pre class="salida">${esc(j)}</pre>
+       <p class="ayuda">Two calls, one identity. With its own key: <b>HTTP 200</b>. With the
+        human key: <b>HTTP 403</b>, naming the resource it was denied. Nothing in this page
+        decides that — Cloud IAM does, and no code here can change it.</p>`;
+    ultimo.scrollIntoView({block:'nearest', behavior:'smooth'});
+  }catch(e){
+    ultimo.innerHTML = `<div class="res mal">could not reach the service: ${esc(e.message)}</div>`;
+  }
 }
 
 // LA FIRMA, EN TRES PASOS Y CADA UNO EN SU SITIO:
@@ -638,6 +690,21 @@ function identidad(){
             stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
       <path d="m8.6 12.1 2.4 2.4 4.4-4.9" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  // TRES ESTADOS, no dos. El de en medio —dentro pero sin poder firmar— es el que ve un juez,
+  // y es el que más cuidado necesita: tiene que quedar claro que no es un fallo.
+  if(!FIRMA.puede && GOOGLE.dentro){
+    el.className = 'ident sinsesion';
+    el.style.color = 'var(--ambar-oscuro)';
+    el.innerHTML = escudo
+      + `<span class="quien">Signed in as ${esc(GOOGLE.correo || 'you')}</span>`
+      + `<span class="alcance">Google has confirmed who you are, and your identity holds
+         <b>no permission</b> on the human key — so no signature can be produced for you.
+         That is the product, not a fault: an outsider who could sign would disprove it.
+         <b>You do not have to take our word for it</b> — make the agent try, below, and read
+         what Google answers.</span>`
+      + `<button class="entrar" onclick="intentarSuplantar()">Make the agent try to sign</button>`;
+    return;
+  }
   if(FIRMA.puede){
     const quien = FIRMA.dominio ? `Signed in as a person at ${esc(FIRMA.dominio)}`
                                 : 'Signed in — session identity could not be read';
@@ -657,11 +724,18 @@ function identidad(){
     el.style.color = 'var(--ambar-oscuro)';
     el.innerHTML = escudo
       + `<span class="quien">Not signed in — this session cannot sign</span>`
+      // El motivo tecnico NO se cuela aqui. En la nube `sondear()` recibe un 404 —correcto, ese
+      // servicio no ofrece firma— y pegarlo detras hacia leer «...this session does not have
+      // one. this server does not offer a signing endpoint (HTTP 404)», que suena a averia
+      // cuando es justo lo contrario. El 404 sigue en la consola para quien depure.
       + `<span class="alcance">The cases below are readable by anyone. Signing one is not: it
          needs a Google identity that holds the human key, and this session does not have one.
-         ${esc(FIRMA.motivo || '')}</span>`
-      + `<a class="entrar" href="https://accounts.google.com/" target="_blank" rel="noopener">
-         Sign in with Google</a>`;
+         <b>Sign in and see for yourself</b> — Google will tell you what your identity may
+         do with that key.</span>`
+      + (GOOGLE.listo
+          ? `<button class="entrar" onclick="pedirToken('entrar')">Sign in with Google</button>`
+          : `<a class="entrar" href="https://accounts.google.com/" target="_blank" rel="noopener">
+             Sign in with Google</a>`);
   }
 }
 
