@@ -171,7 +171,19 @@ def api_transcribir():
 
 @app.route("/api/inbound", methods=["POST"])
 def api_inbound():
-    """La petición del cliente entra en la cola. Es el turno que el agente atenderá."""
+    """La petición del cliente entra en la cola, y en la puerta se le pone su techo.
+
+    LO QUE ESTABA MAL, y era el chip que el vídeo enseña. Esta ruta devolvía «esperando decision
+    humana» PARA CUALQUIER TEXTO, escrito a mano. Es decir: la etiqueta que en cámara sostiene
+    la frase «una función determinista bajó el techo antes de que el modelo hablara» no la
+    producía ninguna función — la producía esta cadena de caracteres. Un jurado que abre el
+    repositorio lo ve en treinta segundos, y con razón concluye lo contrario de lo que el
+    producto sostiene.
+
+    Ahora el techo lo fija `src/techo.py`, la MISMA función que aplica el agente. Y se aplica
+    aquí, en la puerta, que es la versión fuerte del argumento: el corte ocurre antes de que
+    ningún modelo haya leído el texto.
+    """
     try:
         data = request.json or {}
         transcripcion = (data.get("texto") or "").strip()
@@ -179,17 +191,26 @@ def api_inbound():
             return jsonify({"error": "sin texto: el portal no inventa lo que dijo el cliente"}), 400
 
         from src import libro_demo
+        from src.techo import techo_de_autoridad
+        techo = techo_de_autoridad(transcripcion)
+        exige_humano = techo == "exige_humano"
+
         pid, fila = libro_demo.nueva_peticion(
             transcripcion,
             de=data.get("de", "cliente-portal"),
             origen=data.get("origen", "portal"),
-            padre=data.get("peticion_padre"))
+            padre=data.get("peticion_padre"),
+            extra={"techo": techo, "techo_lo_puso": "src/techo.py"})
 
         return jsonify({
             "status": "success",
             "id": pid,
             "transcription": transcripcion,
-            "estado": "esperando decision humana",
+            "techo": techo,
+            # El texto de la etiqueta sale del techo, no de una constante. Si el caso NO exige
+            # persona, decir que la espera es la mentira simétrica de la que había antes.
+            "estado": ("esperando decision humana" if exige_humano
+                       else "en cola: el agente puede atenderlo"),
             "duradero": libro_demo.disponible(),
         }), 200
     except Exception as e:
@@ -401,7 +422,11 @@ def api_config():
         "decisiones": _decisiones_de_la_persona(),
         "aceptadas_por_el_servicio": _aceptadas_por_la_puerta(),
         "alcance_entrar": "openid email profile",
-        "alcance_firmar": "https://www.googleapis.com/auth/cloudkms",
+        # El permiso de firma pide TAMBIÉN los básicos, en la misma concesión. No es un extra:
+        # sin ellos la página consigue firmar y no sabe a nombre de quién, y la banda acaba
+        # diciendo «session identity could not be read» con la sesión perfectamente viva. Una
+        # pantalla cuyo argumento es «mira quién firma» no puede ignorar quién firma.
+        "alcance_firmar": "openid email profile https://www.googleapis.com/auth/cloudkms",
         # Compatibilidad con la primera versión de esta ruta, que solo devolvía uno.
         "alcance_oauth": "https://www.googleapis.com/auth/cloudkms",
     }), 200

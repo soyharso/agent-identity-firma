@@ -568,6 +568,17 @@ function pedirToken(modo){
       GOOGLE.token = resp.access_token;
       FIRMA.puede = true;
       FIRMA.motivo = '';
+      // QUIÉN ES, preguntado a Google con el mismo permiso. Se pinta el DOMINIO y nunca el
+      // correo entero: esta pantalla sale en un vídeo público, y lo que importa no es quién es
+      // la persona sino que HAY una y que Google lo confirmó.
+      if(!FIRMA.dominio){
+        try{
+          const u = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+                                {headers:{'Authorization':'Bearer ' + resp.access_token}});
+          const d = await u.json();
+          if(d.email) FIRMA.dominio = String(d.email).split('@').pop();
+        }catch(e){ /* la banda lo dirá, no se inventa una identidad */ }
+      }
       identidad();
       cargar(true);
     },

@@ -85,12 +85,16 @@ def peticiones() -> dict:
 
 
 def nueva_peticion(texto: str, de: str = "cliente-portal", origen: str = "portal",
-                   padre: str | None = None) -> tuple[str, dict]:
+                   padre: str | None = None, extra: dict | None = None) -> tuple[str, dict]:
     """Crea una petición y devuelve su identificador y su contenido.
 
     El identificador sale del máximo actual, contando también lo que ya está en Firestore.
     Con el fichero solo, dos instancias generaban el mismo número y dos clientes acababan en
     el mismo expediente.
+
+    `extra` es lo que la puerta de entrada ya sabe del caso en el momento de recibirlo —hoy, el
+    techo de autoridad—. Va aquí y no en una segunda escritura porque el panel refresca cada 3 s
+    y un caso que aparece un instante sin su techo se pinta como si nadie lo hubiera evaluado.
     """
     actuales = peticiones()
     n = 1 + max((int(k.split("-")[1]) for k in actuales
@@ -100,6 +104,8 @@ def nueva_peticion(texto: str, de: str = "cliente-portal", origen: str = "portal
             "recibido_en": int(time.time())}
     if padre:
         fila["peticion_padre"] = padre
+    if extra:
+        fila.update(extra)
 
     c = _c()
     if c is not None:

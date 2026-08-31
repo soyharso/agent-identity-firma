@@ -35,7 +35,16 @@ gcloud run deploy cleveria-demo \
   --image "${IMAGE}" \
   --service-account "sa-demo@${PROJECT}.iam.gserviceaccount.com" \
   --allow-unauthenticated \
-  --set-env-vars="WA_VERIFY_TOKEN=cleveria-hackathon-2026"
+  --update-env-vars="WA_VERIFY_TOKEN=cleveria-hackathon-2026"
+
+# `--update-env-vars` Y NO `--set-env-vars`, Y ESTO COSTÓ UNA HORA DE DEPURACIÓN A CIEGAS.
+# `--set-env-vars` REEMPLAZA el conjunto entero: al desplegar con una sola variable, borra
+# todas las demás. Así desapareció `GOOGLE_CLIENT_ID` en cada despliegue posterior a haberlo
+# configurado, y el síntoma era el peor posible — nada fallaba. El servicio arrancaba bien,
+# `/api/config` respondía 200, y solo devolvía el identificador vacío, así que la pantalla se
+# comportaba exactamente igual que antes de existir el login. Se buscó en la caché del
+# navegador, en el código y en Google antes de mirar aquí.
+# La forma de verlo es preguntarle al navegador qué recibió, no leer el código.
 
 echo "✅ Despliegue completado. Toma la Service URL de arriba y ponla en Meta for Developers"
 echo "   (endpoint del webhook: <URL>/webhook/whatsapp)."

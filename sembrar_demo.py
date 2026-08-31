@@ -64,6 +64,39 @@ COLA = [
 ]
 
 
+def sellar_horas():
+    """Le pone hora de llegada —de hoy— a las cuatro peticiones horneadas del repositorio.
+
+    POR QUÉ HACE FALTA. `PET-001..004` viven en `libro/peticiones.json` y NO tienen
+    `recibido_en`: son la cola estática que el agente re-dictamina en `demo.sh 2`. En el panel
+    salen al lado de un caso que acaba de entrar por el portal con su hora real, y la
+    comparación delata cuatro tarjetas de las que no se sabe cuándo llegaron.
+
+    LO QUE NO HACE: escribir una hora a mano en el repositorio. Eso sería un dato fabricado
+    viajando dentro de la entrega, y la regla del concurso puntúa ejecución en vivo y sin
+    editar. La hora se sella AQUÍ, al preparar la toma, así que es cierta: llegaron hace los
+    minutos que dicen. Y cada una queda marcada como lo que es —`origen: seed`—, que el panel
+    pinta como «via seed» junto a «via portal»: la tarjeta declara que es material sembrado.
+    """
+    c = libro_demo._c()
+    if c is None:
+        print(f"{ROJO}Sin Firestore no se puede sellar la hora: la cola estática saldrá "
+              f"sin hora de llegada.{FIN}")
+        return
+    semilla = libro_demo._semilla_peticiones()
+    ahora = int(time.time())
+    for i, pid in enumerate(("PET-001", "PET-002", "PET-003", "PET-004")):
+        fila = dict(semilla.get(pid) or {})
+        if not fila.get("texto"):
+            continue
+        fila.update({"de": fila.get("de", "cola-de-atencion"),
+                     "origen": "seed",
+                     "naturaleza": "seeded fixture",
+                     "recibido_en": ahora - (12 - i * 3) * 60})
+        c.collection(libro_demo.COL_PETICIONES).document(pid).set(fila)
+        print(f"  {GRIS}sellada{FIN} {pid} {GRIS}llegó hace {12 - i * 3} min · via seed{FIN}")
+
+
 def borrar():
     c = libro_demo._c()
     if c is None:
@@ -79,6 +112,10 @@ def borrar():
 def main():
     if "--borrar" in sys.argv:
         borrar()
+        return
+
+    if "--solo-horas" in sys.argv:
+        sellar_horas()
         return
 
     if not libro_demo.disponible():
@@ -140,6 +177,10 @@ def main():
                                      "dictamen": estado, "veredicto": "OK",
                                      "sobre": sobre, "firma": r.get("firma")})
             print(f"     {VERDE}✓ {estado:<20}{FIN} {GRIS}{quien} — {porque}{FIN}")
+
+    # La cola estática entra en el mismo panel: si se queda sin hora, se nota al lado de las
+    # que sí la tienen.
+    sellar_horas()
 
     print(f"\n{VERDE}Cola sembrada.{FIN} {GRIS}Míra la en /ui/unified{FIN}\n")
 

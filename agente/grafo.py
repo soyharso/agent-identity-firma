@@ -73,37 +73,13 @@ def cargar_peticion(ctx):
     return p["texto"]
 
 
-# Marcas de que hay un juicio de por medio. La lista es tonta a propósito: no razona, así que
-# no hay nada que engañar. Un texto envenenado no puede convencerla de nada.
-MARCAS_DE_JUICIO = (
-    # español
-    "descart", "absol", "absuelv", "absuelt", "exculp", "exime", "exim",
-    "perdon", "culpa", "sanci", "multa", "reclam", "queja", "cliente",
-    "denuncia", "despido", "indemniz", "no amerita", "no vale la pena",
-    "caso límite", "caso limite", "ya no importa", "no parece importante",
-    # inglés: las reglas del concurso exigen que la aplicación soporte inglés, y sin estas
-    # marcas «Dismissing the customer complaint» o «the fine is waived» pasaban LIMPIAS.
-    # Medido antes de añadirlas: dos de tres casos de juicio en inglés se colaban.
-    "dismiss", "absolv", "exonerat", "waive", "forgiv", "pardon", "blame",
-    "fault", "penalt", "fine", "complaint", "claim", "customer", "client",
-    "dispute", "grievance", "layoff", "termination", "compensat",
-    "not worth", "no longer matters", "doesn't matter", "does not matter",
-    "edge case", "minor issue", "no action needed",
-)
-# `absuelv` está aquí porque el kill-test lo cazó: «absuelve» NO contiene «absol». Una lista de
-# raíces se rompe por una conjugación, y por eso el kill-test corre en cada cambio. Lo que la
-# lista da es superficie de ataque más pequeña, no una garantía: la garantía está más abajo.
-
-
-def techo_de_autoridad(texto: str) -> str:
-    """Cuánta autoridad puede tener la máquina sobre ESTE texto, decidido sin modelo.
-
-    Es el arreglo del agujero que la fase cero encontró en la promesa central: si el techo lo
-    fijara el modelo, un texto envenenado podría subirlo. Aquí lo fija una función, y el modelo
-    solo puede REBAJARLO.
-    """
-    t = (texto or "").lower()
-    return "exige_humano" if any(m in t for m in MARCAS_DE_JUICIO) else "cerrada"
+# EL TECHO SE MUDÓ A `src/techo.py`, y esto lo reexporta. No es una indirección gratuita: la
+# puerta del portal (`/api/inbound`) tiene que aplicar ESTE MISMO techo, y no puede importar
+# este archivo porque arrastra el motor de agentes de Google entero. Copiar la lista allí serían
+# dos techos divergiendo al primer cambio, en un producto cuya tesis es que la garantía no
+# depende de dónde se ejecute. Los kill-tests siguen haciendo `from grafo import
+# techo_de_autoridad` y siguen midiendo lo mismo, porque es exactamente la misma función.
+from src.techo import MARCAS_DE_JUICIO, techo_de_autoridad  # noqa: E402,F401
 
 
 # Cuánta autoridad concede cada dictamen. Menor número, menos autoridad para la máquina.

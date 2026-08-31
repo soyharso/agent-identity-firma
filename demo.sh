@@ -202,6 +202,20 @@ print(json.dumps(resp, indent=2))
     echo -e "  ${BOLD}${YELLOW}▓▓▓ END OF CANNED SAMPLE ▓▓▓${RESET}"
   fi
 
+  # ── LA MITAD QUE EL VÍDEO YA NO USA ─────────────────────────────────────────
+  # `demo.sh 3` firmaba aquí mismo el juicio humano de PET-002 por línea de comandos. En el
+  # plan de la toma vigente la firma humana ocurre CUARENTA SEGUNDOS DESPUÉS, en la bandeja,
+  # con la persona abriendo el caso y pulsando Firmar. Con las dos, el caso llegaba a la
+  # bandeja ya cerrado: la escena del clímax se quedaba sin nada que firmar, en directo y sin
+  # segunda toma. `3a` corta aquí y deja la firma humana donde el guion la enseña.
+  if [ "${SOLO_403:-0}" = 1 ]; then
+    echo
+    echo -e "  ${DIM}Human signature is NOT produced here: it happens in the operator's own"
+    echo -e "  tray, on her machine, with her own credential. That is the next shot.${RESET}"
+    esperar
+    return 0
+  fi
+
   paso "The operator signs from their own machine and commits to Firestore:"
   python3 src/decidir_como_persona.py PET-002 descartada 2>&1 | limpio | tail -3
 
@@ -279,9 +293,11 @@ toma5() {
 }
 
 case "$TOMA" in
-  1) toma1 ;; 2) toma2 ;; 3) toma3 ;; 4) toma4 ;; 5) toma5 ;;
+  1) toma1 ;; 2) toma2 ;; 3) toma3 ;; 3a) SOLO_403=1; toma3 ;; 4) toma4 ;; 5) toma5 ;;
   todas) toma1; toma2; toma3; toma4; toma5 ;;
-  *) echo "Uso: bash demo.sh [1|2|3|4|5|todas] [--sin-pausa]"; exit 1 ;;
+  *) echo "Uso: bash demo.sh [1|2|3|3a|4|5|todas] [--sin-pausa]"
+     echo "     3a = solo el 403. La firma humana la hace la persona en la bandeja."
+     exit 1 ;;
 esac
 
 echo
