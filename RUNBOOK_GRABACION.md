@@ -228,7 +228,7 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 >
 > Lo que el script **no** hace y sigue siendo tuyo: poner el portal en inglés, abrir las
 > pestañas, dejar a la vista una terminal con `tail -f logs/escena.log`, y correr las dieciséis
-> pruebas (`./pruebas_de_ruptura.sh`, 204 s) si quieres el resumen fresco en cámara.
+> pruebas (`./pruebas_de_ruptura.sh`, ~190 s) si quieres el resumen fresco en cámara.
 
 > ### 📺 EL APUNTADOR VA EN EL OTRO EQUIPO — `dellqnowa`, por escritorio remoto
 >
@@ -277,7 +277,10 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 
 1. **Sesión de nube abierta** — `gcloud auth print-identity-token | head -c 20` debe devolver algo.
 2. **Corre las dieciséis pruebas** y deja el resumen listo: `./pruebas_de_ruptura.sh`
-   (**204 segundos**, medidos en la corrida 16/16 de las 17:28 de hoy — no 150).
+   (**188 segundos**, que es la corrida 16/16 vigente, del 2026-08-31 a las 12:05 — no 204 ni
+   150). **El número sale del registro, no de la memoria**: `libro/pruebas_de_ruptura.json`
+   lleva la fecha y los segundos de la última corrida, y es lo que el panel pinta en cámara.
+   Antes de decir una cifra en la narración, míralo ahí.
    **Tres de las dieciséis llaman a la nube de verdad**: `co-signer`, `double-fence` y
    `write-gate`. Si no hay red, salen rojas y el resumen no sirve para grabar. El resumen avisa
    solo si la corrida tiene más de una hora — córrela justo antes, no por la mañana.
@@ -285,8 +288,8 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
    > **SON DIECISÉIS, Y LA DEL ANCLA NO ENTRA. No la metas a última hora creyendo que ayuda.**
    > Existe una prueba diecisiete, `agente/killtest_ancla_truncada.py`, que cierra el
    > truncamiento del libro y pasa sus catorce casos. Se dejó **deliberadamente fuera** de
-   > `pruebas_de_ruptura.sh`: el guion, este runbook y la presentación dicen «dieciséis pruebas,
-   > 204 segundos», y meterla cambia el número que la cámara enseña el día de la entrega. Corre
+   > `pruebas_de_ruptura.sh`: el guion, este runbook y la presentación dicen **«dieciséis
+   > pruebas»**, y meterla cambia el número que la cámara enseña el día de la entrega. Corre
    > sola, en una centésima de segundo, y ahí se queda hasta que el operador decida instalarla
    > **después** de entregar. Si te la encuentras y te parece que falta: no falta, se decidió.
 3. **Siembra la cola**: `python3 sembrar_demo.py --borrar && python3 sembrar_demo.py`.
