@@ -16,7 +16,7 @@ That is not a bug in a form. It is an agent-identity failure, and it is structur
 
 **What we did.** We stopped asking the software to be honest about who it is, and made the question unanswerable in the wrong direction: the key that signs human judgement is one the machine has no permission to touch. The refusal comes from the cloud, not from us. Then a model from a different family has to agree before the machine signs at all, and a ledger chains every signature so that altering or reordering one is detectable.
 
-**What it buys.** Not caution — **a wider safe lane.** The machine closes what it can prove, and only after clearing a keyword ceiling, two semantic fences, a co-signer from another model family and a mediator that holds the write credential. It is not one brake, it is five, and each one can only ever subtract. We have not measured throughput or reviewer load, so we are not going to claim either: what we can say is that the boundary is arithmetic rather than a habit, and that a supervisor can trust an arithmetic boundary in a way they cannot trust a convention.
+**What it buys.** Not caution — **a wider safe lane.** The machine closes what it can prove, and only after clearing a keyword ceiling, a semantic fence (a second one is built and tested but not yet wired in), a co-signer from another model family and a mediator that holds the write credential. It is not one brake, it is five, and each one can only ever subtract. We have not measured throughput or reviewer load, so we are not going to claim either: what we can say is that the boundary is arithmetic rather than a habit, and that a supervisor can trust an arithmetic boundary in a way they cannot trust a convention.
 
 **What it costs.** Somebody gets bothered unnecessarily about twice in every batch we measured, and we would rather tell you that number than tune it away.
 
@@ -160,7 +160,7 @@ Counting models is not counting who decides. **Every model in this system can on
 |---|---|---|---|
 | **Gemini 3.6 Flash** (Vertex AI) | Proposes an adjudication that it cannot itself execute or authorise | **No.** The proposal goes through the router's minimum | A bad proposal still meets the ceiling, both fences and the co-signer |
 | **`gemini-embedding-001`** (Vertex AI) | The *semantic fence*: compares what the text **means** against examples of human judgement — dismissing, absolving, forgiving a debt | **No.** It has exactly one power: it can say "get a human." It cannot say "go ahead" | A human judgement gets closed as machine work — unless the second fence catches it |
-| **`text-multilingual-embedding-002`** (Vertex AI) | The **second fence**, on a different embedding family and its own measured threshold. Either fence alone can demand a human | **No.** Same single power, and one model's bad day stops being a single point of failure | Same, mirrored. Both must miss the same text on the same day |
+| **`text-multilingual-embedding-002`** (Vertex AI) | The **second fence**, on a different embedding family and its own measured threshold. Either fence alone can demand a human — **built and tested, but not yet on the production path**; see the note below | **No.** Same single power, and one model's bad day stops being a single point of failure | Same, mirrored. Both must miss the same text on the same day |
 | **`gemma-4-26b`** (Vertex AI Model Garden) | The **co-signer**, and deliberately a *different model family*. Where the machine was about to sign on its own, this one has to answer `ALLOW` on a three-field schema: case, action, and whether a human key is present | **No — and it is the only one that can shut one.** `DENY`, silence, a late answer, or anything that is not exactly that one word sends the case to a person | If it lies **towards yes**, the machine signs alone — which is the one thing it exists to prevent. If it lies towards no, a person is bothered |
 | **Cloud Speech-to-Text** | Turns a voice note into words, before the decision and never inside it | **No** | A mis-transcription reaches the fences, which then judge the wrong words |
 | **Cloud Text-to-Speech** | Turns the answer back into sound, after the decision | **No** | The spoken reply is wrong; the record already is not |
@@ -208,7 +208,9 @@ Three fixes, and **none of them was moving the threshold**:
 
 It now catches nine out of nine (`./pruebas_de_ruptura.sh semantic-fence`), and those nine texts ship in the repository as a permanent adversarial bank — a file of attack texts that only ever grows, because removing a case that now passes is how a test suite quietly stops measuring.
 
-**Then we stopped trusting that model on its own.** There is now a second fence, on a second embedding model from a different family, and either one can demand a human. Its threshold is its own — 0.686, measured on the same bank, because reusing the first fence's 0.70 across a different similarity scale would have been inventing a number.
+**Then we stopped trusting that model on its own.** We built a second fence, on a second embedding model from a different family, so that either one alone can demand a human. Its threshold is its own — 0.686, measured on the same bank, because reusing the first fence's 0.70 across a different similarity scale would have been inventing a number.
+
+**And here is where it actually stands today, because the distinction matters and a reviewer found we had blurred it.** The second fence is built, measured and exercised by the `double-fence` break test — but the production graph still calls the single fence: `agente/grafo.py` imports `techo_semantico`, not `techo_semantico_doble`. So *«two fences guard every closure»* would be a claim about our intent, not about our code. What runs today is one fence; what is proven to work is two. Wiring it is one import, and it is the next thing we do — but we would rather tell you the state of it than let a table imply the better version.
 
 The interesting result is not that it catches more. It catches exactly the same nine. **What it measures is that the two fences disagree on none of the twenty-two cases in the bank** — and that is why the second one costs no accuracy: the false positives stayed at two, which was the condition we set before building it. It does cost an extra inference and one more thing that can be unavailable, so it is not free — it is paid for in latency rather than in precision. And what it buys is narrow: redundancy demonstrated on this fixed bank of twenty-two. Two embedding families agreeing here is not proof they cannot drift or fail together later.
 
@@ -247,7 +249,7 @@ So the honest statement of the thesis is narrower than the slogan:
 > **The fence is a net, and nets have holes. The key does not stop a bad decision. It stops a bad decision from wearing someone else's name.**
 
 ```
-  model proposes → ceiling (word list) → two fences → co-signer → sign with clave-agente
+  model proposes → ceiling (word list) → semantic fence → co-signer → sign with clave-agente
                                                                         │
                                                                         ▼
                                               mediator verifies the envelope → record changes
@@ -336,7 +338,7 @@ That is why the guarantee is an IAM binding and not a prompt, a keyword ceiling 
 
 ## You do not have to take our word for any of it
 
-The repository ships with the submission: **sixteen break tests** — all sixteen green in 196 seconds on our last run, 31 August 2026 — the adversarial bank, and a verifier that runs with **no network, no credentials and no Google account**.
+The repository ships with the submission: **sixteen break tests** — all sixteen green in 188 seconds on our last run, 31 August 2026 — the adversarial bank, and a verifier that runs with **no network, no credentials and no Google account**.
 
 Be precise about that last part, because we were not until someone measured it. **Six of the sixteen run with no credentials at all** — `canonical-json`, `signature-replay`, `act-binding`, `prompt-injection`, `ledger-chain` and `ledger-order`. We know because we ran them with the credentials taken away. **The other ten need them**, because they call KMS, Vertex, Firestore or the speech services, which is the entire point of those ten.
 

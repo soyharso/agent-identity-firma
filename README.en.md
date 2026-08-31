@@ -11,7 +11,7 @@ who decides, and here that distinction is the architecture:
 |---|---|---|
 | Gemini 3.6 Flash | **adjudicates** — the one judgement call in the flow | no: a function takes the *minimum* of its verdict and the ceiling |
 | `gemini-embedding-001` | semantic fence: catches judgement written to dodge the keyword list | **no — it can only ask for *more* caution** |
-| `text-multilingual-embedding-002` | **second fence**, scored independently: either fence alone can demand a human, so one model going quiet does not open the door | **no — it can only ask for *more* caution** |
+| `text-multilingual-embedding-002` | **second fence**, scored independently: either fence alone can demand a human. **Exercised in the `double-fence` break test, not yet wired into the production graph** — `agente/grafo.py` calls the single fence today. We are saying so rather than letting the table imply otherwise | **no — it can only ask for *more* caution** |
 | `google/gemma-4-26b-a4b-it-maas` (Model Garden) | **co-signs**: where the machine would sign alone, a model of another family has to agree first | **no — it can only withhold a closure.** No answer in 4 s, a late answer, or anything that is not exactly `ALLOW` all count as `DENY`: its silence shuts the door instead of opening it |
 | Speech-to-Text | transducer: turns a voice note into words | no. It is not on the decision path; it is before it |
 | Text-to-Speech | transducer: turns the answer into speech | no |
@@ -259,7 +259,7 @@ measurement in the commit history.
 ./pruebas_de_ruptura.sh --resumen    # the result of the last run, with its date
 ```
 
-Last run: **16/16 green in 196 seconds**, 31 August 2026. **Six of the sixteen need no
+Last run: **16/16 green in 188 seconds**, 31 August 2026. **Six of the sixteen need no
 credentials and no network at all** — `canonical-json`, `signature-replay`, `act-binding`,
 `prompt-injection`, `ledger-chain` and `ledger-order`.
 

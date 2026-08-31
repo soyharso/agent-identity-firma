@@ -165,7 +165,7 @@ python3 agente/killtest_durabilidad.py      # la pausa sobrevive a que el proces
 ```
 
 La mayoría corren **sin sesión de `gcloud`**; `killtest_blindaje.py` consulta el filtro
-gestionado del proveedor y necesita credenciales. Las dieciséis tardaron 196 segundos en la última corrida, la del 31 de agosto de 2026: la más lenta
+gestionado del proveedor y necesita credenciales. Las dieciséis tardaron 188 segundos en la última corrida, la del 31 de agosto de 2026: la más lenta
 es la del cerco doble, 52 segundos, porque consulta dos modelos de embeddings de verdad.
 
 ### El dato que justifica toda la arquitectura
