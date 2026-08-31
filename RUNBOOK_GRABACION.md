@@ -229,6 +229,38 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 > Lo que el script **no** hace y sigue siendo tuyo: poner el portal en inglés, abrir las
 > pestañas, dejar a la vista una terminal con `tail -f logs/escena.log`, y correr las dieciséis
 > pruebas (`./pruebas_de_ruptura.sh`, 204 s) si quieres el resumen fresco en cámara.
+
+> ### 📺 EL APUNTADOR VA EN EL OTRO EQUIPO — `dellqnowa`, por escritorio remoto
+>
+> En la máquina que graba **no cabe nada más**: la pantalla entera es el vídeo y la terminal del
+> director no puede salir en cámara. El apuntador enseña, con letra grande, qué se ve, qué haces
+> tú y qué frase toca, con cuenta atrás al siguiente cambio.
+>
+> **Allá** (terminal a pantalla completa en `dellqnowa`), y se queda esperando:
+>
+> ```bash
+> python3 ~/SharedPC/toma/apuntador.py --escucha
+> ```
+>
+> **Acá**, en la máquina que graba:
+>
+> ```bash
+> python3 dirigir_grabacion.py --plan plan_toma.txt --apuntador dellqnowa            # la toma
+> python3 dirigir_grabacion.py --plan plan_toma.txt --apuntador dellqnowa --ensayo   # sin grabar
+> ```
+>
+> **UN SOLO PLAN Y NO DOS.** `plan_toma.txt` de este repositorio es un **enlace** a
+> `~/SharedPC/toma/plan_toma.txt`, la carpeta que los dos equipos sincronizan. Cualquier cambio
+> se ve en los dos sin copiar nada — comprobado: misma huella en las dos máquinas. **No copies
+> el plan al otro equipo**: sería la sexta versión del guion, que es el error más caro de este
+> frente.
+>
+> **El arranque va por red, no por la carpeta.** La carpeta sincroniza cuando puede, y unos
+> segundos de retraso son un apuntador que va por detrás de la imagen. `--apuntador` manda el
+> instante exacto en un mensaje de una línea. Si el otro equipo no contesta, **la toma no se
+> para**: se avisa y sigue.
+>
+> Para probar solo la pantalla del apuntador, sin director: `--ensayo` en lugar de `--escucha`.
 >
 > La lista larga de abajo se conserva porque explica **por qué** cada paso existe. El script es
 > la versión que se ejecuta; esto es la que se lee.
