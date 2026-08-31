@@ -4,16 +4,23 @@
 can't. The key that authorises human judgement is out of its reach, and when it tries, the cloud
 says no.
 
-**Five Google models take part. Exactly one of them decides.** Counting models is not counting
+**Six Google models take part. Exactly one of them decides.** Counting models is not counting
 who decides, and here that distinction is the architecture:
 
 | Model | What it does | Can it widen the machine's authority? |
 |---|---|---|
 | Gemini 3.6 Flash | **adjudicates** — the one judgement call in the flow | no: a function takes the *minimum* of its verdict and the ceiling |
 | `gemini-embedding-001` | semantic fence: catches judgement written to dodge the keyword list | **no — it can only ask for *more* caution** |
+| `text-multilingual-embedding-002` | **second fence**, scored independently: either fence alone can demand a human, so one model going quiet does not open the door | **no — it can only ask for *more* caution** |
 | `google/gemma-4-26b-a4b-it-maas` (Model Garden) | **co-signs**: where the machine would sign alone, a model of another family has to agree first | **no — it can only withhold a closure.** No answer in 4 s, a late answer, or anything that is not exactly `ALLOW` all count as `DENY`: its silence shuts the door instead of opening it |
 | Speech-to-Text | transducer: turns a voice note into words | no. It is not on the decision path; it is before it |
 | Text-to-Speech | transducer: turns the answer into speech | no |
+
+> **Six used, two claimed.** These six are what the system runs. The *Bonus Contributions*
+> section of the submission claims **two** additional models, which is a different count on
+> purpose: Gemini 3.5+ is mandatory, so the adjudicator is not "additional", and the transducers
+> that sit outside the decision path are not either. Six is what takes part; two is what is
+> claimed. Neither number is doing work for the other.
 
 **No model here can grant itself authority.** Authority comes from a deterministic function and
 from which key IAM will let you touch. So a model that fails, hallucinates or is poisoned opens
