@@ -370,4 +370,4 @@ If a number in this article has no command beside it, it is a count we made and 
 
 *Built with the Google Agent Development Kit, Gemini 3.6 Flash, `gemma-4-26b` on Vertex AI Model Garden, `gemini-embedding-001`, Cloud Speech-to-Text, Cloud Text-to-Speech, Cloud Run, Cloud KMS, Firestore and Cloud Scheduler — by Softronica S.A.S. for **[Cleveria](https://cleveria.co)**, where we build reasoning support for teams that put agents next to people.*
 
-*Try the boundary yourself: **https://sign.qnowa.com** · Preproduction demo portal: **https://demo.cleveria.co** · Repository: private for the duration of the hackathon, with access granted to the judges — write to **info@cleveria.co** and we will open it for you.*
+*Try the boundary yourself — the human queue, where you make the agent try to sign: **https://sign.qnowa.com** · The customer side of the same preproduction system: **https://demoportal.qnowa.com** · Repository: private for the duration of the hackathon, with access granted to the judges — write to **info@cleveria.co** and we will open it for you.*
