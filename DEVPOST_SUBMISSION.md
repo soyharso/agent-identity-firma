@@ -187,14 +187,15 @@ left 0.2 on the table on purpose, and this section is the receipt.
 ### 2 · Content contribution (0.2)
 
 A technical write-up of what broke while building this, including three findings from red-teaming
-ourselves before shipping — **and one we failed**. Published publicly (not unlisted), and it
-states that it was written for this hackathon.
+ourselves before shipping — **and one we failed**. Published publicly on **LinkedIn** (article
+format, public, not unlisted), and it states that it was written for this hackathon.
 
 **→ URL: _pending — paste the public link here before submitting._**
 
 ### 3 · Social media post (0.2)
 
-Posted publicly with **`#AllThingsAgenticHackathon`**.
+A public post on **LinkedIn** carrying **`#AllThingsAgenticHackathon`**, linking both the article
+above and the live boundary check at `https://sign.qnowa.com`.
 
 **→ URL: _pending — paste the public link here before submitting._**
 
@@ -223,6 +224,11 @@ We would rather you find our limits in our own comments than in your reading of 
 
 ## Verification & Quick Links
 
+- **⭐ See the boundary refuse, on your own click — no install, no account**:
+  **`https://sign.qnowa.com`** → press *«Make the agent try to sign»* and read the raw answer from
+  Google Cloud KMS. **This is the fastest way to check our central claim**, and it takes ten
+  seconds. You are not signing anything: you are making the agent try, which is the one thing this
+  system exists to refuse. (Same screen at `https://demo.cleveria.co/ui/bandeja`.)
 - **Repository**: [Private GitHub, access granted to `testing@devpost.com` and `cloudhackathons@google.com`]
 - **Live Demo Video (≤4:00)**: [YouTube / Vimeo link with Cloud Run proof]
 - **Customer portal (Act I)**: `https://demo.cleveria.co/ui/portal`
@@ -230,7 +236,7 @@ We would rather you find our limits in our own comments than in your reading of 
 - **Agent service**: `https://candado-firma-141981963817.us-central1.run.app` — returns **HTTP 403
   to anonymous callers, by design**: it only accepts callers Cloud Run can authenticate. That
   refusal is the product, not an outage.
-- **Technical Deep-Dive Article**: [dev.to link]
+- **Technical Deep-Dive Article**: [LinkedIn article link]
 
 **Run the break tests yourself**: `./pruebas_de_ruptura.sh` — sixteen tests, 204 seconds, and
 most need no credentials and no network at all.
