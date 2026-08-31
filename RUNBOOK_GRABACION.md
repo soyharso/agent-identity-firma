@@ -128,6 +128,20 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 5. **Modo no molestar**, sin notificaciones ni segundas ventanas.
 6. **Fuente grande, contraste alto**, y **sin rutas de tu disco, usuarios ni clientes en pantalla**.
 
+> ### ⏰ MENOS DE DIEZ MINUTOS entre el ensayo y la toma buena
+>
+> El servicio en la nube **no tiene instancias mínimas** (`minScale` vacío), así que el contenedor
+> se apaga tras unos quince minutos sin tráfico. Si ensayas, te vas a por un café y vuelves, la
+> toma buena paga el arranque en frío delante de la cámara — y la espera no se puede cortar sin
+> romper el criterio de *toma sin editar*.
+>
+> **El ensayo es también el calentador.** Ensaya y graba seguido.
+>
+> Es el único punto de la fase cero de estrategia de grabación que no había aterrizado aquí
+> (fuente: `2026-08-30_FASE0_estrategia_de_grabacion.md`, fila **b** de las siete fuentes de no
+> determinismo). Inferido de la configuración, no cronometrado: el propio revisor declaró que el
+> clasificador de permisos le bloqueó el intento de medirlo con credencial.
+
 ---
 
 ## 3. OBS — ya instalado y con las siete escenas montadas
