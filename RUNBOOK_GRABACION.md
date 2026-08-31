@@ -214,6 +214,25 @@ Trae el recurso con nombre y apellido, y lo devuelve Google, no nosotros.
 
 ## 2. Antes de encender la cámara
 
+> ### ⏰ UN COMANDO HACE CASI TODO ESTO — `bash preparar_toma.sh`
+>
+> Deja la máquina lista y **comprueba lo que no puede arreglar**: sesión de nube, sumidero de
+> audio con el micrófono desviado, hora de llegada de la cola, servicio desplegado,
+> **calentamiento** de las cuatro puertas que el vídeo abre, OBS (las ocho escenas, lienzo
+> 1920×1080, portada y cierre releídas del disco) y el reloj del cuarto de hora. Termina
+> imprimiendo los cinco momentos en los que tú haces algo.
+>
+> Al terminar de grabar: **`bash preparar_toma.sh --soltar`**, que devuelve el micrófono de la
+> máquina a su sitio. Sin eso, el micrófono se queda desviado al sumidero y la siguiente
+> llamada no oye a nadie.
+>
+> Lo que el script **no** hace y sigue siendo tuyo: poner el portal en inglés, abrir las
+> pestañas, dejar a la vista una terminal con `tail -f logs/escena.log`, y correr las dieciséis
+> pruebas (`./pruebas_de_ruptura.sh`, 204 s) si quieres el resumen fresco en cámara.
+>
+> La lista larga de abajo se conserva porque explica **por qué** cada paso existe. El script es
+> la versión que se ejecuta; esto es la que se lee.
+
 1. **Sesión de nube abierta** — `gcloud auth print-identity-token | head -c 20` debe devolver algo.
 2. **Corre las dieciséis pruebas** y deja el resumen listo: `./pruebas_de_ruptura.sh`
    (**204 segundos**, medidos en la corrida 16/16 de las 17:28 de hoy — no 150).
