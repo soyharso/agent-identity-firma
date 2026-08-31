@@ -1,0 +1,57 @@
+@startuml autoridad_y_estados
+' Qué responde este diagrama: "how did you manage state?"
+' Fuente de verdad: claves/directorio.json — no hay reglas por estado en el código.
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam shadowing false
+skinparam ArrowColor #37474F
+skinparam state {
+  BackgroundColor #ECEFF1
+  BorderColor #546E7A
+  FontColor #263238
+}
+
+title The defect, and the state machine that fixes it
+
+legend top
+  <b>The 58 rows came from a missing state.</b>
+  The closing function wrote "human" by default and the schema had no state meaning
+  "a machine closed this" — so the only path to closing ran through the human one.
+  Authority is not written per state in code: it comes from <b>claves/directorio.json</b>,
+  which says which key may authorise which state.
+endlegend
+
+state "open" as abierta #FFF8E1
+state "informed" as informada #E8F5E9
+state "closed" as cerrada #E8F5E9
+state "dismissed" as descartada #FFEBEE
+state "closed with judgement" as juicio #FFEBEE
+state "debt forgiven" as perdonada #FFEBEE
+
+[*] --> abierta : request arrives\n(typed or spoken)
+
+abierta --> informada : **agente-comercial**\nscope: informed only
+abierta --> cerrada : **agente-curador**\nonly with provable evidence,\nafter ceiling + fence + co-signer
+abierta --> abierta : returned unsigned\n(nothing proved)
+
+abierta --> descartada : **persona-operador** only
+abierta --> juicio : **persona-operador** only
+abierta --> perdonada : **persona-operador** only
+
+note right of descartada
+  <b>The three red states are the ones that cost a customer something.</b>
+  No machine key can reach them:
+  Cloud KMS returns 403 to the
+  agent's service account, and the
+  refusal is Google's, not ours.
+end note
+
+note bottom
+  <b>agente-curador</b> (MACHINE) → closed, open
+  <b>agente-comercial</b> (MACHINE) → informed
+  <b>persona-operador</b> (HUMAN) → closed, open, dismissed, closed-with-judgement, forgiven
+  Verbatim from claves/directorio.json. Whoever controls that file controls who counts
+  as human — which is why it lives in the repository, where a change leaves a commit.
+end note
+
+@enduml

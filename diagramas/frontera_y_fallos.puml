@@ -1,0 +1,93 @@
+@startuml frontera_y_fallos
+' Qué responde este diagrama: "how did you decouple systems, and design
+' robust, failure-tolerant agentic systems?"
+' Cada punto de fallo marcado abajo tiene un break test que lo ejerce.
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #37474F
+  LifeLineBorderColor #90A4AE
+  ParticipantBorderColor #546E7A
+  ParticipantBackgroundColor #ECEFF1
+  ParticipantFontColor #263238
+}
+
+title Where it can fail, and what happens when it does
+
+actor "Customer" as cli
+participant "Qnowa queue\n(Cloud Run)" as portal
+participant "Agent graph\n(ADK 2.8)" as grafo
+participant "Ceiling\n(pure function)" as techo
+participant "Semantic fence\ngemini-embedding-001" as cerco
+participant "Co-signer\ngemma-4-26b" as gemma
+participant "Cloud KMS" as kms
+database "Firestore" as fs
+actor "Person\n(own machine)" as humano
+
+cli -> portal : complaint, typed **or spoken**
+portal -> grafo : /api/inbound
+note right of portal
+  A voice note is transcribed and
+  then treated as **data**, exactly
+  like typed text. The modality
+  never widens authority.
+end note
+
+grafo -> techo : what is the most this may become?
+techo --> grafo : ceiling (deterministic, no model)
+
+grafo -> cerco : does this *mean* human judgement?
+alt fence unavailable or slow
+  cerco --> grafo : <b>no answer → treat as "needs a human"</b>
+  note right : failure closes the door,\nit never opens it
+else answers
+  cerco --> grafo : may only RAISE caution
+end
+
+grafo -> grafo : adjudicate (Gemini) → min(verdict, ceiling)
+
+alt machine may close it
+  grafo -> gemma : ALLOW?
+  alt DENY, silence, late, or not exactly "ALLOW"
+    gemma --> grafo : <b>counts as DENY</b>
+    grafo -> fs : pause, wait for a person
+    note right of gemma
+      The agent cannot sign because it
+      cannot control the co-signer.
+      Break test: **co-signer**
+    end note
+  else ALLOW
+    grafo -> kms : sign with **clave-agente**
+    kms --> grafo : signature
+  end
+else needs human judgement
+  grafo -> kms : try to sign with **clave-humano**
+  kms --> grafo : <b>HTTP 403 PERMISSION_DENIED</b>
+  note right of kms
+    Google refuses, not our code.
+    The agent's service account holds
+    no binding on the human key.
+    Break test: **key-scope**
+  end note
+  grafo -> fs : pause
+  fs --> humano : the case waits
+  humano -> humano : signs **on their own machine**
+  humano -> grafo : POST /decidir with the signature already made
+  note left of humano
+    The service verifies it.
+    It cannot produce it.
+  end note
+end
+
+grafo -> grafo : verify (pure function, no network)
+grafo -> fs : append to the ledger
+
+note over fs
+  <b>If the process dies mid-write</b>, state survives in Firestore
+  and the run resumes. Break test: **durability**, 5 steps in 5 processes.
+  <b>Altering or reordering a row</b> is detectable: the ledger is chained.
+  Break tests: **ledger-chain**, **ledger-order**.
+end note
+
+@enduml
