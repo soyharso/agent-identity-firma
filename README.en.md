@@ -243,6 +243,46 @@ Over-promising is worth nothing, so it is kept separate:
 **Whoever controls `claves/directorio.json` controls who counts as human.** That is why it lives
 in the repository and not in a database: every change is in the history, with its author and date.
 
+### "Why isn't least-privilege IAM enough?"
+
+The fair question a cloud architect asks first, and it deserves a straight answer instead of a
+slogan. **Much of what is above, IAM already gives you**: separate principals, minimum privilege,
+a single writer, and the 403 itself — which is not something we built, it is what you get by
+granting nothing. Presenting the absence of a binding as a feature would be makeup.
+
+Here is where IAM stops. **IAM answers "who was allowed to use this key?". It does not answer
+"what was authorised, over which content, and can *I* check it — I, who am not you?"** Audit logs
+record the `asymmetricSign` call: identity, key, timestamp. They do not bind the digest to the
+document, they do not carry the business decision, and above all they live inside your own
+organisation. A regulator, an opposing party or a forensic auditor has no access to them; if you
+export them, they depend on your word and your chain of custody. **The party holding the evidence
+is an interested party.**
+
+That is the whole difference: a signed envelope is verifiable by someone who does not trust you
+and owes you nothing. It survives three real events — you leaving Google Cloud, the project being
+deleted, and the third party not believing you.
+
+**And one honest limit, because the distinction matters.** The per-state scope in
+`claves/directorio.json` is **detection, not prevention**. KMS knows nothing about states: if the
+mediator were compromised, the agent's key would happily sign a state outside its scope, and what
+catches it is the offline verifier — afterwards. IAM prevents; the directory detects. Both are
+needed, and they are not the same thing.
+
+### When this is worth it, and when it is over-engineering
+
+**It is worth it when people and agents work the same queue**, with parallel access to the same
+tools and the same records, and where some decisions open up to the agent only on certain
+evidence — while none of them may ever be attributed to a person who did not make it. That is a
+support desk, a claims process, a compliance workflow: places where a wrong attribution is not a
+bug, it is somebody's name on a decision they never took. It is also the direction of travel:
+models keep getting better at supporting people on harder calls, which widens the set of
+decisions worth delegating and makes *who authorised what* matter more, not less.
+
+**It is over-engineering when there are no humans in the same flow.** A single agent doing work
+nobody else touches, with no judgement calls and no one to misattribute anything to, does not
+need three keys and a co-signer. Least-privilege IAM is enough there, and saying so costs us
+nothing.
+
 ## Concurrency & Cryptographic Integrity
 
 - **Durable State & Race Conditions**: Idempotency and race-condition immunity are guaranteed via **atomic Firestore transactions** (read-modify-write transactional batches), not in-memory locks. Reads inside transactions are strictly consistent; out-of-transaction reads follow Firestore's document model. Signatures and state transitions commit atomically.
