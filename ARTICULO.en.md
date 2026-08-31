@@ -53,8 +53,8 @@ gcloud kms keys add-iam-policy-binding clave-agente \
 
 # A second agent, a second principal, a second key — never shared. This one is the
 # customer-facing agent, and its scope is a single state: informed.
-gcloud kms keys add-iam-policy-binding clave-qnowa \
-  --member="serviceAccount:sa-agente-qnowa@$PROJECT..." --role="roles/cloudkms.signer"
+gcloud kms keys add-iam-policy-binding clave-agente-qnowa \
+  --member="serviceAccount:sa-agente-comercial@$PROJECT..." --role="roles/cloudkms.signer"
 
 # On the human key, no binding is granted to any machine principal.
 ```
@@ -65,7 +65,7 @@ gcloud kms keys add-iam-policy-binding clave-qnowa \
 # The effective policy on the human key, not the one we think we set
 gcloud kms keys get-iam-policy clave-humano --location=... --keyring=...
 # and the call itself, from the agent's own identity, which must fail
-./pruebas_de_ruptura.sh kms-403
+python3 agente/killtest_alcance.py     # or ./pruebas_de_ruptura.sh for all sixteen
 ```
 
 What we verify is narrow and we state it narrowly: **the agent identity that runs this workflow cannot sign with the human key, and the refusal is issued by Google rather than by us.** That is a smaller claim than "impossible for anyone", and it is the one we can hand you.
@@ -129,7 +129,7 @@ But it is two agents and a person, not three agents — and the distinction is t
 
 **And the second agent is the one worth looking at, because its scope is a single word.** It is the agent that talks to customers, and the only state it may ever sign is `informed`. Not *quoted*, not *discounted*, not *cancelled*, not *closed* — one state, meaning *I told them something*. If the model running that agent becomes convinced it should close a case, it can sign that conviction all it likes; the verifier rejects it, because the state is not in its key's scope.
 
-That is what an agent fleet looks like when authority is a key and not a convention: **three identities, three different scopes, and the one facing customers holds the smallest.** It is tested — `./pruebas_de_ruptura.sh channel-port` is one of the sixteen — and it is deliberately wired to a port rather than to a live channel, which is the seventh thing we declared absent rather than faked.
+That is what an agent fleet looks like when authority is a key and not a convention: **three identities, three different scopes, and the one facing customers holds the smallest.** It is tested — `python3 agente/killtest_puerto_canal.py` is one of the sixteen — and it is deliberately wired to a port rather than to a live channel, which is the seventh thing we declared absent rather than faked.
 
 ## Six models, and not one of them can open a door
 

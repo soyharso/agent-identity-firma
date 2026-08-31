@@ -140,7 +140,12 @@ print('  \033[32m✓ Store cleared cleanly\033[0m')
   gcloud scheduler jobs run despertar-candado --location=$REGION --project=$P --quiet 2>&1 | tail -1
   echo -e "  ${CYAN}⏳ Autonomous workflow running in Google Cloud Run...${RESET}"
   # Ready when the fleet has ruled on every request in the batch.
-  esperar_a "all(estado.leer(p).get('veredicto') for p in ('PET-001','PET-002','PET-003','PET-004'))" 90
+  # La condición es «el agente YA PASÓ por cada caso», no «cada caso tiene veredicto». No es lo
+  # mismo, y la diferencia costaba tres minutos y medio de toma: un caso que se detiene a esperar
+  # a una persona —que es LO QUE EL VÍDEO VIENE A ENSEÑAR— se queda SIN veredicto para siempre,
+  # así que `all(veredicto)` no se cumplía nunca y esta espera quemaba sus 90 s enteros antes de
+  # rendirse. Medido en fase cero: `demo.sh 2` tardaba 3m31s donde el plan le da 30.
+  esperar_a "all(estado.leer(p).get('veredicto') or estado.leer(p).get('espera_humana') for p in ('PET-001','PET-002','PET-003','PET-004'))" 90
 
   paso "Durable State & Cryptographic Signatures recorded in Firestore:"
   python3 -c "

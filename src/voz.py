@@ -50,6 +50,18 @@ def _cabeceras():
             "x-goog-user-project": PROYECTO}
 
 
+class SinHabla(Exception):
+    """El motor RESPONDIÓ BIEN y dice que no hay nada que transcribir.
+
+    No es un fallo del servicio: es su veredicto. La diferencia decide si se pasa al motor de
+    respaldo o no, y se pagó cara — medido en fase cero el 2026-08-31: ante un audio de SILENCIO,
+    Speech-to-Text contestaba 200 con la lista de resultados vacía, `transcribir()` lo trataba
+    como motor caído, pasaba al respaldo, y el respaldo INVENTABA una frase («You can find your
+    ideal home in minutes»). Poner palabras en boca de un cliente es la falta más grave que
+    puede cometer este producto, y venía de confundir «falló» con «no hay nada».
+    """
+
+
 def escuchar(audio_wav: bytes, idioma: str = None, codificacion: str = "LINEAR16") -> str:
     """Nota de voz -> texto. Lo que devuelve es DATO, nunca una orden.
 
@@ -76,7 +88,9 @@ def escuchar(audio_wav: bytes, idioma: str = None, codificacion: str = "LINEAR16
                             "audio": {"content": base64.b64encode(audio_wav).decode()}})
     r.raise_for_status()
     res = r.json().get("results") or []
-    return res[0]["alternatives"][0]["transcript"].strip() if res else ""
+    if not res:
+        raise SinHabla("el motor respondió y no encontró habla")
+    return res[0]["alternatives"][0]["transcript"].strip()
 
 
 # Formatos que el navegador y WhatsApp producen, y su nombre para cada motor.
@@ -106,16 +120,31 @@ def escuchar_con_gemini(audio: bytes, codificacion: str = "WEBM_OPUS") -> str:
            f"/locations/{region}/publishers/google/models/{modelo}:generateContent")
     r = requests.post(url, headers=_cabeceras(), timeout=90, json={
         "contents": [{"role": "user", "parts": [
+            # LA INSTRUCCIÓN DE NO INVENTAR ES LA MITAD DE ESTE PROMPT, y falta hacía.
+            # Medido en fase cero el 2026-08-31: con un audio de SILENCIO, este motor devolvió
+            # «You can find your ideal home in minutes.» Un modelo al que se le pide transcribir
+            # rellena si no hay nada que transcribir — y el docstring de `transcribir()` promete
+            # que aquí no hay texto de reserva. Una transcripción inventada es peor que un fallo:
+            # el fallo se ve, y esto pone en boca de un cliente palabras que no dijo.
             {"text": "Transcribe literally what is said in this audio. "
-                     "Reply with the transcription only, no commentary, no quotes."},
+                     "Reply with the transcription only, no commentary, no quotes. "
+                     "If there is no speech, if it is silence, or if you cannot make out "
+                     "any words, reply with exactly NO_SPEECH and nothing else. "
+                     "Never guess, never invent plausible words."},
             {"inlineData": {"mimeType": _MIME.get(codificacion, "audio/webm"),
                             "data": base64.b64encode(audio).decode()}}]}],
         "generationConfig": {"temperature": 0, "maxOutputTokens": 256}})
     r.raise_for_status()
     for c in r.json().get("candidates") or []:
         for p in (c.get("content") or {}).get("parts") or []:
-            if p.get("text"):
-                return p["text"].strip()
+            texto = (p.get("text") or "").strip()
+            if not texto:
+                continue
+            # El modelo declaró que no hay habla: eso NO es una transcripción, es un fallo, y
+            # sube como tal para que el llamador diga que no se entendió en vez de inventar.
+            if texto.upper().replace(".", "").strip() == "NO_SPEECH":
+                raise ValueError("el audio no trae habla reconocible")
+            return texto
     return ""
 
 
@@ -156,6 +185,12 @@ def transcribir(audio: bytes, idioma: str = None, codificacion: str = "WEBM_OPUS
                 if texto:
                     return nombre, texto, fallos
                 break                                    # respondió, pero no entendió nada
+            except SinHabla:
+                # VEREDICTO, no avería: el motor funcionó y dice que ahí no hay habla. Pasar al
+                # respaldo aquí es pedirle a un modelo generativo que rellene un silencio, y lo
+                # rellena. La cadena se corta y el llamador dirá que no se entendió.
+                fallos.append(f"{nombre}: sin habla reconocible")
+                return None, "", fallos
             except Exception as e:                       # noqa: BLE001
                 transitorio = any(c in str(e) for c in ("429", "503", "500"))
                 if transitorio and intento < tope:

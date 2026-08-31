@@ -29,7 +29,7 @@ Cleveria was built specifically for this operational supervisor: **the machine r
 | Fleet Subsystem | Cleveria First-Party Implementation | How It Is Proven Live |
 |---|---|---|
 | ✓ **Agent Registry** | Versioned Agent Cards (`agent_cards/catalog.json`) generated directly from `claves/directorio.json` | Deterministic generation via `generar_agent_cards.py`; immutable in Git history |
-| ✓ **Agent Identity** | Cloud KMS asymmetric keys (P-256) with distinct Service Accounts per agent (`sa-agente-curador` vs `sa-agente-qnowa`) | Real `HTTP 403 PERMISSION_DENIED` when an agent attempts to use the human signing key |
+| ✓ **Agent Identity** | Cloud KMS asymmetric keys (P-256) with distinct Service Accounts per agent (`sa-agente-curador` vs `sa-agente-comercial`) | Real `HTTP 403 PERMISSION_DENIED` when an agent attempts to use the human signing key |
 | ✓ **Gateway / Scope Gate** | Deterministic scope gate enforcing state limits per key before verification | Real-time rejection of out-of-scope state transitions (`agente/killtest_alcance.py`) |
 | ✓ **Durable State / Continuity** | Cloud Firestore native persistence for workflow facts | Resumable execution surviving abrupt Cloud Run process crashes (`agente/killtest_durabilidad.py`) |
 | ✓ **Audit & Trust Anchor** | RFC 8785 canonical JSON signature log + offline zero-credential verifier | Re-derive all cryptographic signatures independently without Google Cloud or network access |
