@@ -474,6 +474,98 @@ async function sondear(){
   identidad();
 }
 
+
+// ─── ENTRAR CON GOOGLE Y FIRMAR DESDE EL NAVEGADOR ─────────────────────────────────────────
+// QUÉ HACE POSIBLE. Hasta ahora esta pantalla solo firmaba servida desde el portátil de la
+// persona, porque allí `gcloud` tiene su credencial. Servida desde la nube no podía, y era
+// correcto: ese servicio corre como el agente y Cloud KMS le contesta 403.
+//
+// Lo que cambia NO es el permiso del servicio: es QUIÉN firma. La persona entra con Google
+// aquí mismo, el navegador obtiene un permiso temporal para Cloud KMS, y llama a Cloud KMS
+// DIRECTAMENTE con esa credencial. El servidor no ve el permiso ni la clave. Sigue siendo
+// verdad que el servicio no puede firmar.
+//
+// LO QUE UN JUEZ PUEDE HACER CON ESTO, que es la razón de construirlo: entrar con su propia
+// cuenta de Google y pulsar el botón. Google le contestará 403, porque su cuenta no tiene
+// permiso sobre esa clave. La frontera deja de ser una afirmación nuestra y pasa a ser algo
+// que comprueba desde su navegador, con su identidad, sin creernos nada.
+const GOOGLE = {clientId:'', clave:'', alcance:'', token:null, correo:null, listo:false};
+
+async function prepararGoogle(){
+  try{
+    const r = await fetch('/api/config');
+    if(!r.ok) return;                       // servido en local: no hay nube que consultar
+    const c = await r.json();
+    GOOGLE.clientId = c.google_client_id || '';
+    GOOGLE.clave    = c.clave_humano || '';
+    GOOGLE.alcance  = c.alcance_oauth || '';
+    if(!GOOGLE.clientId) return;            // sin cliente configurado, la página no cambia
+    await new Promise((ok, mal) => {
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.onload = ok; s.onerror = mal; document.head.appendChild(s);
+    });
+    GOOGLE.listo = true;
+    // SIN VENTANA EMERGENTE SI YA HAY SESIÓN. `prompt:''` reutiliza la sesión que el navegador
+    // ya tiene: si la persona está entrada en Google y ya dio el permiso una vez, el token
+    // llega solo y el botón de firmar aparece sin que nadie pulse nada. Si no, se pide.
+    pedirToken('');
+  }catch(e){ /* la página funciona igual: enseña la cola y no ofrece firmar */ }
+}
+
+function pedirToken(modo){
+  if(!GOOGLE.listo) return;
+  const cliente = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE.clientId,
+    scope: GOOGLE.alcance,
+    prompt: modo,
+    callback: (resp) => {
+      if(resp && resp.access_token){
+        GOOGLE.token = resp.access_token;
+        FIRMA.puede = true;
+        FIRMA.motivo = '';
+        identidad();
+        cargar(true);
+      }
+    },
+    error_callback: () => { /* sin sesión silenciosa: se queda el botón de entrar */ }
+  });
+  cliente.requestAccessToken();
+}
+
+// LA FIRMA, EN TRES PASOS Y CADA UNO EN SU SITIO:
+//   1. el servidor arma el sobre y da su resumen — no puede firmarlo
+//   2. el NAVEGADOR se lo manda a Cloud KMS con la credencial de la persona
+//   3. el servidor lleva el sobre ya firmado al registro — es un cartero
+// El paso 2 es el único que produce autoridad, y ocurre entre la persona y Google.
+async function firmarConGoogle(id, estado){
+  const prep = await fetch('/api/preparar', {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({peticion_id:id, estado})});
+  const d = await prep.json();
+  if(!prep.ok) throw new Error(d.error || ('HTTP ' + prep.status));
+
+  const kms = await fetch(
+    `https://cloudkms.googleapis.com/v1/${GOOGLE.clave}:asymmetricSign`,
+    {method:'POST',
+     headers:{'Authorization':'Bearer ' + GOOGLE.token, 'Content-Type':'application/json'},
+     body: JSON.stringify({digest:{sha256: d.digest_sha256_b64}})});
+  const k = await kms.json();
+  if(!kms.ok){
+    // ESTE ERROR NO SE ESCONDE: es la demostración. Lo dice Google sobre la identidad de quien
+    // está mirando, y para un juez vale más que cualquier frase del vídeo.
+    const e = new Error((k.error && k.error.message) || ('HTTP ' + kms.status));
+    e.deGoogle = true; e.http = kms.status; e.estado = (k.error||{}).status || '';
+    throw e;
+  }
+
+  const ap = await fetch('/api/aplicar', {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({peticion_id:id, decision:estado, sobre:d.sobre,
+                            firma:k.signature})});
+  return {http: ap.status, texto: await ap.text(), firma: k.signature};
+}
+
 // ─── LOS NOMBRES EN INGLÉS, SIN PERDER EL VALOR REAL ───────────────────────────────────────
 // El jurado lee inglés y el registro habla español: `descartada`, `cerrada_con_juicio`,
 // `perdonada`. Traducirlos a secas sería peor que dejarlos, porque el sobre firmado que el
@@ -1071,15 +1163,35 @@ async function firmar(id){
   if(btn){ btn.disabled = true; btn.textContent = 'Signing on this machine…'; }
   let salida, ok = false;
   try{
-    const r = await fetch('/firmar', {method:'POST', headers:{'Content-Type':'application/json'},
-                                      body: JSON.stringify({peticion_id:id, estado})});
-    const d = await r.json();
-    ok = !!d.ok;
-    salida = (d.comando ? '$ ' + d.comando + '\n' : '') + (d.salida || '(no output)');
-    // Solo el acuse del servicio saca el caso de la bandeja. Un error se queda a la vista.
-    if(d.registrado) decididos.set(id, estado);
+    if(GOOGLE.token){
+      // CAMINO WEB: firma el navegador con la credencial de la persona. El servidor solo arma
+      // el sobre y luego hace de cartero; en ningún momento tiene con qué firmar.
+      const r = await firmarConGoogle(id, estado);
+      ok = r.http === 200;
+      salida = 'Cloud KMS signed with YOUR Google identity\n'
+             + 'signature  ' + String(r.firma).slice(0, 44) + '…\n'
+             + 'the ledger replied HTTP ' + r.http + ': ' + r.texto.slice(0, 300);
+      if(ok) decididos.set(id, estado);
+    }else{
+      const r = await fetch('/firmar', {method:'POST', headers:{'Content-Type':'application/json'},
+                                        body: JSON.stringify({peticion_id:id, estado})});
+      const d = await r.json();
+      ok = !!d.ok;
+      salida = (d.comando ? '$ ' + d.comando + '\n' : '') + (d.salida || '(no output)');
+      // Solo el acuse del servicio saca el caso de la bandeja. Un error se queda a la vista.
+      if(d.registrado) decididos.set(id, estado);
+    }
   }catch(e){
-    salida = 'the local tray could not be reached: ' + e.message;
+    // UN 403 DE GOOGLE NO ES UN FALLO DE ESTA PÁGINA: es la respuesta correcta a alguien que
+    // no tiene permiso sobre la clave humana, y es exactamente lo que un juez viene a ver. Se
+    // enseña entero, con el nombre del recurso que Google devuelve, y no se disfraza de avería.
+    salida = e.deGoogle
+      ? 'Google Cloud KMS refused THIS identity — HTTP ' + e.http + ' ' + e.estado + '\n\n'
+        + e.message + '\n\n'
+        + 'This is not an error in this page. It is the boundary: your Google account holds no '
+        + 'permission on the human key, so no signature can be produced for you. Nothing was '
+        + 'written to the ledger.'
+      : 'could not sign: ' + e.message;
   }
   resultados.set(id, {ok, texto: salida});
   pintaUltimo(id, ok, salida);
@@ -1111,6 +1223,7 @@ function tictac(){
 
 // La sonda va PRIMERO y se espera: pintar la bandeja antes de saber dónde estamos haría
 // aparecer los botones un segundo tarde, y en cámara eso se lee como un fallo.
+prepararGoogle();
 sondear().then(() => cargar(true));
 setInterval(cargar, 3000);
 setInterval(tictac, 1000);

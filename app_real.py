@@ -301,6 +301,126 @@ a.puerta:hover,a.puerta:focus-visible{border-color:var(--cyan);transform:transla
 </body></html>"""
     return render_template_string(html)
 
+# ─── FIRMAR DESDE EL NAVEGADOR, CON LA IDENTIDAD DE LA PERSONA ───────────────────────────────
+# EL PROBLEMA QUE RESUELVE. Esta página, servida desde la nube, no podía firmar: corre con
+# `sa-demo`, que no tiene ningún permiso sobre la clave humana. Correcto, y es la tesis. Pero
+# dejaba la firma humana atrapada en el portátil del operador, y un jurado no puede tocarla.
+#
+# LA SOLUCIÓN NO ES DARLE LA CLAVE AL SERVICIO. Es que firme QUIEN MIRA: la persona entra con
+# Google en el navegador, el navegador pide un permiso temporal para Cloud KMS, y llama a KMS
+# DIRECTAMENTE con esa credencial. El servidor no ve la clave ni el token. Sigue siendo cierto
+# que este servicio no puede firmar; lo que cambia es que la persona ya no necesita su máquina.
+#
+# Y ANTE UN JURADO VALE MÁS QUE UNA EXPLICACIÓN: el mismo botón, la misma página. El operador
+# entra y firma; un juez entra y Google le devuelve 403, porque su cuenta no tiene permiso sobre
+# esa clave. La frontera deja de contarse y pasa a poder probarse desde el navegador de quien
+# duda.
+#
+# POR QUÉ EL SOBRE LO ARMA EL SERVIDOR Y NO EL NAVEGADOR. Lo que se firma es JSON canónico
+# RFC 8785, byte a byte. Reimplementarlo en JavaScript sería introducir una segunda
+# implementación que hay que mantener igual a la de Python para siempre, y ese es exactamente el
+# defecto que este proyecto ya pagó una vez —dos serializadores que no coincidían—. Así que el
+# servidor arma el sobre y devuelve SU RESUMEN; el navegador firma el resumen. Y si el servidor
+# mintiera sobre el resumen, el verificador —que vuelve a canonizar el sobre por su cuenta— lo
+# rechazaría: nadie tiene que fiarse de esta ruta.
+
+
+@app.route("/api/config", methods=["GET"])
+def api_config():
+    """Lo que el navegador necesita para entrar con Google. Sin secretos.
+
+    El identificador de cliente es público por diseño —viaja en toda página que use Google
+    Sign-In— y sin el secreto no autoriza nada. Si no está configurado se devuelve vacío, y la
+    página se comporta como antes: enseña la cola y no ofrece firmar.
+    """
+    return jsonify({
+        "google_client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
+        "clave_humano": os.environ.get(
+            "CLAVE_HUMANO_RUTA",
+            "projects/ai-transf-lab-0827/locations/us-central1/keyRings/firmas/"
+            "cryptoKeys/clave-humano/cryptoKeyVersions/1"),
+        "alcance_oauth": "https://www.googleapis.com/auth/cloudkms",
+    }), 200
+
+
+@app.route("/api/preparar", methods=["POST"])
+def api_preparar():
+    """Arma el sobre que la PERSONA va a firmar, y devuelve su resumen. No firma nada.
+
+    Es deliberadamente lo mismo que arma `src/decidir_como_persona.py`, campo por campo, porque
+    el verificador solo acepta un sobre; si estas dos rutas divergieran, una de las dos dejaría
+    de validar y el fallo aparecería en cámara.
+    """
+    try:
+        from src import canonico as canon, libro_demo
+        from src.firma_kms import resumen
+        cuerpo = request.get_json(silent=True) or {}
+        pid = str(cuerpo.get("peticion_id") or "").strip()
+        estado = str(cuerpo.get("estado") or "").strip()
+        if not pid or not estado:
+            return jsonify({"error": "peticion_id and estado are required"}), 400
+
+        peticion = (libro_demo.peticiones() or {}).get(pid) or {}
+        texto = peticion.get("texto") or ""
+
+        ahora = time.time()
+        sobre = {
+            "peticion_id": pid,
+            "estado_destino": estado,
+            "tipo_firmante": "HUMANO",
+            "curado_por": "humano",
+            "hash_contenido": resumen(texto),
+            "marca_temporal": int(ahora),
+            "emitido_en": datetime.datetime.fromtimestamp(
+                ahora, datetime.timezone.utc).isoformat(timespec="seconds"),
+            "origen": "bandeja-web",
+            "emisor": "persona-operador",
+            "sobre_quien": peticion.get("de", "sin_declarar"),
+            "algoritmo": "EC_SIGN_P256_SHA256",
+        }
+        import base64
+        return jsonify({
+            "sobre": sobre,
+            # Lo que Cloud KMS espera en `digest.sha256`: el resumen del canónico, en base64.
+            "digest_sha256_b64": base64.b64encode(canon.digest(sobre)).decode("ascii"),
+        }), 200
+    except Exception as e:                                            # noqa: BLE001
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/aplicar", methods=["POST"])
+def api_aplicar():
+    """Lleva al servicio de firma un sobre QUE YA VIENE FIRMADO. Es un cartero, no un notario.
+
+    Existe porque el servicio que registra los cierres no está abierto a cualquiera, y el
+    navegador de la persona no tiene un identificador de invocación para él. Este servicio sí.
+    Que haga de cartero no le da ningún poder: no puede producir una firma —Cloud KMS le
+    contesta 403— y una que se inventara no pasaría el verificador. Lo único que aporta es el
+    transporte.
+    """
+    try:
+        import google.auth.transport.requests
+        import google.oauth2.id_token
+        import requests as rq
+
+        cuerpo = request.get_json(silent=True) or {}
+        for campo in ("peticion_id", "decision", "sobre", "firma"):
+            if not cuerpo.get(campo):
+                return jsonify({"error": f"{campo} is required"}), 400
+
+        destino = os.environ.get("SERVICIO_FIRMA",
+                                 "https://candado-firma-mzr5fvtnka-uc.a.run.app")
+        pet = google.auth.transport.requests.Request()
+        token = google.oauth2.id_token.fetch_id_token(pet, destino)
+        r = rq.post(f"{destino}/decidir",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={k: cuerpo[k] for k in ("peticion_id", "decision", "sobre", "firma")},
+                    timeout=60)
+        return (r.text, r.status_code, {"Content-Type": "application/json"})
+    except Exception as e:                                            # noqa: BLE001
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/ui/<path:name>")
 def serve_ui(name):
     base_path = os.path.dirname(os.path.abspath(__file__))
