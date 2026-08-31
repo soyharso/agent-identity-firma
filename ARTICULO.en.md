@@ -22,6 +22,23 @@ That is not a bug in a form. It is an agent-identity failure, and it is structur
 
 The rest of this is how, including the four things that broke while we built it.
 
+## Who is writing this, because it changes what the number means
+
+**Softronica S.A.S.** is a Colombian company, founded in 2011. Its product **Qnowa** is a queue
+and turn management platform that has run in production for years with banks, clinics, government
+offices and service centres — it manages the lines real customers wait in, and the tickets that
+get closed at the end of them. **Cleveria** is the reasoning and identity layer we are describing
+here: the part that answers *who decided this* once machines start closing those tickets next to
+people.
+
+We say this early for one reason. **The 58 rows are not from a synthetic dataset.** They are from
+Qnowa's own preproduction records — our queues, our schema, our defect. We did not build a
+scenario in order to have a problem to solve; we found the problem in the system we operate, and
+this is what we built because of it.
+
+That is also why the demo you will see later is branded Qnowa and not Cleveria. **Qnowa is the
+operation. Cleveria is the authority over it. Softronica answers for both.**
+
 
 ## Three claims, and we tested all three on ourselves
 
@@ -325,6 +342,12 @@ Be precise about that last part, because we were not until someone measured it. 
 
 That last one is the one that matters: **you can verify every signature we claim, without us, offline, on your own machine.** Verify, not re-derive — without the private keys nobody re-derives anything, and in an article about cryptography that distinction is the whole difference between a claim and a proof.
 
+**And you can watch the boundary refuse, right now, without installing anything.** Open the human queue at **[sign.qnowa.com](https://sign.qnowa.com)**, press *«Make the agent try to sign»*, and read what comes back. That 403 is not our error page — it is Google Cloud KMS answering our own service, in your browser, on your click. **Don't take our word for it: open the tray, press the button, and read what Google Cloud KMS answers.**
+
+Two things so that button is not oversold. You are not signing anything yourself — **you are making the agent try**, which is the thing the whole system exists to refuse. And anyone can enter the queue, but signing needs a Cloud KMS permission that Google classes as sensitive and does not hand to unverified apps: today only accounts registered as test users can sign at all. So the honest sentence is *anyone can walk in and check the boundary with one click*, not *anyone can sign*.
+
+The repository is private for now, which the rules of this hackathon allow with access granted to the judges — and they have it. If you want to read it too, write to **info@cleveria.co** and we will open it for you.
+
 **Five numbers carry the argument, and here is the command for each:**
 
 | Number | Where it comes from |
@@ -347,4 +370,4 @@ If a number in this article has no command beside it, it is a count we made and 
 
 *Built with the Google Agent Development Kit, Gemini 3.6 Flash, `gemma-4-26b` on Vertex AI Model Garden, `gemini-embedding-001`, Cloud Speech-to-Text, Cloud Text-to-Speech, Cloud Run, Cloud KMS, Firestore and Cloud Scheduler — by Softronica S.A.S. for **[Cleveria](https://cleveria.co)**, where we build reasoning support for teams that put agents next to people.*
 
-*Repository: https://github.com/soyharso/agent-identity-firma · Preproduction demo portal: https://demo.cleveria.co*
+*Try the boundary yourself: **https://sign.qnowa.com** · Preproduction demo portal: **https://demo.cleveria.co** · Repository: private for the duration of the hackathon, with access granted to the judges — write to **info@cleveria.co** and we will open it for you.*
