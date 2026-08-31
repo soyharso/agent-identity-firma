@@ -33,10 +33,20 @@ paso() { echo -e "\n${NEGRITA}$*${FIN}"; }
 # el micrófono del portátil sigue desviado después de grabar y la siguiente videollamada no oye
 # a nadie. Por eso el desmontaje es un comando y no una nota en un documento.
 if [ "${1:-}" = "--soltar" ]; then
+  # El micrófono real NO se busca por su nombre escrito a mano: el identificador de la tarjeta
+  # de sonido cambia si se enchufa una diadema, y entonces esto «restauraba» un aparato que ya
+  # no existe y el micrófono se quedaba mudo con un mensaje en verde. Se coge la primera fuente
+  # que NO sea un monitor, que es lo que significa «un micrófono de verdad».
+  REAL=$(pactl list short sources | awk '$2 !~ /\.monitor$/ {print $2; exit}')
   pactl unload-module module-null-sink 2>/dev/null && echo -e "${VERDE}Sumidero soltado.${FIN}" \
     || echo -e "${AMARILLO}No había sumidero que soltar.${FIN}"
-  pactl set-default-source alsa_input.pci-0000_03_00.6.analog-stereo 2>/dev/null \
-    && echo -e "${VERDE}Micrófono devuelto al de la máquina.${FIN}"
+  if [ -n "$REAL" ]; then
+    pactl set-default-source "$REAL" \
+      && echo -e "${VERDE}Micrófono devuelto a:${FIN} $REAL"
+  else
+    echo -e "${ROJO}No encuentro ningún micrófono real. Míralo en Ajustes → Sonido → Entrada.${FIN}"
+  fi
+  echo -e "${GRIS}Comprobación:${FIN} $(pactl get-default-source)"
   exit 0
 fi
 
