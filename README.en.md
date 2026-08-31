@@ -252,6 +252,19 @@ measurement in the commit history.
 
 ## The tests that close it
 
+**All sixteen at once, which is the fastest way to check everything we claim:**
+
+```bash
+./pruebas_de_ruptura.sh              # the sixteen in one run (~200 s)
+./pruebas_de_ruptura.sh --resumen    # the result of the last run, with its date
+```
+
+Last run: **16/16 green in 196 seconds**, 31 August 2026. **Six of the sixteen need no
+credentials and no network at all** — `canonical-json`, `signature-replay`, `act-binding`,
+`prompt-injection`, `ledger-chain` and `ledger-order`.
+
+Or one by one:
+
 ```bash
 python3 agente/killtest_inyeccion.py     # poisoned text vs the authority ceiling (8 cases, 2 languages)
 python3 agente/killtest_alcance.py       # per-key scope, with real signatures
