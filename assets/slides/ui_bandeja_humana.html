@@ -539,7 +539,12 @@ function pedirToken(modo){
   const cliente = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE.clientId,
     scope: modo === 'entrar' ? GOOGLE.entrar : GOOGLE.firmar,
-    prompt: modo,
+    // `prompt` NO ES EL MODO, y confundirlos fue el fallo que dejó la banda diciendo «not
+    // signed in» después de un login correcto. Google solo admite aquí '', 'none', 'consent'
+    // o 'select_account'; se le estaba mandando 'entrar', que no es ninguno, y la petición
+    // no volvía nunca. Vacío significa «no molestes si ya hay sesión», que es lo que se quiere
+    // en los tres casos.
+    prompt: '',
     callback: async (resp) => {
       if(!resp || !resp.access_token) return;
       if(modo === 'entrar'){
@@ -554,8 +559,10 @@ function pedirToken(modo){
           GOOGLE.correo = d.email ? ('a person at ' + String(d.email).split('@').pop()) : null;
         }catch(e){ GOOGLE.correo = null; }
         identidad();
-        // Y se prueba a pedir el de firma: si esta persona SÍ lo tiene, aparece el botón.
-        pedirToken('firmar');
+        // AQUÍ NO SE ENCADENA OTRA VENTANA, y esa fue la segunda mitad del fallo. Pedir el
+        // permiso de firma justo después de entrar abre una segunda emergente que el navegador
+        // bloquea, porque ya no viene de un clic de la persona. El permiso de firma se pide
+        // desde su propio botón, que sí es un clic.
         return;
       }
       GOOGLE.token = resp.access_token;
@@ -709,7 +716,9 @@ function identidad(){
          That is the product, not a fault: an outsider who could sign would disprove it.
          <b>You do not have to take our word for it</b> — make the agent try, below, and read
          what Google answers.</span>`
-      + `<button class="entrar" onclick="intentarSuplantar()">Make the agent try to sign</button>`;
+      + `<button class="entrar" onclick="pedirToken('firmar')">Enable signing</button>`
+      + `<button class="entrar" style="background:var(--ambar-oscuro)"
+                 onclick="intentarSuplantar()">Make the agent try to sign</button>`;
     return;
   }
   if(FIRMA.puede){

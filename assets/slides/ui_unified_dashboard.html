@@ -90,9 +90,21 @@ h2{font-size:16px;text-transform:uppercase;letter-spacing:.1em;color:var(--gris-
   0%   {box-shadow:0 0 0 0 rgba(39,230,210,.45)}
   100% {box-shadow:0 0 0 0 rgba(39,230,210,0)}
 }
+/* SIN ATENDER. La entrada dura 1,1 s, y entre que el caso llega por el portal y que la cámara
+   corta a este panel pasan más de veinte segundos: se llegaba con la animación muerta hace
+   rato y la tarjeta que hay que mirar era una más. Este latido ámbar dice otra cosa distinta
+   de «acaba de entrar» — dice «nadie la ha atendido todavía», que es el estado del producto.
+   NO es el bucle infinito que se retiró arriba: se apaga solo cuando el caso deja de ser
+   reciente (45 s desde `recibido_en`, ver `cargar()`), así que lo acota el DATO y no el CSS. */
+@keyframes sinatender{
+  0%   {box-shadow:0 0 0 0 rgba(255,176,46,.55)}
+  70%  {box-shadow:0 0 0 12px rgba(255,176,46,0)}
+  100% {box-shadow:0 0 0 0 rgba(255,176,46,0)}
+}
 .exp.entra{animation:entra 1.1s cubic-bezier(.2,.8,.2,1) both}
 .exp.cambia{animation:cambia 1.4s ease-out both}
-@media (prefers-reduced-motion: reduce){.exp.entra,.exp.cambia{animation:none}}
+.exp.espera.sinatender{animation:sinatender 1.5s ease-out infinite}
+@media (prefers-reduced-motion: reduce){.exp.entra,.exp.cambia,.exp.espera.sinatender{animation:none}}
 .cab{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 /* El identificador dejó de ser cian: había uno por tarjeta y doce cianes en la
    cola le robaban el turno al rojo. Va en blanco hueso, que es tinta, no color. */
